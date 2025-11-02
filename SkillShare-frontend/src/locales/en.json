@@ -72,5 +72,38 @@
       "login": "Logged in successfully!",
       "register": "Registration successful!"
     }
+  },
+
+  "announcements": {
+    "title": "Announcements",
+    "addButton": "➕ Add Announcement",
+    "searchPlaceholder": "Search announcements...",
+    "locationPlaceholder": "Location",
+    "all": "All",
+    "minPrice": "Min price",
+    "maxPrice": "Max price",
+    "sort": {
+      "newest": "Newest",
+      "oldest": "Oldest",
+      "priceAsc": "Price ascending",
+      "priceDesc": "Price descending"
+    },
+    "loading": "Loading announcements...",
+    "noAnnouncements": "No announcements to display.",
+    "noImage": "No+image"
+  },
+
+  "addAnnouncement": {
+    "title": "Add New Announcement",
+    "titlePlaceholder": "Title",
+    "descriptionPlaceholder": "Announcement description",
+    "pricePlaceholder": "Price (PLN)",
+    "locationPlaceholder": "Location",
+    "selectCategory": "Select category",
+    "imagePlaceholder": "Image URL (optional)",
+    "addButton": "Add Announcement",
+    "adding": "Adding...",
+    "success": "✅ Announcement added successfully!",
+    "error": "❌ Error adding announcement."
   }
 }

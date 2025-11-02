@@ -74,5 +74,38 @@
       "login": "Zalogowano pomyślnie!",
       "register": "Rejestracja zakończona sukcesem!"
     }
+  },
+
+  "announcements": {
+    "title": "Ogłoszenia",
+    "addButton": "➕ Dodaj ogłoszenie",
+    "searchPlaceholder": "Szukaj ogłoszeń...",
+    "locationPlaceholder": "Lokalizacja",
+    "all": "Wszystkie",
+    "minPrice": "Cena min",
+    "maxPrice": "Cena max",
+    "sort": {
+      "newest": "Najnowsze",
+      "oldest": "Najstarsze",
+      "priceAsc": "Cena rosnąco",
+      "priceDesc": "Cena malejąco"
+    },
+    "loading": "Ładowanie ogłoszeń...",
+    "noAnnouncements": "Brak ogłoszeń do wyświetlenia.",
+    "noImage": "Brak+zdjęcia"
+  },
+
+  "addAnnouncement": {
+    "title": "Dodaj nowe ogłoszenie",
+    "titlePlaceholder": "Tytuł",
+    "descriptionPlaceholder": "Opis ogłoszenia",
+    "pricePlaceholder": "Cena (zł)",
+    "locationPlaceholder": "Lokalizacja",
+    "selectCategory": "Wybierz kategorię",
+    "imagePlaceholder": "URL obrazka (opcjonalnie)",
+    "addButton": "Dodaj ogłoszenie",
+    "adding": "Dodawanie...",
+    "success": "✅ Ogłoszenie zostało dodane!",
+    "error": "❌ Wystąpił błąd przy dodawaniu ogłoszenia."
   }
 }

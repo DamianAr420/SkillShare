@@ -5,7 +5,10 @@ import { useAnnouncementStore } from "@/stores/announcementStore";
 import { useRouter } from "vue-router";
 import { useToast } from "@/composables/useToast";
 import { useAuthStore } from "@/stores/authStore";
+import { useI18n } from "vue-i18n";
+import Toast from "@/components/ui/Toast.vue";
 
+const { t } = useI18n();
 const router = useRouter();
 const categoryStore = useCategoryStore();
 const announcementStore = useAnnouncementStore();
@@ -36,18 +39,20 @@ const handleSubmit = async () => {
       user: authStore.user?._id || "",
     });
 
-    showToast("✅ Ogłoszenie zostało dodane!", "success");
+    showToast(t("addAnnouncement.success"), "success");
     router.push("/categories");
   } catch (err) {
     console.error(err);
-    showToast("❌ Wystąpił błąd przy dodawaniu ogłoszenia.", "error");
+    showToast(t("addAnnouncement.error"), "error");
   }
 };
 </script>
 
 <template>
   <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-    <h1 class="text-3xl font-bold mb-8 text-center">Dodaj nowe ogłoszenie</h1>
+    <h1 class="text-3xl font-bold mb-8 text-center">
+      {{ t("addAnnouncement.title") }}
+    </h1>
 
     <form
       @submit.prevent="handleSubmit"
@@ -56,7 +61,7 @@ const handleSubmit = async () => {
       <input
         v-model="title"
         type="text"
-        placeholder="Tytuł"
+        :placeholder="t('addAnnouncement.titlePlaceholder')"
         class="border p-3 rounded-md"
         required
       />
@@ -64,7 +69,7 @@ const handleSubmit = async () => {
       <textarea
         v-model="description"
         rows="4"
-        placeholder="Opis ogłoszenia"
+        :placeholder="t('addAnnouncement.descriptionPlaceholder')"
         class="border p-3 rounded-md"
         required
       />
@@ -73,20 +78,20 @@ const handleSubmit = async () => {
         <input
           v-model="price"
           type="number"
-          placeholder="Cena (zł)"
+          :placeholder="t('addAnnouncement.pricePlaceholder')"
           class="border p-3 rounded-md flex-1"
           required
         />
         <input
           v-model="location"
           type="text"
-          placeholder="Lokalizacja"
+          :placeholder="t('addAnnouncement.locationPlaceholder')"
           class="border p-3 rounded-md flex-1"
         />
       </div>
 
       <select v-model="category" class="border p-3 rounded-md" required>
-        <option value="">Wybierz kategorię</option>
+        <option value="">{{ t("addAnnouncement.selectCategory") }}</option>
         <option
           v-for="cat in categoryStore.categories"
           :key="cat._id"
@@ -99,7 +104,7 @@ const handleSubmit = async () => {
       <input
         v-model="imageUrl"
         type="text"
-        placeholder="URL obrazka (opcjonalnie)"
+        :placeholder="t('addAnnouncement.imagePlaceholder')"
         class="border p-3 rounded-md"
       />
 
@@ -108,16 +113,14 @@ const handleSubmit = async () => {
         class="mt-4 bg-[#F77821] hover:bg-[#ff973b] text-white font-semibold py-3 rounded-xl shadow-md transition"
         :disabled="announcementStore.loading"
       >
-        {{ announcementStore.loading ? "Dodawanie..." : "Dodaj ogłoszenie" }}
+        {{
+          announcementStore.loading
+            ? t("addAnnouncement.adding")
+            : t("addAnnouncement.addButton")
+        }}
       </button>
     </form>
 
-    <!-- 🔔 Toaster -->
     <Toast />
   </div>
 </template>
-
-<script lang="ts">
-import Toast from "@/components/ui/Toast.vue";
-export default { components: { Toast } };
-</script>

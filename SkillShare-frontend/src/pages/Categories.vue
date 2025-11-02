@@ -2,6 +2,9 @@
 import { ref, onMounted, watch } from "vue";
 import { useCategoryStore } from "@/stores/categoryStore";
 import { useAnnouncementStore } from "@/stores/announcementStore";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const categoryStore = useCategoryStore();
 const announcementStore = useAnnouncementStore();
@@ -44,14 +47,14 @@ watch(
   <div class="px-4 sm:px-6 lg:px-8 py-6">
     <!-- HEADER -->
     <div class="flex flex-col sm:flex-row justify-between items-center mb-6">
-      <h1 class="text-3xl font-bold">Ogłoszenia</h1>
+      <h1 class="text-3xl font-bold">{{ t("announcements.title") }}</h1>
 
       <!-- Przycisk Dodaj ogłoszenie -->
       <RouterLink
         to="/add-announcement"
         class="mt-4 sm:mt-0 inline-flex items-center justify-center px-5 py-2.5 bg-gradient-to-r from-[#F77821] to-[#ff973b] text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition"
       >
-        ➕ Dodaj ogłoszenie
+        {{ t("announcements.addButton") }}
       </RouterLink>
     </div>
 
@@ -59,14 +62,14 @@ watch(
       <input
         v-model="searchTerm"
         type="text"
-        placeholder="Szukaj ogłoszeń..."
+        :placeholder="t('announcements.searchPlaceholder')"
         class="border p-2 rounded w-full sm:w-64"
       />
 
       <input
         v-model="locationFilter"
         type="text"
-        placeholder="Lokalizacja"
+        :placeholder="t('announcements.locationPlaceholder')"
         class="border p-2 rounded w-full sm:w-64"
       />
     </div>
@@ -91,7 +94,7 @@ watch(
         @click="selectedCategory = null"
         class="px-4 py-2 rounded-full text-sm font-medium bg-gray-100 hover:bg-gray-200"
       >
-        Wszystkie
+        {{ t("announcements.all") }}
       </button>
     </div>
 
@@ -101,22 +104,24 @@ watch(
         <input
           v-model="minPrice"
           type="number"
-          placeholder="Cena min"
+          :placeholder="t('announcements.minPrice')"
           class="border p-2 rounded w-28"
         />
         <input
           v-model="maxPrice"
           type="number"
-          placeholder="Cena max"
+          :placeholder="t('announcements.maxPrice')"
           class="border p-2 rounded w-28"
         />
       </div>
 
       <select v-model="sortOption" class="border p-2 rounded w-40">
-        <option value="newest">Najnowsze</option>
-        <option value="oldest">Najstarsze</option>
-        <option value="priceAsc">Cena rosnąco</option>
-        <option value="priceDesc">Cena malejąco</option>
+        <option value="newest">{{ t("announcements.sort.newest") }}</option>
+        <option value="oldest">{{ t("announcements.sort.oldest") }}</option>
+        <option value="priceAsc">{{ t("announcements.sort.priceAsc") }}</option>
+        <option value="priceDesc">
+          {{ t("announcements.sort.priceDesc") }}
+        </option>
       </select>
     </div>
 
@@ -125,14 +130,14 @@ watch(
       v-if="announcementStore.loading"
       class="text-center text-gray-500 py-10"
     >
-      Ładowanie ogłoszeń...
+      {{ t("announcements.loading") }}
     </div>
 
     <div
       v-else-if="announcementStore.announcements.length === 0"
       class="text-center text-gray-500 py-10"
     >
-      Brak ogłoszeń do wyświetlenia.
+      {{ t("announcements.noAnnouncements") }}
     </div>
 
     <div v-else class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -144,7 +149,8 @@ watch(
         <img
           :src="
             a.imageUrl ||
-            'https://via.placeholder.com/300x200?text=Brak+zdjęcia'
+            'https://via.placeholder.com/300x200?text=' +
+              t('announcements.noImage')
           "
           class="h-40 w-full object-cover rounded mb-3"
           alt="img"
@@ -152,9 +158,9 @@ watch(
         <h3 class="text-lg font-semibold mb-1">{{ a.title }}</h3>
         <p class="text-sm text-gray-600 flex-grow">{{ a.desc }}</p>
         <div class="flex items-center justify-between mt-3">
-          <span class="text-[#F77821] font-semibold text-xl"
-            >{{ a.price }}zł</span
-          >
+          <span class="text-[#F77821] font-semibold text-xl">
+            {{ a.price }}zł
+          </span>
           <span class="text-sm text-gray-500">{{ a.category }}</span>
         </div>
       </div>
