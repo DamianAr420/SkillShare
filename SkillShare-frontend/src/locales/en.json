@@ -1,0 +1,76 @@
+{
+  "home": {
+    "header": {
+      "title": "Find or offer your skills in your area",
+      "desc": "From tutoring to graphic design, SkillShare connects people who want to exchange services."
+    },
+    "categories": {
+      "title": "Categories"
+    },
+    "announcements": {
+      "title": "Newest announcements",
+      "showAll": "See all announcements →"
+    }
+  },
+
+  "NavBar": {
+    "buttons": {
+      "home": "Home",
+      "categories": "Categories",
+      "logIn": "Log in"
+    }
+  },
+
+  "Footer": {
+    "description": "Learn new skills, grow your knowledge, and connect with a global community of creators.",
+    "navigation": {
+      "title": "Navigation",
+      "home": "Home",
+      "categories": "Categories"
+    },
+    "contact": {
+      "title": "Contact",
+      "email": "Email: support@skillshare.com",
+      "phone": "Tel: +48 123 456 789"
+    },
+    "social": {
+      "title": "Social Media"
+    },
+    "copyright": "© {year} SkillShare. All rights reserved."
+  },
+
+  "LoginDialog": {
+    "login": {
+      "title": "Log in",
+      "iName": "Username",
+      "iPassword": "Password",
+      "button": "Log in",
+      "signIn": {
+        "text": "Don't have an account yet? ",
+        "signIn": "Sign up!"
+      }
+    },
+    "signIn": {
+      "title": "Sign up",
+      "iName": "Username",
+      "iPassword": "Password",
+      "iRepeatPassword": "Repeat password",
+      "button": "Create account",
+      "logIn": {
+        "text": "Already have an account?",
+        "logIn": "Log in!"
+      }
+    },
+    "errors": {
+      "nameTaken": "This username is already taken",
+      "nameCheckFailed": "Could not verify username availability",
+      "passwordsMismatch": "Passwords do not match",
+      "loginFailed": "Login failed. Please check your credentials.",
+      "registerFailed": "Registration failed. Please try again later."
+    },
+    "success": {
+      "login": "Logged in successfully!",
+      "register": "Registration successful!"
+    }
+  }
+}

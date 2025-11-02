@@ -1,0 +1,78 @@
+{
+  "Home": {
+    "header": {
+      "title": "Znajdź lub zaoferuj swoje umiejętności w swojej okolicy",
+      "desc": "Od korepetycji po projektowanie graficzne, SkillShare łączy osoby, które chcą wymieniać się usługami.",
+      "welcome": "Cześć, "
+    },
+    "categories": {
+      "title": "Kategorie"
+    },
+    "announcements": {
+      "title": "Najnowsze ogłoszenia",
+      "showAll": "Zobacz wszystkie ogłoszenia →"
+    }
+  },
+
+  "NavBar": {
+    "buttons": {
+      "home": "Strona główna",
+      "categories": "Kategorie",
+      "logIn": "Zaloguj się"
+    },
+    "logout": "Pomyślnie wylogowano!"
+  },
+
+  "Footer": {
+    "description": "Ucz się nowych umiejętności, rozwijaj swoją wiedzę i łącz się z globalną społecznością twórców.",
+    "navigation": {
+      "title": "Nawigacja",
+      "home": "Strona główna",
+      "categories": "Kategorie"
+    },
+    "contact": {
+      "title": "Kontakt",
+      "email": "Email: support@skillshare.com",
+      "phone": "Tel: +48 123 456 789"
+    },
+    "social": {
+      "title": "Social Media"
+    },
+    "copyright": "© {year} SkillShare. Wszelkie prawa zastrzeżone."
+  },
+
+  "LoginDialog": {
+    "login": {
+      "title": "Zaloguj się",
+      "iName": "Nazwa",
+      "iPassword": "Hasło",
+      "button": "Zaloguj się",
+      "signIn": {
+        "text": "Nie posiadasz jeszcze konta? ",
+        "signIn": "Zarejestruj się!"
+      }
+    },
+    "signIn": {
+      "title": "Zarejestruj się",
+      "iName": "Nazwa",
+      "iPassword": "Hasło",
+      "iRepeatPassword": "Powtórz hasło",
+      "button": "Utwórz konto",
+      "logIn": {
+        "text": "Masz już konto?",
+        "logIn": "Zaloguj się!"
+      }
+    },
+    "errors": {
+      "nameTaken": "Ta nazwa jest już zajęta",
+      "nameCheckFailed": "Nie udało się sprawdzić nazwy użytkownika",
+      "passwordsMismatch": "Hasła nie są takie same",
+      "loginFailed": "Nie udało się zalogować. Sprawdź dane i spróbuj ponownie.",
+      "registerFailed": "Nie udało się zarejestrować. Spróbuj ponownie później."
+    },
+    "success": {
+      "login": "Zalogowano pomyślnie!",
+      "register": "Rejestracja zakończona sukcesem!"
+    }
+  }
+}

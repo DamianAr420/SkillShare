@@ -1,0 +1,163 @@
+<script setup lang="ts">
+import { ref, onMounted, watch } from "vue";
+import { useCategoryStore } from "@/stores/categoryStore";
+import { useAnnouncementStore } from "@/stores/announcementStore";
+
+const categoryStore = useCategoryStore();
+const announcementStore = useAnnouncementStore();
+
+const selectedCategory = ref<string | null>(null);
+const sortOption = ref("newest");
+const minPrice = ref("");
+const maxPrice = ref("");
+const searchTerm = ref("");
+const locationFilter = ref("");
+
+onMounted(async () => {
+  await categoryStore.fetchCategories();
+  await announcementStore.fetchFilteredAnnouncements();
+});
+
+watch(
+  [
+    selectedCategory,
+    sortOption,
+    minPrice,
+    maxPrice,
+    searchTerm,
+    locationFilter,
+  ],
+  () => {
+    announcementStore.fetchFilteredAnnouncements({
+      category: selectedCategory.value || "",
+      minPrice: minPrice.value || "",
+      maxPrice: maxPrice.value || "",
+      sort: sortOption.value,
+      search: searchTerm.value || "",
+      location: locationFilter.value || "",
+    });
+  }
+);
+</script>
+
+<template>
+  <div class="px-4 sm:px-6 lg:px-8 py-6">
+    <!-- HEADER -->
+    <div class="flex flex-col sm:flex-row justify-between items-center mb-6">
+      <h1 class="text-3xl font-bold">Ogłoszenia</h1>
+
+      <!-- Przycisk Dodaj ogłoszenie -->
+      <RouterLink
+        to="/add-announcement"
+        class="mt-4 sm:mt-0 inline-flex items-center justify-center px-5 py-2.5 bg-gradient-to-r from-[#F77821] to-[#ff973b] text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition"
+      >
+        ➕ Dodaj ogłoszenie
+      </RouterLink>
+    </div>
+
+    <div class="flex flex-col sm:flex-row gap-4 mb-6 items-center">
+      <input
+        v-model="searchTerm"
+        type="text"
+        placeholder="Szukaj ogłoszeń..."
+        class="border p-2 rounded w-full sm:w-64"
+      />
+
+      <input
+        v-model="locationFilter"
+        type="text"
+        placeholder="Lokalizacja"
+        class="border p-2 rounded w-full sm:w-64"
+      />
+    </div>
+
+    <!-- CATEGORY FILTERS -->
+    <div class="flex flex-wrap gap-3 mb-6 justify-center sm:justify-start">
+      <button
+        v-for="cat in categoryStore.categories"
+        :key="cat._id"
+        @click="selectedCategory = cat.name"
+        class="px-4 py-2 rounded-full text-sm font-medium border transition"
+        :class="{
+          'bg-[#F77821] text-white border-[#F77821]':
+            selectedCategory === cat.name,
+          'bg-white text-gray-700 border-gray-300 hover:bg-gray-100':
+            selectedCategory !== cat.name,
+        }"
+      >
+        {{ cat.name }}
+      </button>
+      <button
+        @click="selectedCategory = null"
+        class="px-4 py-2 rounded-full text-sm font-medium bg-gray-100 hover:bg-gray-200"
+      >
+        Wszystkie
+      </button>
+    </div>
+
+    <!-- FILTER PANEL -->
+    <div class="flex flex-col sm:flex-row gap-4 mb-8 items-center">
+      <div class="flex gap-2">
+        <input
+          v-model="minPrice"
+          type="number"
+          placeholder="Cena min"
+          class="border p-2 rounded w-28"
+        />
+        <input
+          v-model="maxPrice"
+          type="number"
+          placeholder="Cena max"
+          class="border p-2 rounded w-28"
+        />
+      </div>
+
+      <select v-model="sortOption" class="border p-2 rounded w-40">
+        <option value="newest">Najnowsze</option>
+        <option value="oldest">Najstarsze</option>
+        <option value="priceAsc">Cena rosnąco</option>
+        <option value="priceDesc">Cena malejąco</option>
+      </select>
+    </div>
+
+    <!-- ANNOUNCEMENTS LIST -->
+    <div
+      v-if="announcementStore.loading"
+      class="text-center text-gray-500 py-10"
+    >
+      Ładowanie ogłoszeń...
+    </div>
+
+    <div
+      v-else-if="announcementStore.announcements.length === 0"
+      class="text-center text-gray-500 py-10"
+    >
+      Brak ogłoszeń do wyświetlenia.
+    </div>
+
+    <div v-else class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div
+        v-for="a in announcementStore.announcements"
+        :key="a._id"
+        class="bg-white rounded-xl shadow hover:shadow-lg transition p-4 flex flex-col"
+      >
+        <img
+          :src="
+            a.imageUrl ||
+            'https://via.placeholder.com/300x200?text=Brak+zdjęcia'
+          "
+          class="h-40 w-full object-cover rounded mb-3"
+          alt="img"
+        />
+        <h3 class="text-lg font-semibold mb-1">{{ a.title }}</h3>
+        <p class="text-sm text-gray-600 flex-grow">{{ a.desc }}</p>
+        <div class="flex items-center justify-between mt-3">
+          <span class="text-[#F77821] font-semibold text-xl"
+            >{{ a.price }}zł</span
+          >
+          <span class="text-sm text-gray-500">{{ a.category }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>

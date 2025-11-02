@@ -1,0 +1,18 @@
+import mongoose from "mongoose";
+
+const announcementSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  desc: { type: String, required: true },
+  price: { type: Number, required: true },
+  location: String,
+  imageUrl: String,
+  category: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Category",
+    required: true,
+  },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  createdAt: { type: Date, default: Date.now },
+});
+
+export default mongoose.model("Announcement", announcementSchema);
