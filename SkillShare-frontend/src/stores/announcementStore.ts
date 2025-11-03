@@ -49,13 +49,15 @@ export const useAnnouncementStore = defineStore("announcement", {
       }
     },
 
-    async addAnnouncement(data: Announcement) {
+    async addAnnouncement(formData: FormData) {
       this.loading = true;
       try {
-        const res = await axios.post("/api/announcements/add", data);
-        this.announcements.push(res.data);
-      } catch (err: any) {
-        this.error = err.message;
+        const res = await fetch("/api/announcements/add", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+        this.announcements.push(data.announcement);
       } finally {
         this.loading = false;
       }

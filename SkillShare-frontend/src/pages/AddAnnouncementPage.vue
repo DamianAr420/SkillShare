@@ -20,7 +20,14 @@ const description = ref("");
 const price = ref("");
 const location = ref("");
 const category = ref("");
-const imageUrl = ref("");
+const imageFile = ref<File | null>(null);
+
+const onFileChange = (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  if (target.files && target.files[0]) {
+    imageFile.value = target.files[0];
+  }
+};
 
 onMounted(() => {
   categoryStore.fetchCategories();
@@ -29,15 +36,16 @@ onMounted(() => {
 
 const handleSubmit = async () => {
   try {
-    await announcementStore.addAnnouncement({
-      title: title.value,
-      desc: description.value,
-      price: Number(price.value),
-      location: location.value,
-      category: category.value,
-      imageUrl: imageUrl.value || "",
-      user: authStore.user?._id || "",
-    });
+    const formData = new FormData();
+    formData.append("title", title.value);
+    formData.append("desc", description.value);
+    formData.append("price", price.value);
+    formData.append("location", location.value);
+    formData.append("category", category.value);
+    formData.append("user", authStore.user?._id || "");
+    if (imageFile.value) formData.append("image", imageFile.value);
+
+    await announcementStore.addAnnouncement(formData);
 
     showToast(t("addAnnouncement.success"), "success");
     router.push("/categories");
@@ -102,9 +110,9 @@ const handleSubmit = async () => {
       </select>
 
       <input
-        v-model="imageUrl"
-        type="text"
-        :placeholder="t('addAnnouncement.imagePlaceholder')"
+        type="file"
+        accept="image/*"
+        @change="onFileChange"
         class="border p-3 rounded-md"
       />
 

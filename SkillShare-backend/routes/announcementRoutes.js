@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import Announcement from "../models/Announcement.js";
 import Category from "../models/Category.js";
 import User from "../models/User.js";
+import upload from "../middleware/upload.js";
 
 const router = express.Router();
 
@@ -80,13 +81,15 @@ router.get("/filter", async (req, res) => {
   }
 });
 
-router.post("/add", async (req, res) => {
+router.post("/add", upload.single("image"), async (req, res) => {
   try {
-    const { title, desc, price, location, category, imageUrl, user } = req.body;
+    const { title, desc, price, location, category, user } = req.body;
 
     if (!title || !desc || !price || !category || !user) {
       return res.status(400).json({ message: "Missing required fields" });
     }
+
+    const imageUrl = req.file?.path || "";
 
     const newAnnouncement = new Announcement({
       title,
@@ -94,8 +97,8 @@ router.post("/add", async (req, res) => {
       price,
       location,
       imageUrl,
-      category: new mongoose.Types.ObjectId(category),
-      user: new mongoose.Types.ObjectId(user),
+      category,
+      user,
     });
 
     await newAnnouncement.save();
