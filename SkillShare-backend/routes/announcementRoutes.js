@@ -122,4 +122,17 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
+router.get("/user/:userId", async (req, res) => {
+  try {
+    const announcements = await Announcement.find({ user: req.params.userId })
+      .populate("category", "name")
+      .sort({ createdAt: -1 });
+
+    res.json(announcements);
+  } catch (error) {
+    console.error("Error fetching user announcements:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 export default router;

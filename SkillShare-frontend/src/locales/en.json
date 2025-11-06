@@ -105,5 +105,14 @@
     "adding": "Adding...",
     "success": "✅ Announcement added successfully!",
     "error": "❌ Error adding announcement."
+  },
+
+  "Profile": {
+    "active": "Active",
+    "announcements": "My Announcements",
+    "following": "Following",
+    "noAnnouncements": "No announcements.",
+    "loadingProfile": "Loading profile...",
+    "loadingAnnouncements": "Loading your announcements..."
   }
 }

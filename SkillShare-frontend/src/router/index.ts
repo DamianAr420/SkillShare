@@ -7,6 +7,7 @@ import MainLayout from "../layouts/MainLayout.vue";
 import Home from "../pages/Home.vue";
 import Categories from "../pages/Categories.vue";
 import AddAnnouncementPage from "@/pages/AddAnnouncementPage.vue";
+import Profile from "@/pages/Profile.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -20,6 +21,7 @@ const routes: Array<RouteRecordRaw> = [
         name: "AddAnnouncement",
         component: AddAnnouncementPage,
       },
+      { path: "/Profile", name: "Profile", component: Profile },
     ],
   },
 ];

@@ -94,7 +94,7 @@ onMounted(() => {
           >
             <img
               class="w-full h-32 rounded bg-[#F77821] object-cover mb-2"
-              src=""
+              :src="ann.imageUrl"
               alt="img"
             />
             <h3 class="text-lg font-medium mb-1">{{ ann.title }}</h3>
@@ -156,7 +156,7 @@ onMounted(() => {
             <div class="flex flex-row items-center justify-between gap-4">
               <img
                 class="h-20 w-32 rounded bg-[#F77821] object-cover"
-                src=""
+                :src="ann.imageUrl"
                 alt="img"
               />
 

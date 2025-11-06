@@ -5,12 +5,10 @@ import { useI18n } from "vue-i18n";
 import LoginDialog from "./dialogs/LoginDialog.vue";
 import { useAuthStore } from "@/stores/authStore";
 import { useRouter } from "vue-router";
-import { useToast } from "@/composables/useToast";
 
 const { t } = useI18n();
 const auth = useAuthStore();
 const router = useRouter();
-const { showToast } = useToast();
 
 const mobileMenuOpen = ref(false);
 const showLogin = ref(false);
@@ -33,8 +31,6 @@ function closeLogin() {
 }
 
 function goToProfile() {
-  showToast(t("NavBar.logout"), "success");
-  auth.logout();
   router.push({ name: "Profile" });
   mobileMenuOpen.value = false;
 }

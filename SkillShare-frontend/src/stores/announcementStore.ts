@@ -62,5 +62,17 @@ export const useAnnouncementStore = defineStore("announcement", {
         this.loading = false;
       }
     },
+
+    async fetchUserAnnouncements(userId: string) {
+      try {
+        this.loading = true;
+        const res = await axios.get(`/api/announcements/user/${userId}`);
+        this.announcements = res.data;
+      } catch (err) {
+        console.error("Error fetching user announcements:", err);
+      } finally {
+        this.loading = false;
+      }
+    },
   },
 });

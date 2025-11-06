@@ -92,7 +92,7 @@
     },
     "loading": "Ładowanie ogłoszeń...",
     "noAnnouncements": "Brak ogłoszeń do wyświetlenia.",
-    "noImage": "Brak+zdjęcia"
+    "noImage": "Brak zdjęcia"
   },
 
   "addAnnouncement": {
@@ -107,5 +107,14 @@
     "adding": "Dodawanie...",
     "success": "✅ Ogłoszenie zostało dodane!",
     "error": "❌ Wystąpił błąd przy dodawaniu ogłoszenia."
+  },
+
+  "Profile": {
+    "active": "Aktywny",
+    "announcements": "Moje ogłoszenia",
+    "following": "Obserwowani",
+    "noAnnouncements": "Brak ogłoszeń.",
+    "loadingProfile": "Ładowanie profilu...",
+    "loadingAnnouncements": "Ładuję Twoje ogłoszenia..."
   }
 }
