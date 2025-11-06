@@ -3,8 +3,11 @@ import { ref, onMounted, watch } from "vue";
 import { useCategoryStore } from "@/stores/categoryStore";
 import { useAnnouncementStore } from "@/stores/announcementStore";
 import { useI18n } from "vue-i18n";
+import { useRoute, useRouter } from "vue-router";
 
 const { t } = useI18n();
+const router = useRouter();
+const route = useRoute();
 
 const categoryStore = useCategoryStore();
 const announcementStore = useAnnouncementStore();
@@ -16,9 +19,35 @@ const maxPrice = ref("");
 const searchTerm = ref("");
 const locationFilter = ref("");
 
+function selectCategory(cat: string | null) {
+  selectedCategory.value = cat;
+  categoryStore.setSelectedCategory(cat || null);
+
+  router.replace({
+    query: {
+      ...route.query,
+      category: cat || undefined,
+    },
+  });
+}
+
 onMounted(async () => {
   await categoryStore.fetchCategories();
-  await announcementStore.fetchFilteredAnnouncements();
+
+  const cat = route.query.category as string;
+  if (cat) {
+    selectedCategory.value = cat;
+    categoryStore.setSelectedCategory(cat);
+  }
+
+  await announcementStore.fetchFilteredAnnouncements({
+    category: selectedCategory.value || "",
+    minPrice: minPrice.value || "",
+    maxPrice: maxPrice.value || "",
+    sort: sortOption.value,
+    search: searchTerm.value || "",
+    location: locationFilter.value || "",
+  });
 });
 
 watch(
@@ -49,7 +78,6 @@ watch(
     <div class="flex flex-col sm:flex-row justify-between items-center mb-6">
       <h1 class="text-3xl font-bold">{{ t("announcements.title") }}</h1>
 
-      <!-- Przycisk Dodaj ogłoszenie -->
       <RouterLink
         to="/add-announcement"
         class="mt-4 sm:mt-0 inline-flex items-center justify-center px-5 py-2.5 bg-gradient-to-r from-[#F77821] to-[#ff973b] text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition"
@@ -58,6 +86,7 @@ watch(
       </RouterLink>
     </div>
 
+    <!-- Wyszukiwanie i lokalizacja -->
     <div class="flex flex-col sm:flex-row gap-4 mb-6 items-center">
       <input
         v-model="searchTerm"
@@ -74,12 +103,12 @@ watch(
       />
     </div>
 
-    <!-- CATEGORY FILTERS -->
+    <!-- Kategorie -->
     <div class="flex flex-wrap gap-3 mb-6 justify-center sm:justify-start">
       <button
         v-for="cat in categoryStore.categories"
         :key="cat._id"
-        @click="selectedCategory = cat.name"
+        @click="selectCategory(cat.name)"
         class="px-4 py-2 rounded-full text-sm font-medium border transition"
         :class="{
           'bg-[#F77821] text-white border-[#F77821]':
@@ -91,14 +120,14 @@ watch(
         {{ cat.name }}
       </button>
       <button
-        @click="selectedCategory = null"
+        @click="selectCategory(null)"
         class="px-4 py-2 rounded-full text-sm font-medium bg-gray-100 hover:bg-gray-200"
       >
         {{ t("announcements.all") }}
       </button>
     </div>
 
-    <!-- FILTER PANEL -->
+    <!-- FILTRY -->
     <div class="flex flex-col sm:flex-row gap-4 mb-8 items-center">
       <div class="flex gap-2">
         <input
@@ -125,7 +154,7 @@ watch(
       </select>
     </div>
 
-    <!-- ANNOUNCEMENTS LIST -->
+    <!-- LISTA OGŁOSZEŃ -->
     <div
       v-if="announcementStore.loading"
       class="text-center text-gray-500 py-10"
@@ -159,7 +188,7 @@ watch(
         <p class="text-sm text-gray-600 flex-grow">{{ a.desc }}</p>
         <div class="flex items-center justify-between mt-3">
           <span class="text-[#F77821] font-semibold text-xl">
-            {{ a.price }}zł
+            {{ a.price }} zł
           </span>
           <span class="text-sm text-gray-500">{{ a.category }}</span>
         </div>

@@ -4,6 +4,7 @@ import { computed, onMounted } from "vue";
 import { useAuthStore } from "@/stores/authStore";
 import { useCategoryStore } from "@/stores/categoryStore";
 import { useAnnouncementStore } from "@/stores/announcementStore";
+import { useRouter } from "vue-router";
 
 import EducationIcon from "@/assets/icons/Education.vue";
 import GraphicsIcon from "@/assets/icons/Graphics.vue";
@@ -16,6 +17,7 @@ const { t } = useI18n();
 const auth = useAuthStore();
 const categoryStore = useCategoryStore();
 const announcementStore = useAnnouncementStore();
+const router = useRouter();
 
 const isLoggedIn = computed(() => auth.isAuthenticated);
 const username = computed(() => auth.user?.name || "");
@@ -28,6 +30,11 @@ const iconMap: Record<string, any> = {
   Other: OtherIcon,
   Technical: TechnicalIcon,
 };
+
+function goToCategory(name: string) {
+  categoryStore.setSelectedCategory(name);
+  router.push({ path: "/categories", query: { category: name } });
+}
 
 onMounted(() => {
   categoryStore.fetchCategories();
@@ -66,7 +73,8 @@ onMounted(() => {
           <button
             v-for="category in categoryStore.categories"
             :key="category._id"
-            class="flex flex-row items-center gap-3 p-4 bg-white rounded-lg shadow hover:shadow-md transition"
+            class="flex flex-row items-center gap-3 p-4 bg-white rounded-lg shadow hover:shadow-md transition-all duration-200 active:scale-95 hover:-translate-y-1"
+            @click="goToCategory(category.name)"
           >
             <div
               class="bg-[#F77821] rounded-full flex items-center justify-center h-12 w-12"
@@ -124,7 +132,8 @@ onMounted(() => {
           <button
             v-for="category in categoryStore.categories"
             :key="category._id"
-            class="flex flex-col items-center p-4 rounded-lg hover:shadow-md transition w-32"
+            class="flex flex-col items-center p-4 rounded-xl bg-white hover:shadow-lg transition-all duration-200 hover:-translate-y-2 active:scale-95 w-32"
+            @click="goToCategory(category.name)"
           >
             <div
               class="bg-[#F77821] rounded-full flex items-center justify-center h-12 w-12"

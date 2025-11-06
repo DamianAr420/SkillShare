@@ -10,6 +10,7 @@ export const useCategoryStore = defineStore("category", {
   state: () => ({
     categories: [] as Category[],
     loading: false,
+    selectedCategory: null as string | null,
     error: null as string | null,
   }),
 
@@ -25,6 +26,9 @@ export const useCategoryStore = defineStore("category", {
       } finally {
         this.loading = false;
       }
+    },
+    setSelectedCategory(name: string) {
+      this.selectedCategory = name;
     },
   },
 });
