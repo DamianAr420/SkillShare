@@ -90,7 +90,7 @@ function logout() {
       <button
         v-if="isLoggedIn"
         @click="logout()"
-        class="hidden md:flex items-center gap-2 bg-red-500 text-white px-5 py-2 rounded-xl hover:bg-red-600 transition-all duration-150 ease-in-out cursor-pointer"
+        class="hidden md:flex items-center gap-2 bg-red-500 text-white px-5 py-2 rounded-md hover:bg-red-600 transition-all duration-150 ease-in-out cursor-pointer"
       >
         <LogoutIcon class="w-5 h-5" />
       </button>

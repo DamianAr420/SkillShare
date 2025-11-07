@@ -34,12 +34,22 @@ const handleUpdated = async () => {
   username.value = auth.user?.name || "Użytkownik";
   desc.value = auth.user?.desc || "Brak opisu użytkownika.";
 };
+
+const openSettings = () => {
+  showSettings.value = true;
+  document.body.style.overflow = "hidden";
+};
+
+const closeSettings = () => {
+  showSettings.value = false;
+  document.body.style.overflow = "";
+};
 </script>
 
 <template>
   <ProfileSettingsDialog
     :show="showSettings"
-    @close="showSettings = false"
+    @close="closeSettings()"
     @updated="handleUpdated"
   />
   <div class="max-w-5xl mx-auto p-6">
@@ -72,7 +82,7 @@ const handleUpdated = async () => {
           <div class="flex justify-between items-start">
             <h2 class="text-3xl font-bold text-gray-900">{{ username }}</h2>
             <button
-              @click="showSettings = true"
+              @click="openSettings()"
               class="bg-[#F77821] hover:bg-[#EA580C] transition-all duration-200 p-2 rounded-xl shadow-sm hover:shadow-md"
               title="Ustawienia"
             >
