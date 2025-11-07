@@ -4,6 +4,7 @@ import Announcement from "../models/Announcement.js";
 import Category from "../models/Category.js";
 import User from "../models/User.js";
 import upload from "../middleware/upload.js";
+import cloudinary from "../config/cloudinary.js";
 
 const router = express.Router();
 
@@ -89,6 +90,16 @@ router.post("/add", upload.single("image"), async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
+    let categoryId = null;
+    if (mongoose.Types.ObjectId.isValid(category)) {
+      categoryId = category;
+    } else {
+      const foundCategory = await Category.findOne({ name: category });
+      if (!foundCategory)
+        return res.status(404).json({ message: "Category not found" });
+      categoryId = foundCategory._id;
+    }
+
     const imageUrl = req.file?.path || "";
 
     const newAnnouncement = new Announcement({
@@ -97,15 +108,20 @@ router.post("/add", upload.single("image"), async (req, res) => {
       price,
       location,
       imageUrl,
-      category,
+      category: categoryId,
       user,
     });
 
     await newAnnouncement.save();
 
+    const populated = await newAnnouncement.populate([
+      { path: "user", select: "name email" },
+      { path: "category", select: "name" },
+    ]);
+
     res.status(201).json({
       message: "Announcement created successfully",
-      announcement: await newAnnouncement.populate("user", "name email"),
+      announcement: populated,
     });
   } catch (error) {
     console.error("Error adding announcement:", error);
@@ -115,9 +131,29 @@ router.post("/add", upload.single("image"), async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   try {
+    const announcement = await Announcement.findById(req.params.id);
+    if (!announcement) {
+      return res.status(404).json({ message: "Announcement not found" });
+    }
+
+    if (announcement.imageUrl) {
+      try {
+        const urlParts = announcement.imageUrl.split("/");
+        const fileName = urlParts[urlParts.length - 1].split(".")[0];
+        const publicId = `announcements/${fileName}`;
+
+        await cloudinary.uploader.destroy(publicId);
+        console.log(`🗑️ Deleted image from Cloudinary: ${publicId}`);
+      } catch (cloudErr) {
+        console.error("⚠️ Failed to delete image from Cloudinary:", cloudErr);
+      }
+    }
+
     await Announcement.findByIdAndDelete(req.params.id);
-    res.json({ message: "Announcement deleted" });
+
+    res.json({ message: "Announcement and image deleted successfully" });
   } catch (error) {
+    console.error("Error deleting announcement:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -131,6 +167,21 @@ router.get("/user/:userId", async (req, res) => {
     res.json(announcements);
   } catch (error) {
     console.error("Error fetching user announcements:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.get("/:id", async (req, res) => {
+  try {
+    const ann = await Announcement.findById(req.params.id)
+      .populate("category", "name")
+      .populate("user", "name email phone");
+
+    if (!ann)
+      return res.status(404).json({ message: "Announcement not found" });
+    res.json(ann);
+  } catch (error) {
+    console.error("Error fetching announcement:", error);
     res.status(500).json({ message: "Server error" });
   }
 });

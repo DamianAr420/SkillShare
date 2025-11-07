@@ -6,7 +6,6 @@ export interface AuthResponse {
   token?: string;
 }
 
-// 🔹 Rejestracja
 export const registerUser = async (
   name: string,
   password: string
@@ -15,7 +14,6 @@ export const registerUser = async (
   return res.data;
 };
 
-// 🔹 Logowanie
 export const loginUser = async (
   name: string,
   password: string
@@ -24,16 +22,19 @@ export const loginUser = async (
   return res.data;
 };
 
-// 🔹 Pobranie aktualnego użytkownika
 export const getCurrentUser = async (): Promise<User> => {
   const res = await api.get<User>("/me");
   return res.data;
 };
 
-// 🔹 Sprawdzenie dostępności nazwy użytkownika
 export const checkNameAvailability = async (name: string): Promise<boolean> => {
   const res = await api.get<{ available: boolean }>("/check-name", {
     params: { name },
   });
   return res.data.available;
+};
+
+export const getUserById = async (id: string) => {
+  const res = await api.get(`/${id}`);
+  return res.data;
 };

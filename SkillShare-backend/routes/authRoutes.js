@@ -86,4 +86,20 @@ router.get("/check-name", async (req, res) => {
   }
 });
 
+router.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findById(id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error("❌ Error while fetching user:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 export default router;

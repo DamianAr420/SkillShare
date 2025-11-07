@@ -98,6 +98,7 @@ onMounted(() => {
           <button
             v-for="ann in announcementStore.announcements"
             :key="ann.title"
+            @click="$router.push(`/announcement/${ann._id}`)"
             class="flex flex-col bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition"
           >
             <img
@@ -160,6 +161,7 @@ onMounted(() => {
           <button
             v-for="ann in announcementStore.announcements"
             :key="ann.title"
+            @click="$router.push(`/announcement/${ann._id}`)"
             class="w-full text-left flex flex-col bg-gray-50 p-4 rounded-lg hover:shadow-lg transition"
           >
             <div class="flex flex-row items-center justify-between gap-4">

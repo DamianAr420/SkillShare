@@ -1,12 +1,18 @@
 import { ref, computed } from "vue";
 import { defineStore } from "pinia";
-import { loginUser, registerUser, getCurrentUser } from "@/api/auth";
+import {
+  loginUser,
+  registerUser,
+  getCurrentUser,
+  getUserById,
+} from "@/api/auth";
 import { parseAuthError, type FormError } from "@/utils/errorHandler";
 import type { User } from "@/types/user";
 
 export const useAuthStore = defineStore("auth", () => {
   const token = ref<string | null>(localStorage.getItem("token"));
   const user = ref<User | null>(null);
+  const selectedUser = ref<User | null>(null);
   const loading = ref(false);
   const error = ref<FormError | null>(null);
 
@@ -48,8 +54,23 @@ export const useAuthStore = defineStore("auth", () => {
     try {
       user.value = await getCurrentUser();
     } catch (err: any) {
-      console.error("Failed to fetch user:", err);
+      console.error("❌ Failed to fetch user:", err);
       logout();
+    }
+  }
+
+  async function fetchUserById(id: string) {
+    loading.value = true;
+    try {
+      const data = await getUserById(id);
+      selectedUser.value = data;
+      return data;
+    } catch (err) {
+      console.error("❌ Failed to fetch user by id:", err);
+      selectedUser.value = null;
+      throw err;
+    } finally {
+      loading.value = false;
     }
   }
 
@@ -66,12 +87,14 @@ export const useAuthStore = defineStore("auth", () => {
   return {
     token,
     user,
+    selectedUser,
     loading,
     error,
     isAuthenticated,
     login,
     register,
     fetchUser,
+    fetchUserById,
     logout,
   };
 });

@@ -121,6 +121,7 @@ onMounted(async () => {
             <div
               v-for="a in announcementStore.announcements"
               :key="a._id"
+              @click="$router.push(`/announcement/${a._id}`)"
               class="bg-white rounded-xl shadow hover:shadow-lg transition p-4 flex flex-col"
             >
               <img

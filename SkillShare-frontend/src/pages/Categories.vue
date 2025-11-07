@@ -173,6 +173,7 @@ watch(
       <div
         v-for="a in announcementStore.announcements"
         :key="a._id"
+        @click="$router.push(`/announcement/${a._id}`)"
         class="bg-white rounded-xl shadow hover:shadow-lg transition p-4 flex flex-col"
       >
         <img
@@ -190,7 +191,10 @@ watch(
           <span class="text-[#F77821] font-semibold text-xl">
             {{ a.price }} zł
           </span>
-          <span class="text-sm text-gray-500">{{ a.category }}</span>
+          <span
+            class="px-4 py-2 rounded-full text-sm font-medium border transition bg-[#F77821] text-white border-[#F77821]"
+            >{{ a.category.name }}</span
+          >
         </div>
       </div>
     </div>

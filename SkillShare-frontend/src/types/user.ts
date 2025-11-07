@@ -4,4 +4,6 @@ export interface User {
   createdAt?: string;
   updatedAt?: string;
   desc: string;
+  phone: string;
+  email: string;
 }

@@ -7,6 +7,7 @@ export const useAnnouncementStore = defineStore("announcement", {
     announcements: [] as Announcement[],
     loading: false,
     error: null as string | null,
+    selectedAnnouncement: null as any | null,
   }),
 
   actions: {
@@ -72,6 +73,29 @@ export const useAnnouncementStore = defineStore("announcement", {
         console.error("Error fetching user announcements:", err);
       } finally {
         this.loading = false;
+      }
+    },
+
+    async fetchAnnouncementById(id: string) {
+      this.loading = true;
+      this.selectedAnnouncement = null;
+      try {
+        const { data } = await axios.get(`/api/announcements/${id}`);
+        this.selectedAnnouncement = data;
+      } catch (err) {
+        console.error("Nie znaleziono ogłoszenia", err);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async deleteAnnouncement(id: string) {
+      try {
+        await axios.delete(`/api/announcements/${id}`);
+        this.announcements = this.announcements.filter((a) => a._id !== id);
+      } catch (err) {
+        console.error("Error deleting announcement:", err);
+        throw err;
       }
     },
   },

@@ -109,6 +109,20 @@
     "error": "❌ Wystąpił błąd przy dodawaniu ogłoszenia."
   },
 
+  "announcementDetails": {
+    "loading": "Ładowanie ogłoszenia...",
+    "notFound": "Ogłoszenie nie zostało znalezione 😢",
+    "noImage": "Brak zdjęcia",
+    "sellerData": "Dane ogłoszeniodawcy",
+    "seller": {
+      "name": "Nazwa:",
+      "phone": "Telefon:",
+      "email": "E-mail:"
+    },
+    "back": "Wróć",
+    "unknownCategory": "Nieznana kategoria"
+  },
+
   "Profile": {
     "active": "Aktywny",
     "announcements": "Moje ogłoszenia",

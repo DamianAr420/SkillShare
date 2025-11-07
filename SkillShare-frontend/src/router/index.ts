@@ -8,6 +8,7 @@ import Home from "../pages/Home.vue";
 import Categories from "../pages/Categories.vue";
 import AddAnnouncementPage from "@/pages/AddAnnouncementPage.vue";
 import Profile from "@/pages/Profile.vue";
+import AnnouncementDetails from "@/pages/AnnouncementDetails.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -22,6 +23,11 @@ const routes: Array<RouteRecordRaw> = [
         component: AddAnnouncementPage,
       },
       { path: "/Profile", name: "Profile", component: Profile },
+      {
+        path: "/announcement/:id",
+        name: "announcement-details",
+        component: AnnouncementDetails,
+      },
     ],
   },
 ];

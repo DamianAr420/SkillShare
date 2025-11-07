@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import axios from "axios";
+import api from "@/api/axios";
 
 export interface Category {
   _id: string;
@@ -19,7 +19,7 @@ export const useCategoryStore = defineStore("category", {
       this.loading = true;
       this.error = null;
       try {
-        const res = await axios.get<Category[]>("/api/categories");
+        const res = await api.get<Category[]>("/categories");
         this.categories = res.data;
       } catch (err: any) {
         this.error = err.message || "Failed to load categories";
@@ -27,6 +27,7 @@ export const useCategoryStore = defineStore("category", {
         this.loading = false;
       }
     },
+
     setSelectedCategory(name: string) {
       this.selectedCategory = name;
     },
