@@ -127,9 +127,24 @@
   "Profile": {
     "active": "Aktywny",
     "announcements": "Moje ogłoszenia",
-    "following": "Obserwowani",
+    "following": "Obserwowane",
     "noAnnouncements": "Brak ogłoszeń.",
     "loadingProfile": "Ładowanie profilu...",
-    "loadingAnnouncements": "Ładuję Twoje ogłoszenia..."
+    "loadingAnnouncements": "Ładuję Twoje ogłoszenia...",
+    "edit": {
+      "title": "Ustawienia profilu",
+      "avatar": "Avatar",
+      "avatarHint": "Kliknij avatar, aby wybrać obraz",
+      "name": "Nazwa",
+      "email": "E-mail",
+      "phone": "Telefon",
+      "description": "Opis",
+      "password": "Nowe hasło",
+      "passwordPlaceholder": "Zostaw puste, aby nie zmieniać",
+      "saveButton": "Zapisz zmiany",
+      "saving": "Zapisuję...",
+      "success": "✅ Pomyślnie zapisano ustawienia!",
+      "error": "❌ Wystąpił błąd podczas zapisywania ustawień!"
+    }
   }
 }

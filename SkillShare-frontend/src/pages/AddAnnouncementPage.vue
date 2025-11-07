@@ -58,47 +58,51 @@ const handleSubmit = async () => {
 
 <template>
   <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-    <h1 class="text-3xl font-bold mb-8 text-center">
+    <h1 class="text-4xl font-extrabold mb-10 text-center text-gray-800">
       {{ t("addAnnouncement.title") }}
     </h1>
 
     <form
       @submit.prevent="handleSubmit"
-      class="flex flex-col gap-4 bg-white shadow-md rounded-2xl p-6"
+      class="flex flex-col gap-6 bg-white shadow-lg rounded-3xl p-8"
     >
       <input
         v-model="title"
         type="text"
         :placeholder="t('addAnnouncement.titlePlaceholder')"
-        class="border p-3 rounded-md"
+        class="border border-gray-300 p-4 rounded-xl focus:ring-2 focus:ring-[#F77821] focus:border-[#F77821] transition outline-none text-gray-700"
         required
       />
 
       <textarea
         v-model="description"
-        rows="4"
+        rows="5"
         :placeholder="t('addAnnouncement.descriptionPlaceholder')"
-        class="border p-3 rounded-md"
+        class="border border-gray-300 p-4 rounded-xl focus:ring-2 focus:ring-[#F77821] focus:border-[#F77821] transition outline-none text-gray-700"
         required
-      />
+      ></textarea>
 
       <div class="flex flex-col sm:flex-row gap-4">
         <input
           v-model="price"
           type="number"
           :placeholder="t('addAnnouncement.pricePlaceholder')"
-          class="border p-3 rounded-md flex-1"
+          class="border border-gray-300 p-4 rounded-xl flex-1 focus:ring-2 focus:ring-[#F77821] focus:border-[#F77821] transition outline-none text-gray-700"
           required
         />
         <input
           v-model="location"
           type="text"
           :placeholder="t('addAnnouncement.locationPlaceholder')"
-          class="border p-3 rounded-md flex-1"
+          class="border border-gray-300 p-4 rounded-xl flex-1 focus:ring-2 focus:ring-[#F77821] focus:border-[#F77821] transition outline-none text-gray-700"
         />
       </div>
 
-      <select v-model="category" class="border p-3 rounded-md" required>
+      <select
+        v-model="category"
+        class="border border-gray-300 p-4 rounded-xl focus:ring-2 focus:ring-[#F77821] focus:border-[#F77821] transition outline-none text-gray-700"
+        required
+      >
         <option value="">{{ t("addAnnouncement.selectCategory") }}</option>
         <option
           v-for="cat in categoryStore.categories"
@@ -113,12 +117,12 @@ const handleSubmit = async () => {
         type="file"
         accept="image/*"
         @change="onFileChange"
-        class="border p-3 rounded-md"
+        class="border border-gray-300 p-4 rounded-xl file:bg-[#F77821] file:text-white file:px-4 file:py-2 file:rounded-xl file:cursor-pointer hover:file:bg-[#ff973b] transition outline-none"
       />
 
       <button
         type="submit"
-        class="mt-4 bg-[#F77821] hover:bg-[#ff973b] text-white font-semibold py-3 rounded-xl shadow-md transition"
+        class="mt-6 bg-[#F77821] hover:bg-[#ff973b] text-white font-semibold py-4 rounded-2xl shadow-lg transition-all duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
         :disabled="announcementStore.loading"
       >
         {{

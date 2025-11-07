@@ -2,6 +2,8 @@
 import { ref, watch } from "vue";
 import { useAuthStore } from "@/stores/authStore";
 import Loader from "@/components/ui/Loader.vue";
+import { useI18n } from "vue-i18n";
+import { useToast } from "@/composables/useToast";
 
 const props = defineProps<{
   show: boolean;
@@ -10,6 +12,8 @@ const props = defineProps<{
 const emit = defineEmits(["close", "updated"]);
 
 const auth = useAuthStore();
+const { t } = useI18n();
+const { showToast } = useToast();
 
 const editName = ref("");
 const editDesc = ref("");
@@ -58,9 +62,10 @@ const saveSettings = async () => {
     emit("close");
   } catch (err) {
     console.error(err);
-    alert("Błąd podczas zapisu ustawień.");
+    showToast(t("Profile.edit.error"), "error");
   } finally {
     loading.value = false;
+    showToast(t("Profile.edit.success"), "success");
   }
 };
 </script>
@@ -68,93 +73,124 @@ const saveSettings = async () => {
 <template>
   <div
     v-if="show"
-    class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50"
+    class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
   >
     <div
-      class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative animate-fadeIn"
+      class="bg-white rounded-3xl shadow-2xl w-full max-w-md sm:max-w-lg p-6 relative animate-fadeIn"
     >
       <button
         @click="$emit('close')"
-        class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl transition"
+        class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-3xl transition"
       >
         ×
       </button>
 
-      <h2 class="text-2xl font-semibold text-gray-900 mb-5 text-center">
-        Ustawienia profilu
+      <h2 class="text-3xl font-bold text-gray-900 mb-6 text-center">
+        {{ t("Profile.edit.title") }}
       </h2>
 
-      <form @submit.prevent="saveSettings" class="flex flex-col gap-4">
-        <div>
-          <label class="text-sm text-gray-500">Avatar</label>
-          <input
-            type="file"
-            @change="handleFileChange"
-            accept="image/*"
-            class="mt-1 text-sm text-gray-600"
-          />
-          <img
-            v-if="previewUrl"
-            :src="previewUrl"
-            class="w-24 h-24 object-cover rounded-lg mt-3 border border-gray-200 shadow-sm"
-          />
+      <form @submit.prevent="saveSettings" class="flex flex-col gap-5">
+        <!-- Avatar -->
+        <div class="flex flex-col items-center">
+          <label class="text-sm text-gray-500 mb-2 font-medium">
+            {{ t("Profile.edit.avatar") }}
+          </label>
+
+          <div class="relative w-28 h-28 mb-3">
+            <img
+              v-if="previewUrl"
+              :src="previewUrl"
+              class="w-28 h-28 object-cover rounded-full border-2 border-gray-200 shadow-sm"
+            />
+            <div
+              v-else
+              class="w-28 h-28 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 text-xl border-2 border-gray-200"
+            >
+              +
+            </div>
+
+            <input
+              type="file"
+              accept="image/*"
+              @change="handleFileChange"
+              class="absolute inset-0 w-full h-full opacity-0 cursor-pointer rounded-full"
+            />
+          </div>
+
+          <p class="text-xs text-gray-400">
+            {{ t("Profile.edit.avatarHint") }}
+          </p>
         </div>
 
+        <!-- Name -->
         <div>
-          <label class="text-sm text-gray-500">Nazwa</label>
+          <label class="text-sm text-gray-500 mb-1">{{
+            t("Profile.edit.name")
+          }}</label>
           <input
             v-model="editName"
             required
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#F77821]/60 transition"
+            class="w-full border border-gray-300 rounded-xl px-4 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#F77821] transition"
           />
         </div>
 
+        <!-- Email -->
         <div>
-          <label class="text-sm text-gray-500">E-mail</label>
+          <label class="text-sm text-gray-500 mb-1">{{
+            t("Profile.edit.email")
+          }}</label>
           <input
             v-model="editEmail"
             type="email"
-            required
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#F77821]/60 transition"
+            class="w-full border border-gray-300 rounded-xl px-4 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#F77821] transition"
           />
         </div>
 
+        <!-- Phone -->
         <div>
-          <label class="text-sm text-gray-500">Telefon</label>
+          <label class="text-sm text-gray-500 mb-1">{{
+            t("Profile.edit.phone")
+          }}</label>
           <input
             v-model="editPhone"
             type="tel"
-            required
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#F77821]/60 transition"
+            class="w-full border border-gray-300 rounded-xl px-4 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#F77821] transition"
           />
         </div>
 
+        <!-- Description -->
         <div>
-          <label class="text-sm text-gray-500">Opis</label>
+          <label class="text-sm text-gray-500 mb-1">{{
+            t("Profile.edit.description")
+          }}</label>
           <textarea
             v-model="editDesc"
             rows="3"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#F77821]/60 transition"
+            class="w-full border border-gray-300 rounded-xl px-4 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#F77821] transition"
           />
         </div>
 
+        <!-- Password -->
         <div>
-          <label class="text-sm text-gray-500">Nowe hasło</label>
+          <label class="text-sm text-gray-500 mb-1">{{
+            t("Profile.edit.password")
+          }}</label>
           <input
             v-model="editPassword"
             type="password"
-            placeholder="Zostaw puste, aby nie zmieniać"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#F77821]/60 transition"
+            :placeholder="t('Profile.edit.passwordPlaceholder')"
+            class="w-full border border-gray-300 rounded-xl px-4 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#F77821] transition"
           />
         </div>
 
+        <!-- Save Button -->
         <button
           type="submit"
           :disabled="loading"
-          class="bg-[#F77821] hover:bg-[#EA580C] text-white py-2 rounded-lg font-medium transition-all duration-200 shadow disabled:opacity-60 flex items-center justify-center"
+          class="bg-[#F77821] hover:bg-[#EA580C] text-white py-3 rounded-2xl font-semibold transition-all duration-200 shadow flex items-center justify-center disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          <Loader v-if="loading" text="Zapisuję..." />
-          <span v-else>Zapisz zmiany</span>
+          <Loader v-if="loading" :text="t('Profile.edit.saving')" />
+          <span v-else>{{ t("Profile.edit.saveButton") }}</span>
         </button>
       </form>
     </div>
