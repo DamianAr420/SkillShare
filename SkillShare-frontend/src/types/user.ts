@@ -6,4 +6,5 @@ export interface User {
   desc: string;
   phone: string;
   email: string;
+  avatarUrl: string;
 }

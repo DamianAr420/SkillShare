@@ -2,14 +2,18 @@ import multer from "multer";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import cloudinary from "../config/cloudinary.js";
 
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: "announcements",
-    allowed_formats: ["jpg", "jpeg", "png", "webp"],
-  },
-});
+export const createUploader = (folderName) => {
+  const storage = new CloudinaryStorage({
+    cloudinary,
+    params: {
+      folder: folderName,
+      allowed_formats: ["jpg", "jpeg", "png", "webp"],
+    },
+  });
 
-const upload = multer({ storage });
+  return multer({ storage });
+};
 
-export default upload;
+export const uploadAnnouncement = createUploader("announcements");
+
+export const uploadAvatar = createUploader("avatars");

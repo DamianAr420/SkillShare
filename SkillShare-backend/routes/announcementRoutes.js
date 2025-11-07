@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import Announcement from "../models/Announcement.js";
 import Category from "../models/Category.js";
 import User from "../models/User.js";
-import upload from "../middleware/upload.js";
+import { uploadAnnouncement } from "../middleware/upload.js";
 import cloudinary from "../config/cloudinary.js";
 
 const router = express.Router();
@@ -82,7 +82,7 @@ router.get("/filter", async (req, res) => {
   }
 });
 
-router.post("/add", upload.single("image"), async (req, res) => {
+router.post("/add", uploadAnnouncement.single("image"), async (req, res) => {
   try {
     const { title, desc, price, location, category, user } = req.body;
 

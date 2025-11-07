@@ -5,6 +5,7 @@ import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import Settings from "@/assets/icons/Settings.vue";
 import Loader from "@/components/ui/Loader.vue";
+import ProfileSettingsDialog from "@/components/dialogs/ProfileSettingsDialog.vue";
 
 const auth = useAuthStore();
 const announcementStore = useAnnouncementStore();
@@ -14,6 +15,7 @@ const username = ref("");
 const desc = ref("");
 const selected = ref("ann");
 const userLoading = ref(true);
+const showSettings = ref(false);
 
 onMounted(async () => {
   userLoading.value = true;
@@ -26,9 +28,20 @@ onMounted(async () => {
     await announcementStore.fetchUserAnnouncements(auth.user._id);
   }
 });
+
+const handleUpdated = async () => {
+  await auth.fetchUser();
+  username.value = auth.user?.name || "Użytkownik";
+  desc.value = auth.user?.desc || "Brak opisu użytkownika.";
+};
 </script>
 
 <template>
+  <ProfileSettingsDialog
+    :show="showSettings"
+    @close="showSettings = false"
+    @updated="handleUpdated"
+  />
   <div class="max-w-5xl mx-auto p-6">
     <!-- Header -->
     <div
@@ -43,7 +56,7 @@ onMounted(async () => {
           <img
             class="w-40 h-40 object-cover border-4 border-[#F77821] rounded-2xl"
             :src="
-              auth.user?.imageUrl ||
+              auth.user?.avatarUrl ||
               'https://via.placeholder.com/200x200?text=Profile'
             "
             alt="Profile image"
@@ -59,6 +72,7 @@ onMounted(async () => {
           <div class="flex justify-between items-start">
             <h2 class="text-3xl font-bold text-gray-900">{{ username }}</h2>
             <button
+              @click="showSettings = true"
               class="bg-[#F77821] hover:bg-[#EA580C] transition-all duration-200 p-2 rounded-xl shadow-sm hover:shadow-md"
               title="Ustawienia"
             >

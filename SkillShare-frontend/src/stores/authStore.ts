@@ -5,6 +5,7 @@ import {
   registerUser,
   getCurrentUser,
   getUserById,
+  updateUser,
 } from "@/api/auth";
 import { parseAuthError, type FormError } from "@/utils/errorHandler";
 import type { User } from "@/types/user";
@@ -74,6 +75,20 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
+  async function updateUserData(formData: FormData) {
+    loading.value = true;
+    try {
+      const res = await updateUser(formData);
+      user.value = res.user;
+      return res.message;
+    } catch (err) {
+      console.error("❌ Update user failed:", err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
   function logout() {
     token.value = null;
     user.value = null;
@@ -96,5 +111,6 @@ export const useAuthStore = defineStore("auth", () => {
     fetchUser,
     fetchUserById,
     logout,
+    updateUserData,
   };
 });

@@ -38,3 +38,10 @@ export const getUserById = async (id: string) => {
   const res = await api.get(`/${id}`);
   return res.data;
 };
+
+export const updateUser = async (formData: FormData) => {
+  const res = await api.put("/update", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
+};
