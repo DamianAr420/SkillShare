@@ -18,7 +18,8 @@
     "buttons": {
       "home": "Strona główna",
       "categories": "Kategorie",
-      "logIn": "Zaloguj się"
+      "logIn": "Zaloguj się",
+      "logout": "Wyloguj"
     },
     "logout": "Pomyślnie wylogowano!"
   },
