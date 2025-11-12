@@ -151,6 +151,12 @@ router.delete("/:id", async (req, res) => {
 
     await Announcement.findByIdAndDelete(req.params.id);
 
+    const objId = new mongoose.Types.ObjectId(req.params.id);
+    await User.updateMany(
+      { watchlist: objId },
+      { $pull: { watchlist: objId } }
+    );
+
     res.json({ message: "Announcement and image deleted successfully" });
   } catch (error) {
     console.error("Error deleting announcement:", error);
@@ -182,6 +188,25 @@ router.get("/:id", async (req, res) => {
     res.json(ann);
   } catch (error) {
     console.error("Error fetching announcement:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.post("/byIds", async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.json([]);
+    }
+
+    const announcements = await Announcement.find({ _id: { $in: ids } })
+      .populate("category", "name")
+      .populate("user", "name email")
+      .sort({ createdAt: -1 });
+
+    res.json(announcements);
+  } catch (err) {
+    console.error("❌ Error fetching announcements by IDs:", err);
     res.status(500).json({ message: "Server error" });
   }
 });

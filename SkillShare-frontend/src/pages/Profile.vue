@@ -13,9 +13,11 @@ const { t } = useI18n();
 
 const username = ref("");
 const desc = ref("");
-const selected = ref("ann");
+const selected = ref<"ann" | "follow">("ann");
 const userLoading = ref(true);
 const showSettings = ref(false);
+
+const followedAnnouncements = ref([]);
 
 onMounted(async () => {
   userLoading.value = true;
@@ -27,7 +29,24 @@ onMounted(async () => {
   if (auth.user?._id) {
     await announcementStore.fetchUserAnnouncements(auth.user._id);
   }
+
+  await loadFollowedAnnouncements();
 });
+
+const loadFollowedAnnouncements = async () => {
+  if (!auth.user?.watchlist || auth.user.watchlist.length === 0) {
+    followedAnnouncements.value = [];
+    return;
+  }
+  try {
+    followedAnnouncements.value =
+      await announcementStore.fetchAnnouncementsByIds(auth.user.watchlist);
+    console.log(followedAnnouncements.value);
+  } catch (err) {
+    console.error("❌ Failed to load followed announcements:", err);
+    followedAnnouncements.value = [];
+  }
+};
 
 const handleUpdated = async () => {
   await auth.fetchUser();
@@ -52,15 +71,14 @@ const closeSettings = () => {
     @close="closeSettings()"
     @updated="handleUpdated"
   />
+
   <div class="max-w-5xl mx-auto p-6">
     <!-- Header -->
     <div
       class="bg-white rounded-2xl shadow-md p-6 flex flex-col sm:flex-row gap-6 items-center min-h-[200px]"
     >
-      <!-- Loader podczas ładowania użytkownika -->
       <Loader v-if="userLoading" text="Ładowanie profilu..." />
 
-      <!-- Główne dane użytkownika -->
       <template v-else>
         <div class="relative">
           <img
@@ -125,17 +143,14 @@ const closeSettings = () => {
 
       <!-- Content -->
       <div class="min-h-[300px] bg-white rounded-2xl shadow p-6 text-gray-600">
-        <!-- Ogłoszenia -->
+        <!-- Twoje ogłoszenia -->
         <div v-if="selected === 'ann'">
           <div v-if="announcementStore.loading">
             <Loader text="Ładuję Twoje ogłoszenia..." />
           </div>
 
           <div
-            v-else-if="
-              announcementStore.announcements.length === 0 &&
-              !announcementStore.loading
-            "
+            v-else-if="announcementStore.announcements.length === 0"
             class="text-center text-gray-500 py-10"
           >
             {{ t("Profile.noAnnouncements") || "Brak ogłoszeń." }}
@@ -146,7 +161,7 @@ const closeSettings = () => {
               v-for="a in announcementStore.announcements"
               :key="a._id"
               @click="$router.push(`/announcement/${a._id}`)"
-              class="bg-white rounded-xl shadow hover:shadow-lg transition p-4 flex flex-col"
+              class="bg-white rounded-xl shadow hover:shadow-lg transition p-4 flex flex-col cursor-pointer"
             >
               <img
                 :src="
@@ -168,17 +183,44 @@ const closeSettings = () => {
           </div>
         </div>
 
-        <!-- Obserwowani -->
-        <div
-          v-else-if="selected === 'follow'"
-          class="flex flex-col items-center justify-center h-full"
-        >
-          <h3 class="text-xl font-semibold text-[#F77821] mb-2">
-            {{ t("Profile.following") }}
-          </h3>
-          <p class="text-gray-500">
-            Lista obserwowanych ogłoszeń pojawi się tutaj.
-          </p>
+        <!-- Obserwowane -->
+        <div v-else-if="selected === 'follow'">
+          <div v-if="userLoading">
+            <Loader text="Ładuję obserwowane ogłoszenia..." />
+          </div>
+
+          <div
+            v-else-if="followedAnnouncements.length === 0"
+            class="text-center text-gray-500 py-10"
+          >
+            {{ t("Profile.noFollowed") || "Brak obserwowanych ogłoszeń." }}
+          </div>
+
+          <div v-else class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div
+              v-for="a in followedAnnouncements"
+              :key="a._id"
+              @click="$router.push(`/announcement/${a._id}`)"
+              class="bg-white rounded-xl shadow hover:shadow-lg transition p-4 flex flex-col cursor-pointer"
+            >
+              <img
+                :src="
+                  a.imageUrl ||
+                  'https://via.placeholder.com/300x200?text=' +
+                    t('announcements.noImage')
+                "
+                class="h-40 w-full object-cover rounded mb-3"
+                alt="img"
+              />
+              <h3 class="text-lg font-semibold mb-1">{{ a.title }}</h3>
+              <p class="text-sm text-gray-600 flex-grow">{{ a.desc }}</p>
+              <div class="flex items-center justify-between mt-3">
+                <span class="text-[#F77821] font-semibold text-xl">
+                  {{ a.price }} zł
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -6,6 +6,7 @@ import User from "../models/User.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import { uploadAvatar } from "../middleware/upload.js";
 import cloudinary from "../config/cloudinary.js";
+import mongoose from "mongoose";
 
 dotenv.config();
 const router = express.Router();
@@ -66,9 +67,21 @@ router.post("/login", async (req, res) => {
 
 router.get("/me", authMiddleware, async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId).select("-password");
+    const user = await User.findById(req.user.userId)
+      .populate({
+        path: "watchlist",
+        populate: [
+          { path: "category", select: "name" },
+          { path: "user", select: "name" },
+        ],
+      })
+      .lean();
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
     res.json(user);
   } catch (err) {
+    console.error("❌ Error while fetching user:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -84,22 +97,6 @@ router.get("/check-name", async (req, res) => {
     return res.json({ available: !exists });
   } catch (err) {
     console.error("Check name error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-router.get("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const user = await User.findById(id).select("-password");
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.json(user);
-  } catch (error) {
-    console.error("❌ Error while fetching user:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -154,5 +151,68 @@ router.put(
     }
   }
 );
+
+router.post("/watch/:announcementId", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { announcementId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const announcementObjectId = new mongoose.Types.ObjectId(announcementId);
+
+    const index = user.watchlist.findIndex((id) =>
+      id.equals(announcementObjectId)
+    );
+    if (index > -1) {
+      user.watchlist.splice(index, 1);
+    } else {
+      user.watchlist.push(announcementObjectId);
+    }
+
+    await user.save();
+
+    res.json({ watchlist: user.watchlist });
+  } catch (err) {
+    console.error("❌ Error updating watchlist:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.get("/watchlist", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId)
+      .populate({
+        path: "watchlist",
+        populate: [
+          { path: "category", select: "name" },
+          { path: "user", select: "name" },
+        ],
+      })
+      .lean();
+
+    res.json(user.watchlist || []);
+  } catch (err) {
+    console.error("❌ Error fetching watchlist:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findById(id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error("❌ Error while fetching user:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 export default router;

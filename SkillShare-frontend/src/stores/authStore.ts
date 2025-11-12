@@ -6,6 +6,8 @@ import {
   getCurrentUser,
   getUserById,
   updateUser,
+  toggleWatchAnnouncement,
+  getUserWatchlist,
 } from "@/api/auth";
 import { parseAuthError, type FormError } from "@/utils/errorHandler";
 import type { User } from "@/types/user";
@@ -16,6 +18,7 @@ export const useAuthStore = defineStore("auth", () => {
   const selectedUser = ref<User | null>(null);
   const loading = ref(false);
   const error = ref<FormError | null>(null);
+  const watchlist = ref<any[]>([]);
 
   const isAuthenticated = computed(() => !!token.value);
 
@@ -89,6 +92,28 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
+  async function toggleWatchlist(announcementId: string) {
+    try {
+      const res = await toggleWatchAnnouncement(announcementId);
+      user.value!.watchlist = res.watchlist;
+      await fetchWatchlist();
+    } catch (err) {
+      console.error("❌ Failed to toggle watchlist:", err);
+      throw err;
+    }
+  }
+
+  async function fetchWatchlist() {
+    loading.value = true;
+    try {
+      watchlist.value = await getUserWatchlist();
+    } catch (err) {
+      console.error("❌ Failed to fetch watchlist:", err);
+    } finally {
+      loading.value = false;
+    }
+  }
+
   function logout() {
     token.value = null;
     user.value = null;
@@ -112,5 +137,8 @@ export const useAuthStore = defineStore("auth", () => {
     fetchUserById,
     logout,
     updateUserData,
+    watchlist,
+    fetchWatchlist,
+    toggleWatchlist,
   };
 });

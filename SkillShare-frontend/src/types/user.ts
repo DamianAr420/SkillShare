@@ -7,4 +7,5 @@ export interface User {
   phone: string;
   email: string;
   avatarUrl: string;
+  watchlist?: string[];
 }

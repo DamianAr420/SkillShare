@@ -118,10 +118,29 @@
     "seller": {
       "name": "Nazwa:",
       "phone": "Telefon:",
-      "email": "E-mail:"
+      "email": "E-mail:",
+      "no": "Brak"
     },
     "back": "Wróć",
-    "unknownCategory": "Nieznana kategoria"
+    "unknownCategory": "Nieznana kategoria",
+    "edit": "Edytuj",
+    "delete": "Usuń",
+    "confirmDelete": {
+      "title": "Potwierdź usunięcie",
+      "message": "Czy na pewno chcesz usunąć to ogłoszenie? Tej operacji nie można cofnąć.",
+      "yes": "Usuń",
+      "no": "Anuluj"
+    },
+    "annDelete": {
+      "success": "Pomyślnie usunięto ogłoszenie!",
+      "error": "Wystąpił błąd podczas usuwania ogłoszenia."
+    },
+    "watch": "Obserwuj",
+    "watching": "Obserwowane",
+    "watchError": "Nie udało się zaobserwować tego ogłoszenia!",
+    "watchSuccess": "Ogłoszenie zostało zaobserwowane!",
+    "unwatchSuccess": "Ogłoszenie nie jest już obserwowane!",
+    "loginToWatch": "Zaloguj się aby zaobserwować to ogłoszenie!"
   },
 
   "Profile": {
@@ -131,6 +150,7 @@
     "noAnnouncements": "Brak ogłoszeń.",
     "loadingProfile": "Ładowanie profilu...",
     "loadingAnnouncements": "Ładuję Twoje ogłoszenia...",
+    "noFollowed": "Brak zaobserwowanych ogłoszeń",
     "edit": {
       "title": "Ustawienia profilu",
       "avatar": "Avatar",

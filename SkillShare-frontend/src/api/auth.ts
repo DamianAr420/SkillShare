@@ -45,3 +45,13 @@ export const updateUser = async (formData: FormData) => {
   });
   return res.data;
 };
+
+export const toggleWatchAnnouncement = async (announcementId: string) => {
+  const res = await api.post(`/watch/${announcementId}`);
+  return res.data;
+};
+
+export const getUserWatchlist = async () => {
+  const res = await api.get("/watchlist");
+  return res.data;
+};

@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema(
     avatarUrl: { type: String },
     email: { type: String, unique: true },
     phone: { type: String, unique: true },
+    watchlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "Announcement" }],
   },
   { timestamps: true }
 );

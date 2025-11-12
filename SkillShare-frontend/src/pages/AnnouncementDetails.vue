@@ -1,32 +1,132 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { watch, onMounted, ref, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAnnouncementStore } from "@/stores/announcementStore";
 import { useAuthStore } from "@/stores/authStore";
 import Loader from "@/components/ui/Loader.vue";
 import { useI18n } from "vue-i18n";
+import { useToast } from "@/composables/useToast";
+import ConfirmDialog from "@/components/dialogs/ConfirmDialog.vue";
 
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const announcementStore = useAnnouncementStore();
 const auth = useAuthStore();
+const { showToast } = useToast();
+
+const isOwner = ref(false);
+const showConfirm = ref(false);
 
 onMounted(async () => {
   const id = route.params.id as string;
   await announcementStore.fetchAnnouncementById(id);
+
+  if (auth.isAuthenticated) {
+    await auth.fetchWatchlist();
+  }
 });
+
+watch(
+  () => announcementStore.selectedAnnouncement,
+  (announcement) => {
+    if (!announcement) {
+      isOwner.value = false;
+      return;
+    }
+
+    const announcementUserId = announcement.user?._id;
+    const currentUserId = auth.user?._id;
+    isOwner.value =
+      Boolean(announcementUserId && currentUserId) &&
+      announcementUserId === currentUserId;
+  },
+  { immediate: true }
+);
+
+const isWatched = computed(() => {
+  const selectedId = announcementStore.selectedAnnouncement?._id?.toString();
+  if (!auth.user?.watchlist || !selectedId) return false;
+
+  return auth.user.watchlist.some((item: any) => {
+    const id = typeof item === "string" ? item : item._id?.toString();
+    return id === selectedId;
+  });
+});
+
+const handleEdit = () => {
+  if (!announcementStore.selectedAnnouncement) return;
+  router.push(
+    `/announcements/edit/${announcementStore.selectedAnnouncement._id}`
+  );
+};
+
+const handleDelete = () => {
+  showConfirm.value = true;
+};
+
+const confirmDelete = async () => {
+  try {
+    if (!announcementStore.selectedAnnouncement) return;
+    await announcementStore.deleteAnnouncement(
+      announcementStore.selectedAnnouncement._id
+    );
+    router.push("/Profile");
+    showToast(t("announcementDetails.annDelete.success"), "success");
+  } catch (error) {
+    showToast(t("announcementDetails.annDelete.error"), "error");
+    console.error(error);
+  } finally {
+    showConfirm.value = false;
+  }
+};
+
+const toggleWatch = async () => {
+  if (!auth.isAuthenticated) {
+    showToast(t("announcementDetails.loginToWatch"), "error");
+    return;
+  }
+  try {
+    await auth.toggleWatchlist(announcementStore.selectedAnnouncement!._id);
+
+    await auth.fetchWatchlist();
+
+    showToast(
+      isWatched.value
+        ? t("announcementDetails.watchSuccess")
+        : t("announcementDetails.unwatchSuccess"),
+      "success"
+    );
+  } catch (err) {
+    showToast(t("announcementDetails.watchError"), "error");
+  }
+};
 </script>
 
 <template>
   <div class="max-w-6xl mx-auto p-6">
-    <div class="flex justify-start mb-6">
+    <div class="flex justify-between mb-6">
       <button
         @click="router.back()"
         class="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#F77821]/10 text-[#F77821] font-medium hover:bg-[#F77821]/20 transition-all duration-200 shadow-sm"
       >
         ⬅ {{ t("announcementDetails.back") }}
       </button>
+
+      <div v-if="isOwner" class="flex gap-3">
+        <button
+          @click="handleEdit"
+          class="px-4 py-2 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition-all duration-200 shadow-sm"
+        >
+          ✏️ {{ t("announcementDetails.edit") }}
+        </button>
+        <button
+          @click="handleDelete"
+          class="px-4 py-2 rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition-all duration-200 shadow-sm"
+        >
+          🗑 {{ t("announcementDetails.delete") }}
+        </button>
+      </div>
     </div>
 
     <div v-if="announcementStore.loading" class="flex justify-center py-10">
@@ -65,7 +165,25 @@ onMounted(async () => {
             {{ announcementStore.selectedAnnouncement.desc }}
           </p>
 
-          <div class="flex flex-wrap gap-3 text-sm text-gray-500">
+          <div v-if="!isOwner" class="flex justify-end mt-2">
+            <button
+              @click="toggleWatch"
+              class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm"
+              :class="
+                isWatched
+                  ? 'bg-yellow-400/20 text-yellow-600 hover:bg-yellow-400/30'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              "
+            >
+              {{
+                isWatched
+                  ? "★ " + t("announcementDetails.watching")
+                  : "☆ " + t("announcementDetails.watch")
+              }}
+            </button>
+          </div>
+
+          <div class="flex flex-wrap gap-3 text-sm text-gray-500 mt-4">
             <span
               class="bg-[#F77821]/10 text-[#F77821] px-3 py-1 rounded-full font-medium"
             >
@@ -121,7 +239,7 @@ onMounted(async () => {
                 <p class="text-gray-800 font-medium">
                   {{
                     announcementStore.selectedAnnouncement.user.phone ||
-                    t("announcementDetails.seller.noPhone")
+                    t("announcementDetails.seller.no")
                   }}
                 </p>
               </div>
@@ -131,7 +249,10 @@ onMounted(async () => {
                   {{ t("announcementDetails.seller.email") }}
                 </p>
                 <p class="text-gray-800 font-medium break-words">
-                  {{ announcementStore.selectedAnnouncement.user.email }}
+                  {{
+                    announcementStore.selectedAnnouncement.user.email ||
+                    t("announcementDetails.seller.no")
+                  }}
                 </p>
               </div>
             </div>
@@ -140,6 +261,16 @@ onMounted(async () => {
       </div>
     </div>
   </div>
+
+  <ConfirmDialog
+    :visible="showConfirm"
+    :title="t('announcementDetails.confirmDelete.title')"
+    :message="t('announcementDetails.confirmDelete.message')"
+    :confirmText="t('announcementDetails.confirmDelete.yes')"
+    :cancelText="t('announcementDetails.confirmDelete.no')"
+    @confirm="confirmDelete"
+    @cancel="showConfirm = false"
+  />
 </template>
 
 <style scoped>

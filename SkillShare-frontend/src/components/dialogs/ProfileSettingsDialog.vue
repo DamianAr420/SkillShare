@@ -60,12 +60,12 @@ const saveSettings = async () => {
     await auth.updateUserData(formData);
     emit("updated");
     emit("close");
+    showToast(t("Profile.edit.success"), "success");
   } catch (err) {
     console.error(err);
     showToast(t("Profile.edit.error"), "error");
   } finally {
     loading.value = false;
-    showToast(t("Profile.edit.success"), "success");
   }
 };
 </script>

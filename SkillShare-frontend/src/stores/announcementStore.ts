@@ -98,5 +98,16 @@ export const useAnnouncementStore = defineStore("announcement", {
         throw err;
       }
     },
+
+    async fetchAnnouncementsByIds(ids: string[]) {
+      if (!ids || ids.length === 0) return [];
+      try {
+        const res = await axios.post("/api/announcements/byIds", { ids });
+        return res.data;
+      } catch (err) {
+        console.error("❌ fetchAnnouncementsByIds failed:", err);
+        return [];
+      }
+    },
   },
 });
