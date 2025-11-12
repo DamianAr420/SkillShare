@@ -4,13 +4,16 @@ import { useCategoryStore } from "@/stores/categoryStore";
 import { useAnnouncementStore } from "@/stores/announcementStore";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/authStore";
+import { useToast } from "@/composables/useToast";
 
 const { t } = useI18n();
 const router = useRouter();
 const route = useRoute();
-
+const auth = useAuthStore();
 const categoryStore = useCategoryStore();
 const announcementStore = useAnnouncementStore();
+const { showToast } = useToast();
 
 const selectedCategory = ref<string | null>(null);
 const sortOption = ref("newest");
@@ -18,6 +21,30 @@ const minPrice = ref("");
 const maxPrice = ref("");
 const searchTerm = ref("");
 const locationFilter = ref("");
+
+onMounted(async () => {
+  await categoryStore.fetchCategories();
+  await auth.fetchUser();
+
+  const cat = route.query.category as string;
+  if (cat) {
+    selectedCategory.value = cat;
+    categoryStore.setSelectedCategory(cat);
+  }
+
+  await fetchAnnouncements();
+});
+
+async function fetchAnnouncements() {
+  await announcementStore.fetchFilteredAnnouncements({
+    category: selectedCategory.value || "",
+    minPrice: minPrice.value || "",
+    maxPrice: maxPrice.value || "",
+    sort: sortOption.value,
+    search: searchTerm.value || "",
+    location: locationFilter.value || "",
+  });
+}
 
 function selectCategory(cat: string | null) {
   selectedCategory.value = cat;
@@ -31,24 +58,50 @@ function selectCategory(cat: string | null) {
   });
 }
 
-onMounted(async () => {
-  await categoryStore.fetchCategories();
+const isOwner = (announcementUserId: string) => {
+  return auth.user?._id === announcementUserId;
+};
 
-  const cat = route.query.category as string;
-  if (cat) {
-    selectedCategory.value = cat;
-    categoryStore.setSelectedCategory(cat);
+const isWatched = (announcement: any) => {
+  if (!auth.user || isOwner(announcement.user._id)) return false;
+  const announcementId = announcement._id.toString();
+
+  return auth.user.watchlist?.some((item: any) => {
+    const id = typeof item === "string" ? item : item._id?.toString();
+    return id === announcementId;
+  });
+};
+
+const toggleWatch = async (announcement: any) => {
+  if (!auth.user) {
+    showToast(t("announcementDetails.loginToWatch"), "error");
+    return;
   }
 
-  await announcementStore.fetchFilteredAnnouncements({
-    category: selectedCategory.value || "",
-    minPrice: minPrice.value || "",
-    maxPrice: maxPrice.value || "",
-    sort: sortOption.value,
-    search: searchTerm.value || "",
-    location: locationFilter.value || "",
-  });
-});
+  try {
+    const id = announcement._id.toString();
+    const index = auth.user.watchlist.findIndex((item: any) => {
+      const itemId = typeof item === "string" ? item : item._id?.toString();
+      return itemId === id;
+    });
+
+    let message = "";
+    if (index > -1) {
+      auth.user.watchlist.splice(index, 1);
+      message = t("announcementDetails.unwatchSuccess");
+    } else {
+      auth.user.watchlist.push({ _id: id });
+      message = t("announcementDetails.watchSuccess");
+    }
+
+    showToast(message, "success");
+
+    await auth.toggleWatchlist(id);
+  } catch (err) {
+    console.error("Error toggling watchlist", err);
+    showToast(t("announcementDetails.watchError"), "error");
+  }
+};
 
 watch(
   [
@@ -59,16 +112,7 @@ watch(
     searchTerm,
     locationFilter,
   ],
-  () => {
-    announcementStore.fetchFilteredAnnouncements({
-      category: selectedCategory.value || "",
-      minPrice: minPrice.value || "",
-      maxPrice: maxPrice.value || "",
-      sort: sortOption.value,
-      search: searchTerm.value || "",
-      location: locationFilter.value || "",
-    });
-  }
+  fetchAnnouncements
 );
 </script>
 
@@ -86,7 +130,7 @@ watch(
       </RouterLink>
     </div>
 
-    <!-- Wyszukiwanie i lokalizacja -->
+    <!-- SEARCH & FILTERS -->
     <div class="flex flex-col sm:flex-row gap-4 mb-6 items-center">
       <input
         v-model="searchTerm"
@@ -94,7 +138,6 @@ watch(
         :placeholder="t('announcements.searchPlaceholder')"
         class="border p-2 rounded w-full sm:w-64"
       />
-
       <input
         v-model="locationFilter"
         type="text"
@@ -103,7 +146,7 @@ watch(
       />
     </div>
 
-    <!-- Kategorie -->
+    <!-- CATEGORIES -->
     <div class="flex flex-wrap gap-3 mb-6 justify-center sm:justify-start">
       <button
         v-for="cat in categoryStore.categories"
@@ -127,7 +170,7 @@ watch(
       </button>
     </div>
 
-    <!-- FILTRY -->
+    <!-- PRICE & SORT -->
     <div class="flex flex-col sm:flex-row gap-4 mb-8 items-center">
       <div class="flex gap-2">
         <input
@@ -154,27 +197,24 @@ watch(
       </select>
     </div>
 
-    <!-- LISTA OGŁOSZEŃ -->
+    <!-- ANNOUNCEMENTS GRID -->
     <div
       v-if="announcementStore.loading"
       class="text-center text-gray-500 py-10"
     >
       {{ t("announcements.loading") }}
     </div>
-
     <div
       v-else-if="announcementStore.announcements.length === 0"
       class="text-center text-gray-500 py-10"
     >
       {{ t("announcements.noAnnouncements") }}
     </div>
-
     <div v-else class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
       <div
         v-for="a in announcementStore.announcements"
         :key="a._id"
-        @click="$router.push(`/announcement/${a._id}`)"
-        class="bg-white rounded-xl shadow hover:shadow-lg transition p-4 flex flex-col"
+        class="bg-white rounded-xl shadow hover:shadow-lg transition p-4 flex flex-col relative"
       >
         <img
           :src="
@@ -182,21 +222,44 @@ watch(
             'https://via.placeholder.com/300x200?text=' +
               t('announcements.noImage')
           "
-          class="h-40 w-full object-cover rounded mb-3"
+          class="h-40 w-full object-cover rounded mb-3 cursor-pointer"
           alt="img"
+          @click="$router.push(`/announcement/${a._id}`)"
         />
-        <h3 class="text-lg font-semibold mb-1">{{ a.title }}</h3>
+
+        <h3
+          class="text-lg font-semibold mb-1 flex items-center justify-between"
+        >
+          {{ a.title }}
+          <button
+            v-if="!isOwner(a.user._id)"
+            @click.stop="toggleWatch(a)"
+            class="ml-2 text-yellow-500 text-2xl transition-transform duration-200"
+            :class="{ 'scale-110': isWatched(a) }"
+          >
+            {{ isWatched(a) ? "★" : "☆" }}
+          </button>
+        </h3>
+
         <p class="text-sm text-gray-600 flex-grow">{{ a.desc }}</p>
+
         <div class="flex items-center justify-between mt-3">
-          <span class="text-[#F77821] font-semibold text-xl">
-            {{ a.price }} zł
-          </span>
+          <span class="text-[#F77821] font-semibold text-xl"
+            >{{ a.price }} zł</span
+          >
           <span
             class="px-4 py-2 rounded-full text-sm font-medium border transition bg-[#F77821] text-white border-[#F77821]"
-            >{{ a.category.name }}</span
           >
+            {{ a.category.name }}
+          </span>
         </div>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+button:active {
+  transform: scale(0.95);
+}
+</style>

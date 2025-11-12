@@ -5,6 +5,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useCategoryStore } from "@/stores/categoryStore";
 import { useAnnouncementStore } from "@/stores/announcementStore";
 import { useRouter } from "vue-router";
+import { useToast } from "@/composables/useToast";
 
 import EducationIcon from "@/assets/icons/Education.vue";
 import GraphicsIcon from "@/assets/icons/Graphics.vue";
@@ -18,6 +19,7 @@ const auth = useAuthStore();
 const categoryStore = useCategoryStore();
 const announcementStore = useAnnouncementStore();
 const router = useRouter();
+const { showToast } = useToast();
 
 const isLoggedIn = computed(() => auth.isAuthenticated);
 const username = computed(() => auth.user?.name || "");
@@ -40,6 +42,50 @@ onMounted(() => {
   categoryStore.fetchCategories();
   announcementStore.fetchLatestAnnouncements();
 });
+
+const isOwner = (announcementUserId: string) => {
+  return auth.user?._id === announcementUserId;
+};
+
+const isWatched = (announcement: any) => {
+  if (!auth.user) return false;
+  const id = announcement._id?.toString();
+  return auth.user.watchlist?.some(
+    (item: any) =>
+      (typeof item === "string" ? item : item._id?.toString()) === id
+  );
+};
+
+const toggleWatch = async (announcement: any) => {
+  if (!auth.user) {
+    showToast(t("announcementDetails.loginToWatch"), "error");
+    return;
+  }
+
+  try {
+    const id = announcement._id;
+    const index = auth.user.watchlist.findIndex(
+      (item: any) =>
+        (typeof item === "string" ? item : item._id?.toString()) ===
+        id.toString()
+    );
+
+    let message = "";
+    if (index > -1) {
+      auth.user.watchlist.splice(index, 1);
+      message = t("announcementDetails.unwatchSuccess");
+    } else {
+      auth.user.watchlist.push({ _id: id });
+      message = t("announcementDetails.watchSuccess");
+    }
+
+    showToast(message, "success");
+    await auth.toggleWatchlist(id);
+  } catch (err) {
+    console.error(err);
+    showToast(t("announcementDetails.watchError"), "error");
+  }
+};
 </script>
 
 <template>
@@ -94,30 +140,50 @@ onMounted(() => {
         <h2 class="text-2xl font-bold mb-4">
           {{ t("Home.announcements.title") }}
         </h2>
-        <div class="flex flex-col gap-4">
-          <button
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div
             v-for="ann in announcementStore.announcements"
-            :key="ann.title"
-            @click="$router.push(`/announcement/${ann._id}`)"
-            class="flex flex-col bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition"
+            :key="ann._id"
+            class="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer flex flex-col overflow-hidden"
           >
             <img
-              class="w-full h-32 rounded bg-[#F77821] object-cover mb-2"
-              :src="ann.imageUrl"
+              :src="
+                ann.imageUrl ||
+                'https://via.placeholder.com/300x200?text=' +
+                  t('announcements.noImage')
+              "
               alt="img"
+              class="w-full h-40 object-cover"
+              @click="$router.push(`/announcement/${ann._id}`)"
             />
-            <h3 class="text-lg font-medium mb-1">{{ ann.title }}</h3>
-            <span class="text-gray-600 text-sm mb-2">{{ ann.desc }}</span>
-            <div class="text-xl font-semibold text-right">
-              {{ ann.price }}
+
+            <div class="p-4 flex flex-col gap-2 flex-1">
+              <div class="flex justify-between items-center">
+                <h3 class="text-lg font-semibold truncate">{{ ann.title }}</h3>
+                <button
+                  v-if="!isOwner(ann.user._id)"
+                  @click.stop="toggleWatch(ann)"
+                  class="ml-2 text-yellow-500 text-2xl transition-transform duration-200"
+                  :class="{ 'scale-110': isWatched(ann) }"
+                >
+                  {{ isWatched(ann) ? "★" : "☆" }}
+                </button>
+              </div>
+
+              <p class="text-gray-600 text-sm line-clamp-3">{{ ann.desc }}</p>
+
+              <div class="flex justify-between items-center mt-3">
+                <span class="text-[#F77821] font-semibold text-xl"
+                  >{{ ann.price }} zł</span
+                >
+                <span
+                  class="px-3 py-1 rounded-full bg-[#F77821] text-white text-xs font-medium"
+                >
+                  {{ ann.category.name }}
+                </span>
+              </div>
             </div>
-          </button>
-          <button
-            @click="$router.push('/categories')"
-            class="mt-4 text-[#F77821] hover:underline"
-          >
-            {{ t("Home.announcements.showAll") }}
-          </button>
+          </div>
         </div>
       </div>
     </div>
@@ -155,46 +221,43 @@ onMounted(() => {
           {{ t("Home.announcements.title") }}
         </h1>
 
-        <div
-          class="bg-white p-6 flex flex-col mx-auto gap-4 rounded-lg shadow-md max-w-4xl"
-        >
-          <button
+        <div class="hidden md:flex flex-col gap-4">
+          <div
             v-for="ann in announcementStore.announcements"
-            :key="ann.title"
-            @click="$router.push(`/announcement/${ann._id}`)"
-            class="w-full text-left flex flex-col bg-gray-50 p-4 rounded-lg hover:shadow-lg transition"
+            :key="ann._id"
+            class="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 flex flex-row overflow-hidden cursor-pointer"
           >
-            <div class="flex flex-row items-center justify-between gap-4">
-              <img
-                class="h-20 w-32 rounded bg-[#F77821] object-cover"
-                :src="ann.imageUrl"
-                alt="img"
-              />
-
-              <div
-                class="flex-1 flex flex-col justify-center text-center md:text-left"
-              >
-                <h2 class="text-xl md:text-2xl font-medium mb-1">
-                  {{ ann.title }}
-                </h2>
-                <span class="text-gray-600 text-sm md:text-base">{{
-                  ann.desc
-                }}</span>
+            <img
+              :src="ann.imageUrl"
+              alt="img"
+              class="w-40 h-40 object-cover"
+              @click="$router.push(`/announcement/${ann._id}`)"
+            />
+            <div class="p-4 flex flex-col justify-between flex-1">
+              <div class="flex justify-between items-start">
+                <h3 class="text-xl font-semibold">{{ ann.title }}</h3>
+                <button
+                  v-if="!isOwner(ann.user._id)"
+                  @click.stop="toggleWatch(ann)"
+                  class="ml-2 text-yellow-500 text-2xl transition-transform duration-200"
+                  :class="{ 'scale-110': isWatched(ann) }"
+                >
+                  {{ isWatched(ann) ? "★" : "☆" }}
+                </button>
               </div>
-
-              <div class="text-2xl font-semibold text-right md:text-right">
-                {{ ann.price }}
+              <p class="text-gray-600 text-sm line-clamp-4">{{ ann.desc }}</p>
+              <div class="flex justify-between items-center mt-2">
+                <span class="text-[#F77821] font-semibold text-lg"
+                  >{{ ann.price }} zł</span
+                >
+                <span
+                  class="px-3 py-1 rounded-full bg-[#F77821] text-white text-xs font-medium"
+                >
+                  {{ ann.category.name }}
+                </span>
               </div>
             </div>
-
-            <hr class="border-[#F77821] mt-4" />
-          </button>
-          <button
-            @click="$router.push('/categories')"
-            class="mt-4 text-[#F77821] hover:underline"
-          >
-            {{ t("Home.announcements.showAll") }}
-          </button>
+          </div>
         </div>
       </div>
     </div>
