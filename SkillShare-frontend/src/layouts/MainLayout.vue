@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import NavBar from "../components/NavBar.vue";
 import Footer from "../components/Footer.vue";
+import ChatBubble from "../components/ChatBubble.vue";
 </script>
 
 <template>
@@ -14,5 +15,7 @@ import Footer from "../components/Footer.vue";
     </main>
 
     <Footer />
+
+    <ChatBubble />
   </div>
 </template>

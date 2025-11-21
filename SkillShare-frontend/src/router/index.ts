@@ -8,8 +8,10 @@ import Home from "../pages/Home.vue";
 import Categories from "../pages/Categories.vue";
 import AddAnnouncementPage from "@/pages/AddAnnouncementPage.vue";
 import Profile from "@/pages/Profile.vue";
+import UserProfile from "@/pages/UserProfile.vue";
 import AnnouncementDetails from "@/pages/AnnouncementDetails.vue";
 import EditAnnouncement from "@/pages/EditAnnouncement.vue";
+import Chat from "@/pages/Chat.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -24,6 +26,7 @@ const routes: Array<RouteRecordRaw> = [
         component: AddAnnouncementPage,
       },
       { path: "/Profile", name: "Profile", component: Profile },
+      { path: "/Profile/:id", name: "UserProfile", component: UserProfile },
       {
         path: "/announcement/:id",
         name: "announcement-details",
@@ -34,6 +37,9 @@ const routes: Array<RouteRecordRaw> = [
         name: "announcement-edit",
         component: EditAnnouncement,
       },
+      { path: "/chat/:id", name: "chat-with-user", component: Chat },
+
+      { path: "/chat", name: "chat", component: Chat },
     ],
   },
 ];

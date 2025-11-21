@@ -101,6 +101,10 @@ const toggleWatch = async () => {
     showToast(t("announcementDetails.watchError"), "error");
   }
 };
+
+const goToProfile = (userId: string) => {
+  router.push(`/profile/${userId}`);
+};
 </script>
 
 <template>
@@ -227,7 +231,12 @@ const toggleWatch = async () => {
                 <p class="text-gray-500 text-sm">
                   {{ t("announcementDetails.seller.name") }}
                 </p>
-                <p class="text-gray-800 font-medium">
+                <p
+                  class="text-gray-800 font-medium cursor-pointer hover:underline"
+                  @click="
+                    goToProfile(announcementStore.selectedAnnouncement.user._id)
+                  "
+                >
                   {{ announcementStore.selectedAnnouncement.user.name }}
                 </p>
               </div>
@@ -255,6 +264,21 @@ const toggleWatch = async () => {
                   }}
                 </p>
               </div>
+              <button
+                v-if="
+                  auth.isAuthenticated &&
+                  !isOwner &&
+                  announcementStore.selectedAnnouncement?.user?._id
+                "
+                @click="
+                  $router.push(
+                    `/chat/${announcementStore.selectedAnnouncement.user._id}`
+                  )
+                "
+                class="bg-[#F77821] text-white px-4 py-2 rounded"
+              >
+                Napisz do sprzedawcy
+              </button>
             </div>
           </div>
         </div>
