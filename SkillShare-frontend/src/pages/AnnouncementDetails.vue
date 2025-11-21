@@ -57,7 +57,7 @@ const isWatched = computed(() => {
 const handleEdit = () => {
   if (!announcementStore.selectedAnnouncement) return;
   router.push(
-    `/announcements/edit/${announcementStore.selectedAnnouncement._id}`
+    `/announcement/edit/${announcementStore.selectedAnnouncement._id}`
   );
 };
 

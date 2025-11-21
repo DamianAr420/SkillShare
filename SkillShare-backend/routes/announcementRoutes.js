@@ -211,4 +211,62 @@ router.post("/byIds", async (req, res) => {
   }
 });
 
+router.put("/:id", uploadAnnouncement.single("image"), async (req, res) => {
+  try {
+    const announcement = await Announcement.findById(req.params.id);
+
+    if (!announcement) {
+      return res.status(404).json({ message: "Announcement not found" });
+    }
+
+    // Przygotowanie danych do aktualizacji
+    const updateData = {
+      title: req.body.title,
+      desc: req.body.desc,
+      price: req.body.price,
+      location: req.body.location,
+      category: req.body.category,
+    };
+
+    // Jeśli wysłano nowe zdjęcie
+    if (req.file) {
+      // Usuń stare zdjęcie z Cloudinary, jeśli istnieje
+      if (
+        announcement.imageUrl &&
+        announcement.imageUrl.includes("cloudinary")
+      ) {
+        try {
+          const urlParts = announcement.imageUrl.split("/");
+          const fileName = urlParts[urlParts.length - 1].split(".")[0];
+          const publicId = `announcements/${fileName}`;
+
+          await cloudinary.uploader.destroy(publicId);
+          console.log("🗑️ Old image removed:", publicId);
+        } catch (deleteErr) {
+          console.error("Failed to delete old image:", deleteErr);
+        }
+      }
+
+      // Dodaj nowe zdjęcie z cloudinary
+      updateData.imageUrl = req.file.path;
+    }
+
+    const updated = await Announcement.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true }
+    )
+      .populate("category", "name")
+      .populate("user", "name email phone");
+
+    res.json({
+      message: "Announcement updated successfully",
+      announcement: updated,
+    });
+  } catch (err) {
+    console.error("Error updating announcement:", err);
+    res.status(500).json({ error: "Update failed" });
+  }
+});
+
 export default router;

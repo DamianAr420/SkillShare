@@ -166,5 +166,14 @@
       "success": "✅ Pomyślnie zapisano ustawienia!",
       "error": "❌ Wystąpił błąd podczas zapisywania ustawień!"
     }
+  },
+
+  "editAnnouncement": {
+    "title": "Edytuj ogłoszenie",
+    "updateButton": "Zapisz zmiany",
+    "success": "Ogłoszenie zostało zaktualizowane!",
+    "error": "Wystąpił błąd podczas aktualizacji ogłoszenia.",
+    "image": "Zdjęcie ogłoszenia",
+    "imageHint": "Kliknij lub dotknij, aby dodać zdjęcie"
   }
 }

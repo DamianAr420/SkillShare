@@ -109,5 +109,19 @@ export const useAnnouncementStore = defineStore("announcement", {
         return [];
       }
     },
+
+    async updateAnnouncement(id: string, formData: FormData) {
+      this.loading = true;
+      try {
+        const res = await axios.put(`/api/announcements/${id}`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+
+        this.selectedAnnouncement = res.data;
+        return res.data;
+      } finally {
+        this.loading = false;
+      }
+    },
   },
 });
