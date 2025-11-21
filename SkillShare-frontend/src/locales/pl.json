@@ -17,7 +17,7 @@
   "NavBar": {
     "buttons": {
       "home": "Strona główna",
-      "categories": "Kategorie",
+      "categories": "Szukaj",
       "logIn": "Zaloguj się",
       "logout": "Wyloguj"
     },

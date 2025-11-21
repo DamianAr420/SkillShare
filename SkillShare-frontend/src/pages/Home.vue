@@ -144,6 +144,7 @@ const toggleWatch = async (announcement: any) => {
           <div
             v-for="ann in announcementStore.announcements"
             :key="ann._id"
+            @click="$router.push(`/announcement/${ann._id}`)"
             class="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer flex flex-col overflow-hidden"
           >
             <img
@@ -154,7 +155,6 @@ const toggleWatch = async (announcement: any) => {
               "
               alt="img"
               class="w-full h-40 object-cover"
-              @click="$router.push(`/announcement/${ann._id}`)"
             />
 
             <div class="p-4 flex flex-col gap-2 flex-1">
@@ -225,14 +225,10 @@ const toggleWatch = async (announcement: any) => {
           <div
             v-for="ann in announcementStore.announcements"
             :key="ann._id"
+            @click="$router.push(`/announcement/${ann._id}`)"
             class="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 flex flex-row overflow-hidden cursor-pointer"
           >
-            <img
-              :src="ann.imageUrl"
-              alt="img"
-              class="w-40 h-40 object-cover"
-              @click="$router.push(`/announcement/${ann._id}`)"
-            />
+            <img :src="ann.imageUrl" alt="img" class="w-40 h-40 object-cover" />
             <div class="p-4 flex flex-col justify-between flex-1">
               <div class="flex justify-between items-start">
                 <h3 class="text-xl font-semibold">{{ ann.title }}</h3>
