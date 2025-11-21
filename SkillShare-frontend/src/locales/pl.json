@@ -107,7 +107,9 @@
     "addButton": "Dodaj ogłoszenie",
     "adding": "Dodawanie...",
     "success": "✅ Ogłoszenie zostało dodane!",
-    "error": "❌ Wystąpił błąd przy dodawaniu ogłoszenia."
+    "error": "❌ Wystąpił błąd przy dodawaniu ogłoszenia.",
+    "imageLabel": "Zdjęcie ogłoszenia",
+    "imageHint": "Kliknij, aby dodać zdjęcie"
   },
 
   "announcementDetails": {

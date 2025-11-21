@@ -21,11 +21,14 @@ const price = ref("");
 const location = ref("");
 const category = ref("");
 const imageFile = ref<File | null>(null);
+const previewUrl = ref("");
 
 const onFileChange = (e: Event) => {
   const target = e.target as HTMLInputElement;
-  if (target.files && target.files[0]) {
-    imageFile.value = target.files[0];
+  const file = target.files?.[0];
+  if (file) {
+    imageFile.value = file;
+    previewUrl.value = URL.createObjectURL(file);
   }
 };
 
@@ -113,12 +116,39 @@ const handleSubmit = async () => {
         </option>
       </select>
 
-      <input
-        type="file"
-        accept="image/*"
-        @change="onFileChange"
-        class="border border-gray-300 p-4 rounded-xl file:bg-[#F77821] file:text-white file:px-4 file:py-2 file:rounded-xl file:cursor-pointer hover:file:bg-[#ff973b] transition outline-none"
-      />
+      <div class="flex flex-col items-center">
+        <label class="text-xl text-gray-500 mb-2 font-medium">
+          {{ t("addAnnouncement.imageLabel") }}
+        </label>
+
+        <div
+          class="relative w-full h-full mb-3 flex justify-center items-center"
+        >
+          <img
+            v-if="previewUrl"
+            :src="previewUrl"
+            class="w-full h-full object-cover rounded-2xl border-2 border-gray-200 shadow-sm"
+          />
+
+          <div
+            v-else
+            class="w-32 h-32 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-400 text-3xl border-2 border-gray-200"
+          >
+            +
+          </div>
+
+          <input
+            type="file"
+            accept="image/*"
+            @change="onFileChange"
+            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer rounded-2xl"
+          />
+        </div>
+
+        <p class="text-lg text-gray-400">
+          {{ t("addAnnouncement.imageHint") }}
+        </p>
+      </div>
 
       <button
         type="submit"
