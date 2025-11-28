@@ -226,7 +226,7 @@ const toggleWatch = async (announcement: any) => {
             v-for="ann in announcementStore.announcements"
             :key="ann._id"
             @click="$router.push(`/announcement/${ann._id}`)"
-            class="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 flex flex-row overflow-hidden cursor-pointer"
+            class="bg-white rounded-2xl shadow-[0_0_5px_1px_rgba(0,0,0,0.25)] hover:shadow-[0_0_10px_2px_rgba(0,0,0,0.25)] hover:shadow-[#F77821] transition-all duration-200 flex flex-row overflow-hidden cursor-pointer"
           >
             <img :src="ann.imageUrl" alt="img" class="w-40 h-40 object-cover" />
             <div class="p-4 flex flex-col justify-between flex-1">

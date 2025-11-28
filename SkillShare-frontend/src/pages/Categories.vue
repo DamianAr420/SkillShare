@@ -214,7 +214,7 @@ watch(
       <div
         v-for="a in announcementStore.announcements"
         :key="a._id"
-        class="bg-white rounded-xl shadow hover:shadow-lg transition p-4 flex flex-col relative"
+        class="bg-white rounded-xl shadow-[0_0_5px_1px_rgba(0,0,0,0.25)] hover:shadow-[0_0_8px_1px_rgba(0,0,0,0.25)] hover:shadow-[#F77821] transition p-4 flex flex-col relative"
       >
         <img
           :src="

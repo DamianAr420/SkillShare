@@ -103,7 +103,10 @@ const toggleWatch = async () => {
 };
 
 const goToProfile = (userId: string) => {
-  router.push(`/profile/${userId}`);
+  if (!isOwner) {
+    router.push(`/profile/${userId}`);
+  }
+  router.push(`/profile`);
 };
 </script>
 
