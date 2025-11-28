@@ -12,7 +12,12 @@ import { initSocket } from "./socket.js";
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://damianar420.github.io",
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 const server = http.createServer(app);
