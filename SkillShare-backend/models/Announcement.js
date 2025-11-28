@@ -12,6 +12,7 @@ const announcementSchema = new mongoose.Schema({
     required: true,
   },
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  type: { type: String, enum: ["offer", "search"], required: true },
   createdAt: { type: Date, default: Date.now },
 });
 

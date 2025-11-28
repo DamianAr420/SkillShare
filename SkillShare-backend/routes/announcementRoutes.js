@@ -84,10 +84,14 @@ router.get("/filter", async (req, res) => {
 
 router.post("/add", uploadAnnouncement.single("image"), async (req, res) => {
   try {
-    const { title, desc, price, location, category, user } = req.body;
+    const { title, desc, price, location, category, user, type } = req.body;
 
-    if (!title || !desc || !price || !category || !user) {
+    if (!title || !desc || !price || !category || !user || !type) {
       return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    if (!["offer", "search"].includes(type)) {
+      return res.status(400).json({ message: "Invalid announcement type" });
     }
 
     let categoryId = null;
@@ -110,6 +114,7 @@ router.post("/add", uploadAnnouncement.single("image"), async (req, res) => {
       imageUrl,
       category: categoryId,
       user,
+      type,
     });
 
     await newAnnouncement.save();
