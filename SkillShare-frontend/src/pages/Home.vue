@@ -62,30 +62,43 @@ const toggleWatch = async (announcement: any) => {
     return;
   }
 
+  if (!auth.user.watchlist) {
+    auth.user.watchlist = [];
+  }
+
   try {
-    const id = announcement._id;
-    const index = auth.user.watchlist.findIndex(
-      (item: any) =>
-        (typeof item === "string" ? item : item._id?.toString()) ===
-        id.toString()
-    );
+    const id = announcement._id.toString();
+    const index = auth.user.watchlist.findIndex((item: any) => {
+      const itemId = typeof item === "string" ? item : item._id?.toString();
+      return itemId === id;
+    });
 
     let message = "";
     if (index > -1) {
       auth.user.watchlist.splice(index, 1);
       message = t("announcementDetails.unwatchSuccess");
     } else {
-      auth.user.watchlist.push({ _id: id });
+      auth.user.watchlist.push(id);
       message = t("announcementDetails.watchSuccess");
     }
 
     showToast(message, "success");
+
     await auth.toggleWatchlist(id);
   } catch (err) {
-    console.error(err);
+    console.error("Error toggling watchlist", err);
     showToast(t("announcementDetails.watchError"), "error");
   }
 };
+
+const normalizedAnnouncements = computed(() =>
+  announcementStore.announcements.map((a) => ({
+    ...a,
+    userId: typeof a.user === "string" ? a.user : a.user._id,
+    userName: typeof a.user === "string" ? a.user : a.user.name,
+    categoryName: typeof a.category === "string" ? a.category : a.category.name,
+  }))
+);
 </script>
 
 <template>
@@ -142,7 +155,7 @@ const toggleWatch = async (announcement: any) => {
         </h2>
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <div
-            v-for="ann in announcementStore.announcements"
+            v-for="ann in normalizedAnnouncements"
             :key="ann._id"
             @click="$router.push(`/announcement/${ann._id}`)"
             class="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer flex flex-col overflow-hidden"
@@ -161,7 +174,7 @@ const toggleWatch = async (announcement: any) => {
               <div class="flex justify-between items-center">
                 <h3 class="text-lg font-semibold truncate">{{ ann.title }}</h3>
                 <button
-                  v-if="!isOwner(ann.user._id)"
+                  v-if="!isOwner(ann.userId)"
                   @click.stop="toggleWatch(ann)"
                   class="ml-2 text-yellow-500 text-2xl transition-transform duration-200"
                   :class="{ 'scale-110': isWatched(ann) }"
@@ -179,7 +192,7 @@ const toggleWatch = async (announcement: any) => {
                 <span
                   class="px-3 py-1 rounded-full bg-[#F77821] text-white text-xs font-medium"
                 >
-                  {{ ann.category.name }}
+                  {{ ann.categoryName }}
                 </span>
               </div>
             </div>
@@ -223,7 +236,7 @@ const toggleWatch = async (announcement: any) => {
 
         <div class="hidden md:flex flex-col gap-4">
           <div
-            v-for="ann in announcementStore.announcements"
+            v-for="ann in normalizedAnnouncements"
             :key="ann._id"
             @click="$router.push(`/announcement/${ann._id}`)"
             class="bg-white rounded-2xl shadow-[0_0_5px_1px_rgba(0,0,0,0.25)] hover:shadow-[0_0_10px_2px_rgba(0,0,0,0.25)] hover:shadow-[#F77821] transition-all duration-200 flex flex-row overflow-hidden cursor-pointer"
@@ -233,7 +246,7 @@ const toggleWatch = async (announcement: any) => {
               <div class="flex justify-between items-start">
                 <h3 class="text-xl font-semibold">{{ ann.title }}</h3>
                 <button
-                  v-if="!isOwner(ann.user._id)"
+                  v-if="!isOwner(ann.userId)"
                   @click.stop="toggleWatch(ann)"
                   class="ml-2 text-yellow-500 text-2xl transition-transform duration-200"
                   :class="{ 'scale-110': isWatched(ann) }"
@@ -249,7 +262,7 @@ const toggleWatch = async (announcement: any) => {
                 <span
                   class="px-3 py-1 rounded-full bg-[#F77821] text-white text-xs font-medium"
                 >
-                  {{ ann.category.name }}
+                  {{ ann.categoryName }}
                 </span>
               </div>
             </div>

@@ -93,6 +93,12 @@ const selectedConversation = computed(() => {
 const getOtherParticipant = (conversation: any) => {
   return conversation.participants.find((p: any) => p._id !== auth.user?._id);
 };
+
+const getLastMessage = (conversation: any) => {
+  return conversation.messages.length
+    ? conversation.messages[conversation.messages.length - 1]
+    : null;
+};
 </script>
 
 <template>
@@ -121,16 +127,15 @@ const getOtherParticipant = (conversation: any) => {
               {{ getOtherParticipant(c)?.name || "Nieznany" }}
             </div>
             <div class="text-gray-500 text-sm truncate">
-              <span v-if="c.messages.length">
+              <span v-if="getLastMessage(c)">
                 <strong>
                   {{
-                    c.messages[c.messages.length - 1].senderId ===
-                    auth.user?._id
+                    getLastMessage(c)?.senderId === auth.user?._id
                       ? "Ty"
-                      : getOtherParticipant(c)?.name
-                  }}:
+                      : getOtherParticipant(c)?.name || "Nieznany"
+                  }}
                 </strong>
-                {{ c.messages[c.messages.length - 1].content }}
+                {{ getLastMessage(c)?.content }}
               </span>
               <span v-else class="italic">Brak wiadomości</span>
             </div>

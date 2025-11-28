@@ -6,6 +6,7 @@ import { useI18n } from "vue-i18n";
 import Settings from "@/assets/icons/Settings.vue";
 import Loader from "@/components/ui/Loader.vue";
 import ProfileSettingsDialog from "@/components/dialogs/ProfileSettingsDialog.vue";
+import { type Announcement } from "@/types/announcement";
 
 const auth = useAuthStore();
 const announcementStore = useAnnouncementStore();
@@ -17,7 +18,7 @@ const selected = ref<"ann" | "follow">("ann");
 const userLoading = ref(true);
 const showSettings = ref(false);
 
-const followedAnnouncements = ref([]);
+const followedAnnouncements = ref<Announcement[]>([]);
 
 onMounted(async () => {
   userLoading.value = true;

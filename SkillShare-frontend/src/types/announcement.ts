@@ -4,8 +4,8 @@ export interface Announcement {
   desc: string;
   price: number;
   location: string;
-  category: string;
   createdAt?: string;
   imageUrl: string;
-  user: string;
+  user: { _id: string; name: string } | string;
+  category: { name: string } | string;
 }

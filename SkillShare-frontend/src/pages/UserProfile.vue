@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute } from "vue-router";
 import { useAuthStore } from "@/stores/authStore";
 import { useAnnouncementStore } from "@/stores/announcementStore";
 import Loader from "@/components/ui/Loader.vue";
 
 const route = useRoute();
-const router = useRouter();
 const auth = useAuthStore();
 const announcementStore = useAnnouncementStore();
 

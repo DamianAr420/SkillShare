@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import { useCategoryStore } from "@/stores/categoryStore";
 import { useAnnouncementStore } from "@/stores/announcementStore";
 import { useI18n } from "vue-i18n";
@@ -48,7 +48,7 @@ async function fetchAnnouncements() {
 
 function selectCategory(cat: string | null) {
   selectedCategory.value = cat;
-  categoryStore.setSelectedCategory(cat || null);
+  categoryStore.setSelectedCategory(cat || "");
 
   router.replace({
     query: {
@@ -78,6 +78,10 @@ const toggleWatch = async (announcement: any) => {
     return;
   }
 
+  if (!auth.user.watchlist) {
+    auth.user.watchlist = [];
+  }
+
   try {
     const id = announcement._id.toString();
     const index = auth.user.watchlist.findIndex((item: any) => {
@@ -90,7 +94,7 @@ const toggleWatch = async (announcement: any) => {
       auth.user.watchlist.splice(index, 1);
       message = t("announcementDetails.unwatchSuccess");
     } else {
-      auth.user.watchlist.push({ _id: id });
+      auth.user.watchlist.push(id);
       message = t("announcementDetails.watchSuccess");
     }
 
@@ -114,6 +118,15 @@ watch(
   ],
   fetchAnnouncements
 );
+
+const normalizedAnnouncements = computed(() => {
+  return announcementStore.announcements.map((a) => ({
+    ...a,
+    userId: typeof a.user === "string" ? a.user : a.user._id,
+    userName: typeof a.user === "string" ? a.user : a.user.name,
+    categoryName: typeof a.category === "string" ? a.category : a.category.name,
+  }));
+});
 </script>
 
 <template>
@@ -212,7 +225,7 @@ watch(
     </div>
     <div v-else class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
       <div
-        v-for="a in announcementStore.announcements"
+        v-for="a in normalizedAnnouncements"
         :key="a._id"
         class="bg-white rounded-xl shadow-[0_0_5px_1px_rgba(0,0,0,0.25)] hover:shadow-[0_0_8px_1px_rgba(0,0,0,0.25)] hover:shadow-[#F77821] transition p-4 flex flex-col relative"
       >
@@ -232,7 +245,7 @@ watch(
         >
           {{ a.title }}
           <button
-            v-if="!isOwner(a.user._id)"
+            v-if="!isOwner(a.userId)"
             @click.stop="toggleWatch(a)"
             class="ml-2 text-yellow-500 text-2xl transition-transform duration-200"
             :class="{ 'scale-110': isWatched(a) }"
@@ -250,7 +263,7 @@ watch(
           <span
             class="px-4 py-2 rounded-full text-sm font-medium border transition bg-[#F77821] text-white border-[#F77821]"
           >
-            {{ a.category.name }}
+            {{ a.categoryName }}
           </span>
         </div>
       </div>
