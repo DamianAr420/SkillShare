@@ -5,7 +5,7 @@ import path from "path";
 import VueDevTools from "vite-plugin-vue-devtools";
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   base: "/SkillShare/",
   plugins: [vue(), tailwindcss(), VueDevTools()],
   resolve: {
@@ -14,12 +14,15 @@ export default defineConfig({
     },
   },
   server: {
-    proxy: {
-      "/api": {
-        target: "http://localhost:5000",
-        changeOrigin: true,
-        secure: false,
-      },
-    },
+    proxy:
+      mode === "development"
+        ? {
+            "/api": {
+              target: "http://localhost:5000",
+              changeOrigin: true,
+              secure: false,
+            },
+          }
+        : undefined,
   },
-});
+}));

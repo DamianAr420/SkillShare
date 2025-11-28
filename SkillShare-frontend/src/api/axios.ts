@@ -1,7 +1,11 @@
 import axios from "axios";
 
+const API_BASE = import.meta.env.PROD
+  ? "https://skillshare-tgfy.onrender.com/api"
+  : "/api";
+
 const api = axios.create({
-  baseURL: "https://skillshare-tgfy.onrender.com",
+  baseURL: API_BASE,
   headers: {
     "Content-Type": "application/json",
   },
