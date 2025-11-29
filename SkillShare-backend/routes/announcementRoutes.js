@@ -86,7 +86,7 @@ router.post("/add", uploadAnnouncement.single("image"), async (req, res) => {
   try {
     const { title, desc, price, location, category, user, type } = req.body;
 
-    if (!title || !desc || !price || !category || !user || !type) {
+    if (!title || !desc || !category || !user || !type) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
