@@ -8,4 +8,5 @@ export interface Announcement {
   imageUrl: string;
   user: { _id: string; name: string } | string;
   category: { name: string } | string;
+  type: string;
 }

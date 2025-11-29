@@ -21,6 +21,7 @@ const minPrice = ref("");
 const maxPrice = ref("");
 const searchTerm = ref("");
 const locationFilter = ref("");
+const offerType = ref<"offer" | "search" | "">("");
 
 onMounted(async () => {
   await categoryStore.fetchCategories();
@@ -43,6 +44,7 @@ async function fetchAnnouncements() {
     sort: sortOption.value,
     search: searchTerm.value || "",
     location: locationFilter.value || "",
+    type: offerType.value || "",
   });
 }
 
@@ -208,6 +210,11 @@ const normalizedAnnouncements = computed(() => {
           {{ t("announcements.sort.priceDesc") }}
         </option>
       </select>
+      <select v-model="offerType" class="border p-2 rounded w-40">
+        <option value="">{{ t("announcements.type.all") }}</option>
+        <option value="offer">{{ t("announcements.type.offer") }}</option>
+        <option value="search">{{ t("announcements.type.search") }}</option>
+      </select>
     </div>
 
     <!-- ANNOUNCEMENTS GRID -->
@@ -260,6 +267,16 @@ const normalizedAnnouncements = computed(() => {
           <span class="text-[#F77821] font-semibold text-xl"
             >{{ a.price }} zł</span
           >
+          <span
+            class="px-2 py-1 rounded-full text-xs font-medium border"
+            :class="{
+              'bg-green-200 border-green-400 text-green-800':
+                a.type === 'offer',
+              'bg-blue-200 border-blue-400 text-blue-800': a.type === 'search',
+            }"
+          >
+            {{ t(`announcements.type.${a.type}`) }}
+          </span>
           <span
             class="px-4 py-2 rounded-full text-sm font-medium border transition bg-[#F77821] text-white border-[#F77821]"
           >

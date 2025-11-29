@@ -93,7 +93,12 @@
     },
     "loading": "Ładowanie ogłoszeń...",
     "noAnnouncements": "Brak ogłoszeń do wyświetlenia.",
-    "noImage": "Brak zdjęcia"
+    "noImage": "Brak zdjęcia",
+    "type": {
+      "all": "Wszystkie",
+      "offer": "Oferujący",
+      "search": "Szukający"
+    }
   },
 
   "addAnnouncement": {

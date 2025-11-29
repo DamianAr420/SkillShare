@@ -53,12 +53,10 @@ export const useAnnouncementStore = defineStore("announcement", {
     async addAnnouncement(formData: FormData) {
       this.loading = true;
       try {
-        const res = await fetch("/announcements/add", {
-          method: "POST",
-          body: formData,
+        const res = await api.post("/announcements/add", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
         });
-        const data = await res.json();
-        this.announcements.push(data.announcement);
+        this.announcements.push(res.data.announcement);
       } finally {
         this.loading = false;
       }
