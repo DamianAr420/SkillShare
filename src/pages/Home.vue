@@ -103,7 +103,6 @@ const normalizedAnnouncements = computed(() =>
 
 <template>
   <div class="px-4 sm:px-6 lg:px-8">
-    <!-- HEADER -->
     <div class="text-center sm:text-left mb-8 flex flex-col">
       <h1 class="text-3xl sm:text-4xl font-bold">
         {{ t("Home.header.title") }}
@@ -121,9 +120,7 @@ const normalizedAnnouncements = computed(() =>
       </span>
     </div>
 
-    <!-- ================= MOBILE VIEW ================= -->
     <div class="block md:hidden">
-      <!-- Categories -->
       <div class="mb-6">
         <h2 class="text-2xl font-bold mb-4">
           {{ t("Home.categories.title") }}
@@ -148,7 +145,6 @@ const normalizedAnnouncements = computed(() =>
         </div>
       </div>
 
-      <!-- Announcements -->
       <div>
         <h2 class="text-2xl font-bold mb-4">
           {{ t("Home.announcements.title") }}
@@ -203,7 +199,6 @@ const normalizedAnnouncements = computed(() =>
 
     <!-- ================= DESKTOP VIEW ================= -->
     <div class="hidden md:block">
-      <!-- Categories -->
       <div class="mb-6">
         <h2 class="text-3xl font-bold mb-4">
           {{ t("Home.categories.title") }}
@@ -228,7 +223,6 @@ const normalizedAnnouncements = computed(() =>
         </div>
       </div>
 
-      <!-- Announcements -->
       <div>
         <h1 class="text-3xl font-bold mb-6">
           {{ t("Home.announcements.title") }}
