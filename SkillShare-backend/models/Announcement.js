@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const announcementSchema = new mongoose.Schema({
   title: { type: String, required: true },
   desc: { type: String, required: true },
-  price: { type: Number, required: true },
+  price: { type: Number },
   location: String,
   imageUrl: String,
   category: {
