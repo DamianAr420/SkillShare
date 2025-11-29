@@ -6,7 +6,7 @@ import VueDevTools from "vite-plugin-vue-devtools";
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: "/SkillShare/",
+  base: "/",
   plugins: [vue(), tailwindcss(), VueDevTools()],
   resolve: {
     alias: {
