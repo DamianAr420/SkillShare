@@ -38,7 +38,8 @@ router.get("/latest", async (req, res) => {
 
 router.get("/filter", async (req, res) => {
   try {
-    const { category, minPrice, maxPrice, sort, search, location } = req.query;
+    const { category, minPrice, maxPrice, sort, search, location, type } =
+      req.query;
 
     const query = {};
 
@@ -62,6 +63,10 @@ router.get("/filter", async (req, res) => {
         { title: { $regex: search, $options: "i" } },
         { description: { $regex: search, $options: "i" } },
       ];
+    }
+
+    if (type && (type === "offer" || type === "search")) {
+      query.type = type;
     }
 
     let sortOption = {};

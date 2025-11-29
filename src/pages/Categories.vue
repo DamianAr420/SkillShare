@@ -44,7 +44,7 @@ async function fetchAnnouncements() {
     sort: sortOption.value,
     search: searchTerm.value || "",
     location: locationFilter.value || "",
-    type: offerType.value || "",
+    type: offerType.value || undefined,
   });
 }
 
@@ -127,6 +127,7 @@ const normalizedAnnouncements = computed(() => {
     userId: typeof a.user === "string" ? a.user : a.user._id,
     userName: typeof a.user === "string" ? a.user : a.user.name,
     categoryName: typeof a.category === "string" ? a.category : a.category.name,
+    location: a.location || "",
   }));
 });
 </script>
@@ -282,6 +283,7 @@ const normalizedAnnouncements = computed(() => {
           >
             {{ a.categoryName }}
           </span>
+          <span class="text-gray-500 text-sm">{{ a.location }}</span>
         </div>
       </div>
     </div>
