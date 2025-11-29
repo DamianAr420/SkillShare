@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import axios from "axios";
+import api from "@/api/axios";
 import { type Announcement } from "@/types/announcement";
 
 export const useAnnouncementStore = defineStore("announcement", {
@@ -15,7 +15,7 @@ export const useAnnouncementStore = defineStore("announcement", {
       this.loading = true;
       this.error = null;
       try {
-        const res = await axios.get("/api/announcements");
+        const res = await api.get("/api/announcements");
         this.announcements = res.data;
       } catch (err: any) {
         this.error = err.message;
@@ -27,7 +27,7 @@ export const useAnnouncementStore = defineStore("announcement", {
     async fetchLatestAnnouncements() {
       this.loading = true;
       try {
-        const res = await axios.get("/api/announcements/latest");
+        const res = await api.get("/api/announcements/latest");
         this.announcements = res.data;
       } catch (err: any) {
         this.error = err.message;
@@ -39,7 +39,7 @@ export const useAnnouncementStore = defineStore("announcement", {
     async fetchFilteredAnnouncements(filters?: any) {
       this.loading = true;
       try {
-        const res = await axios.get("/api/announcements/filter", {
+        const res = await api.get("/api/announcements/filter", {
           params: filters,
         });
         this.announcements = res.data;
@@ -67,7 +67,7 @@ export const useAnnouncementStore = defineStore("announcement", {
     async fetchUserAnnouncements(userId: string) {
       try {
         this.loading = true;
-        const res = await axios.get(`/api/announcements/user/${userId}`);
+        const res = await api.get(`/api/announcements/user/${userId}`);
         this.announcements = res.data;
       } catch (err) {
         console.error("Error fetching user announcements:", err);
@@ -80,7 +80,7 @@ export const useAnnouncementStore = defineStore("announcement", {
       this.loading = true;
       this.selectedAnnouncement = null;
       try {
-        const { data } = await axios.get(`/api/announcements/${id}`);
+        const { data } = await api.get(`/api/announcements/${id}`);
         this.selectedAnnouncement = data;
       } catch (err) {
         console.error("Nie znaleziono ogłoszenia", err);
@@ -91,7 +91,7 @@ export const useAnnouncementStore = defineStore("announcement", {
 
     async deleteAnnouncement(id: string) {
       try {
-        await axios.delete(`/api/announcements/${id}`);
+        await api.delete(`/api/announcements/${id}`);
         this.announcements = this.announcements.filter((a) => a._id !== id);
       } catch (err) {
         console.error("Error deleting announcement:", err);
@@ -102,7 +102,7 @@ export const useAnnouncementStore = defineStore("announcement", {
     async fetchAnnouncementsByIds(ids: string[]) {
       if (!ids || ids.length === 0) return [];
       try {
-        const res = await axios.post("/api/announcements/byIds", { ids });
+        const res = await api.post("/api/announcements/byIds", { ids });
         return res.data;
       } catch (err) {
         console.error("❌ fetchAnnouncementsByIds failed:", err);
@@ -113,7 +113,7 @@ export const useAnnouncementStore = defineStore("announcement", {
     async updateAnnouncement(id: string, formData: FormData) {
       this.loading = true;
       try {
-        const res = await axios.put(`/api/announcements/${id}`, formData, {
+        const res = await api.put(`/api/announcements/${id}`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
 
