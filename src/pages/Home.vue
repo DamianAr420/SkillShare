@@ -248,15 +248,39 @@ const normalizedAnnouncements = computed(() =>
                   {{ isWatched(ann) ? "★" : "☆" }}
                 </button>
               </div>
+
               <p class="text-gray-600 text-sm line-clamp-4">{{ ann.desc }}</p>
-              <div class="flex justify-between items-center mt-2">
-                <span class="text-[#F77821] font-semibold text-lg"
-                  >{{ ann.price }} zł</span
-                >
+
+              <div
+                class="flex flex-wrap justify-between items-center mt-3 gap-2"
+              >
                 <span
-                  class="px-3 py-1 rounded-full bg-[#F77821] text-white text-xs font-medium"
+                  v-if="ann.price !== null"
+                  class="text-[#F77821] font-semibold text-lg"
+                >
+                  {{ ann.price }} zł
+                </span>
+
+                <span
+                  class="px-2 py-1 rounded-full text-xs font-semibold border flex-shrink-0"
+                  :class="{
+                    'bg-green-200 border-green-400 text-green-800':
+                      ann.type === 'offer',
+                    'bg-blue-200 border-blue-400 text-blue-800':
+                      ann.type === 'search',
+                  }"
+                >
+                  {{ t(`announcements.type.${ann.type}`) }}
+                </span>
+
+                <span
+                  class="px-3 py-1 rounded-full bg-[#F77821] text-white text-xs font-medium flex-shrink-0"
                 >
                   {{ ann.categoryName }}
+                </span>
+
+                <span class="text-gray-500 text-sm italic flex-shrink-0">
+                  {{ ann.location || t("announcements.noLocation") }}
                 </span>
               </div>
             </div>
