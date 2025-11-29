@@ -264,12 +264,18 @@ const normalizedAnnouncements = computed(() => {
 
         <p class="text-sm text-gray-600 flex-grow">{{ a.desc }}</p>
 
-        <div class="flex items-center justify-between mt-3">
-          <span class="text-[#F77821] font-semibold text-xl"
-            >{{ a.price }} zł</span
-          >
+        <div
+          class="flex flex-col sm:flex-row sm:items-center justify-between mt-3 gap-2 sm:gap-4"
+        >
           <span
-            class="px-2 py-1 rounded-full text-xs font-medium border"
+            v-if="a.price !== null"
+            class="text-[#F77821] font-bold text-lg sm:text-xl"
+          >
+            {{ a.price }} zł
+          </span>
+
+          <span
+            class="px-2 py-1 rounded-full text-xs font-semibold border flex-shrink-0"
             :class="{
               'bg-green-200 border-green-400 text-green-800':
                 a.type === 'offer',
@@ -278,12 +284,16 @@ const normalizedAnnouncements = computed(() => {
           >
             {{ t(`announcements.type.${a.type}`) }}
           </span>
+
           <span
-            class="px-4 py-2 rounded-full text-sm font-medium border transition bg-[#F77821] text-white border-[#F77821]"
+            class="px-3 py-1 rounded-full text-sm font-medium border bg-[#F77821] text-white border-[#F77821] flex-shrink-0"
           >
             {{ a.categoryName }}
           </span>
-          <span class="text-gray-500 text-sm">{{ a.location }}</span>
+
+          <span class="text-gray-500 text-sm italic flex-shrink-0">
+            {{ a.location || t("announcements.noLocation") }}
+          </span>
         </div>
       </div>
     </div>
