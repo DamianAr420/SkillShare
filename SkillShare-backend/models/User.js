@@ -6,8 +6,8 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true },
     desc: { type: String },
     avatarUrl: { type: String },
-    email: { type: String, unique: true },
-    phone: { type: String, unique: true },
+    email: { type: String },
+    phone: { type: String },
     watchlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "Announcement" }],
   },
   { timestamps: true }
