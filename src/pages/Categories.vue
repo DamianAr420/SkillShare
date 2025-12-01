@@ -117,6 +117,7 @@ watch(
     maxPrice,
     searchTerm,
     locationFilter,
+    offerType,
   ],
   fetchAnnouncements
 );
