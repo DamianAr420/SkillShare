@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from "vue";
+import { ref, onMounted, watch, computed, onUnmounted } from "vue";
 import { useCategoryStore } from "@/stores/categoryStore";
 import { useAnnouncementStore } from "@/stores/announcementStore";
 import { useI18n } from "vue-i18n";
@@ -22,6 +22,19 @@ const maxPrice = ref("");
 const searchTerm = ref("");
 const locationFilter = ref("");
 const offerType = ref<"offer" | "search" | "">("");
+const isMobile = ref(window.innerWidth < 768);
+
+const updateScreen = () => {
+  isMobile.value = window.innerWidth < 768;
+};
+
+onMounted(() => {
+  window.addEventListener("resize", updateScreen);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", updateScreen);
+});
 
 onMounted(async () => {
   await categoryStore.fetchCategories();
@@ -177,7 +190,7 @@ const normalizedAnnouncements = computed(() => {
             selectedCategory !== cat.name,
         }"
       >
-        {{ cat.name }}
+        {{ t("categories." + cat.name) }}
       </button>
       <button
         @click="selectCategory(null)"
@@ -232,6 +245,106 @@ const normalizedAnnouncements = computed(() => {
     >
       {{ t("announcements.noAnnouncements") }}
     </div>
+    <!-- MOBILE VIEW -->
+    <div v-if="isMobile" class="flex flex-col gap-4">
+      <div
+        v-for="a in normalizedAnnouncements"
+        :key="a._id"
+        class="bg-white rounded-xl shadow-[0px_0px_8px_1px_rgba(0,0,0,0.25)] p-3 active:scale-[0.98] transition cursor-pointer"
+        @click="$router.push(`/announcement/${a._id}`)"
+      >
+        <!-- IMAGE -->
+        <div class="relative">
+          <img
+            :src="
+              a.imageUrl ||
+              'https://via.placeholder.com/300x200?text=' +
+                t('announcements.noImage')
+            "
+            class="h-48 w-full object-cover rounded-lg"
+          />
+
+          <!-- WATCH ICON FLOATING -->
+          <button
+            v-if="!isOwner(a.userId)"
+            @click.stop="toggleWatch(a)"
+            class="absolute top-2 right-2 text-yellow-400 text-3xl bg-white rounded-full shadow p-1 leading-none"
+            :class="{ 'scale-110': isWatched(a) }"
+          >
+            {{ isWatched(a) ? "★" : "☆" }}
+          </button>
+        </div>
+
+        <!-- TITLE -->
+        <h3 class="text-lg font-bold mt-3 mb-1">
+          {{ a.title }}
+        </h3>
+
+        <!-- CATEGORY + TYPE + LOCATION -->
+        <div class="flex flex-wrap items-center gap-2 mb-2">
+          <span
+            class="px-2 py-1 rounded-full text-[11px] font-semibold border"
+            :class="{
+              'bg-green-200 border-green-400 text-green-800':
+                a.type === 'offer',
+              'bg-blue-200 border-blue-400 text-blue-800': a.type === 'search',
+            }"
+          >
+            {{ t(`announcements.type.${a.type}`) }}
+          </span>
+
+          <span
+            class="px-2 py-1 rounded-full text-[11px] bg-[#F77821] text-white font-medium border border-[#F77821]"
+          >
+            {{ t("categories." + a.categoryName) }}
+          </span>
+
+          <span
+            class="ml-auto flex items-center gap-1 bg-orange-50 text-orange-700 text-xs px-2 py-1 rounded-lg border border-orange-200 shadow-sm"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-3 w-3 text-orange-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5 9 6.343 9 8s1.343 3 3 3z"
+              />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 22s8-4.438 8-11a8 8 0 10-16 0c0 6.562 8 11 8 11z"
+              />
+            </svg>
+
+            {{ a.location || t("announcements.noLocation") }}
+          </span>
+        </div>
+
+        <!-- DESCRIPTION -->
+        <p class="text-gray-700 text-sm mb-3 line-clamp-3">
+          {{ a.desc }}
+        </p>
+
+        <!-- PRICE -->
+        <div class="flex justify-between items-center">
+          <span
+            v-if="a.price !== null"
+            class="text-[#F77821] font-bold text-2xl"
+          >
+            {{ a.price }} zł
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- DESKTOP VIEW -->
     <div v-else class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
       <div
         v-for="a in normalizedAnnouncements"
@@ -245,7 +358,6 @@ const normalizedAnnouncements = computed(() => {
               t('announcements.noImage')
           "
           class="h-40 w-full object-cover rounded mb-3 cursor-pointer"
-          alt="img"
           @click="$router.push(`/announcement/${a._id}`)"
         />
 
@@ -289,7 +401,7 @@ const normalizedAnnouncements = computed(() => {
           <span
             class="px-3 py-1 rounded-full text-sm font-medium border bg-[#F77821] text-white border-[#F77821] flex-shrink-0"
           >
-            {{ a.categoryName }}
+            {{ t("categories." + a.categoryName) }}
           </span>
 
           <span class="text-gray-500 text-sm italic flex-shrink-0">

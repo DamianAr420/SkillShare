@@ -21,15 +21,6 @@
     }
   },
 
-  "categories": {
-    "IT": "Informatyka",
-    "Education": "Edukacja",
-    "Home": "Dom",
-    "Technical": "Technika",
-    "Graphics": "Grafika",
-    "Other": "Inna"
-  },
-
   "Footer": {
     "description": "Learn new skills, grow your knowledge, and connect with a global community of creators.",
     "navigation": {

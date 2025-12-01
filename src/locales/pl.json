@@ -24,6 +24,15 @@
     "logout": "Pomyślnie wylogowano!"
   },
 
+  "categories": {
+    "IT": "Informatyka",
+    "Education": "Edukacja",
+    "Home": "Dom",
+    "Technical": "Technika",
+    "Graphics": "Grafika",
+    "Other": "Inna"
+  },
+
   "Footer": {
     "description": "Ucz się nowych umiejętności, rozwijaj swoją wiedzę i łącz się z globalną społecznością twórców.",
     "navigation": {
