@@ -38,10 +38,6 @@ router.post("/register", async (req, res) => {
       .json({ message: "User created successfully", userId: user._id });
   } catch (err) {
     console.error("Register error:", err);
-    if (err.code === 11000) {
-      const field = Object.keys(err.keyValue)[0];
-      return res.status(400).json({ message: `${field} already exists` });
-    }
     res.status(500).json({ message: err.message || "Server error" });
   }
 });
