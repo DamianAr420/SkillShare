@@ -13,7 +13,7 @@ const router = express.Router();
 
 router.post("/register", async (req, res) => {
   try {
-    const { name, password } = req.body;
+    const { name, password, email = null, phone = null } = req.body;
 
     if (!name || !password) {
       return res.status(400).json({ message: "Missing name or password" });
@@ -25,14 +25,24 @@ router.post("/register", async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({ name, password: hashedPassword });
+
+    const user = await User.create({
+      name,
+      password: hashedPassword,
+      email,
+      phone,
+    });
 
     res
       .status(201)
       .json({ message: "User created successfully", userId: user._id });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    console.error("Register error:", err);
+    if (err.code === 11000) {
+      const field = Object.keys(err.keyValue)[0];
+      return res.status(400).json({ message: `${field} already exists` });
+    }
+    res.status(500).json({ message: err.message || "Server error" });
   }
 });
 
