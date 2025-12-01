@@ -150,7 +150,7 @@ const getLastMessage = (conversation: any) => {
     <div class="flex-1 bg-white shadow rounded p-4 flex flex-col">
       <div
         ref="messagesContainer"
-        class="flex-1 overflow-y-auto mb-2 space-y-2 px-1 md:px-0"
+        class="flex-1 overflow-y-auto mb-2 space-y-2 px-1 md:px-0 max-h-[90vh]"
       >
         <div
           v-for="msg in selectedConversation?.messages || []"
