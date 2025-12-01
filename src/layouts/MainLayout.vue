@@ -1,7 +1,10 @@
 <script lang="ts" setup>
+import { useRoute } from "vue-router";
 import NavBar from "../components/NavBar.vue";
 import Footer from "../components/Footer.vue";
 import ChatBubble from "../components/ChatBubble.vue";
+
+const route = useRoute();
 </script>
 
 <template>
@@ -16,6 +19,6 @@ import ChatBubble from "../components/ChatBubble.vue";
 
     <Footer />
 
-    <ChatBubble />
+    <ChatBubble v-if="!route.path.startsWith('/chat')" />
   </div>
 </template>
