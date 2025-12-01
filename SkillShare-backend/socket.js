@@ -13,7 +13,6 @@ export const initSocket = (server) => {
     });
 
     socket.on("sendMessage", ({ conversationId, message }) => {
-      // Emit tylko do innych użytkowników w pokoju
       socket
         .to(conversationId)
         .emit("newMessage", { ...message, conversationId });
