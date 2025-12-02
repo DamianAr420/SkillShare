@@ -1,5 +1,5 @@
 import { Server as SocketIOServer } from "socket.io";
-import User from "../models/User.js";
+import User from "./models/User.js";
 
 export const initSocket = (server) => {
   const io = new SocketIOServer(server, {
