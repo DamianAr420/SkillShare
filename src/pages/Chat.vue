@@ -82,14 +82,6 @@ socket.on("userOnlineStatus", (user: User) => {
   });
 });
 
-onMounted(() => {
-  socket.emit("heartbeat", { userId: auth.user?._id });
-
-  setInterval(() => {
-    socket.emit("heartbeat", { userId: auth.user?._id });
-  }, 30000);
-});
-
 const sendMessage = async () => {
   if (!selectedConversationId.value || !newMessage.value.trim()) return;
 
@@ -139,6 +131,11 @@ const getLastMessage = (conversation: any) => {
 };
 
 onMounted(() => {
+  socket.emit("heartbeat", { userId: auth.user?._id });
+  setInterval(() => {
+    socket.emit("heartbeat", { userId: auth.user?._id });
+  }, 30000);
+
   onlineCheckInterval.value = window.setInterval(() => {}, 1000);
 });
 
