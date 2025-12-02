@@ -215,7 +215,7 @@ const getLastMessage = (conversation: any) => {
                 <span
                   :class="[
                     'inline-block w-2 h-2 rounded-full',
-                    otherUser?.isOnline ? 'bg-green-500' : 'bg-gray-400',
+                    otherUserIsOnline ? 'bg-green-500' : 'bg-gray-400',
                   ]"
                 ></span>
                 <span>
@@ -338,7 +338,7 @@ const getLastMessage = (conversation: any) => {
                   <span
                     :class="[
                       'inline-block w-2 h-2 rounded-full',
-                      otherUser?.isOnline ? 'bg-green-500' : 'bg-gray-400',
+                      otherUserIsOnline ? 'bg-green-500' : 'bg-gray-400',
                     ]"
                   ></span>
                   <span>
