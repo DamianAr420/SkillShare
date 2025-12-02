@@ -9,6 +9,8 @@ const userSchema = new mongoose.Schema(
     email: { type: String },
     phone: { type: String },
     watchlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "Announcement" }],
+    isOnline: { type: Boolean, default: false },
+    lastSeen: { type: Date, default: null },
   },
   { timestamps: true }
 );

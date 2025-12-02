@@ -64,6 +64,14 @@ export const useChatStore = defineStore("chat", () => {
     return conv._id;
   };
 
+  const updateUserStatus = (userId: string, isOnline: boolean) => {
+    conversations.value.forEach((conv) => {
+      conv.participants.forEach((p: any) => {
+        if (p._id === userId) p.isOnline = isOnline;
+      });
+    });
+  };
+
   return {
     conversations,
     loading,
@@ -71,5 +79,6 @@ export const useChatStore = defineStore("chat", () => {
     fetchConversation,
     sendMessage,
     startConversation,
+    updateUserStatus,
   };
 });

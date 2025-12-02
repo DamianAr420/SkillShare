@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { useRoute } from "vue-router";
 import NavBar from "@/components/NavBar.vue";
-import Footer from "@/components/Footer.vue";
+import FooterComp from "@/components/Footer.vue";
 import ChatBubble from "@/components/ChatBubble.vue";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -19,7 +19,7 @@ const auth = useAuthStore();
       <router-view />
     </main>
 
-    <Footer />
+    <FooterComp v-if="!route.path.startsWith('/chat')" />
 
     <ChatBubble
       v-if="!route.path.startsWith('/chat') && auth.isAuthenticated"

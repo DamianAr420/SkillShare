@@ -52,7 +52,11 @@ function logout() {
     class="w-full flex justify-between items-center px-6 py-4 shadow-md relative"
   >
     <button @click="$router.push({ name: 'Home' })">
-      <img class="max-h-24 object-contain" :src="SkillShareLogo" alt="Logo" />
+      <img
+        class="max-h-14 md:max-h-24 object-contain"
+        :src="SkillShareLogo"
+        alt="Logo"
+      />
     </button>
 
     <nav class="hidden md:flex gap-2 text-2xl font-bold">
@@ -114,7 +118,7 @@ function logout() {
   >
     <div
       v-if="mobileMenuOpen"
-      class="md:hidden bg-[#F9FAFB] shadow-md w-full absolute top-32 left-0 flex flex-col items-center gap-4 py-4 z-40"
+      class="md:hidden bg-[#F9FAFB] shadow-md w-full absolute top-22 left-0 flex flex-col items-center gap-4 py-4 z-40"
     >
       <button
         @click="
