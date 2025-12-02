@@ -7,6 +7,7 @@ import Loader from "@/components/ui/Loader.vue";
 import { io } from "socket.io-client";
 import { useBreakpoints } from "@/composables/useBreakpoints";
 import ArrowLeft from "@/assets/icons/ArrowLeft.vue";
+import { timeAgo } from "@/utils/time";
 
 const { isMobile } = useBreakpoints();
 
@@ -20,7 +21,6 @@ const socket = io("https://skillshare-tgfy.onrender.com", {
 const selectedConversationId = ref<string | null>(null);
 const newMessage = ref("");
 const messagesContainer = ref<HTMLElement | null>(null);
-
 const showMobileChat = ref(false);
 
 onMounted(async () => {
@@ -98,6 +98,10 @@ const getOtherParticipant = (conversation: any) => {
   return conversation.participants.find((p: any) => p._id !== auth.user?._id);
 };
 
+const otherUser = computed(() =>
+  getOtherParticipant(selectedConversation.value)
+);
+
 const getLastMessage = (conversation: any) => {
   return conversation.messages.length
     ? conversation.messages[conversation.messages.length - 1]
@@ -106,7 +110,7 @@ const getLastMessage = (conversation: any) => {
 </script>
 
 <template>
-  <div class="h-[82vh] max-w-6xl mx-auto">
+  <div class="h-[80vh] max-w-6xl mx-auto">
     <!-- ============ MOBILE ============ -->
     <template v-if="isMobile">
       <!-- lista rozmów -->
@@ -160,7 +164,7 @@ const getLastMessage = (conversation: any) => {
           <!-- Back button -->
           <button
             class="flex items-center justify-center w-10 h-10 bg-[#F77821] rounded-xl text-white active:scale-95 transition"
-            @click="showMobileChat = false"
+            @click="(showMobileChat = false), (selectedConversationId = null)"
           >
             <ArrowLeft class="w-6 h-6" />
           </button>
@@ -178,20 +182,18 @@ const getLastMessage = (conversation: any) => {
                 {{ getOtherParticipant(selectedConversation)?.name }}
               </span>
 
-              <div class="flex items-center gap-1 text-xs">
+              <div class="flex items-center gap-1 text-xs text-gray-500">
                 <span
                   :class="[
                     'inline-block w-2 h-2 rounded-full',
-                    getOtherParticipant(selectedConversation)?.isOnline
-                      ? 'bg-green-500'
-                      : 'bg-gray-400',
+                    otherUser?.isOnline ? 'bg-green-500' : 'bg-gray-400',
                   ]"
                 ></span>
-                <span class="text-gray-500 text-xs">
+                <span>
                   {{
-                    getOtherParticipant(selectedConversation)?.isOnline
+                    otherUser?.isOnline
                       ? "online"
-                      : "offline"
+                      : timeAgo(otherUser?.lastSeen)
                   }}
                 </span>
               </div>
@@ -288,6 +290,41 @@ const getLastMessage = (conversation: any) => {
 
         <!-- okno czatu -->
         <div class="flex-1 bg-white shadow rounded p-4 flex flex-col">
+          <div
+            v-if="selectedConversation"
+            class="flex items-center h-16 px-4 mb-3 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.15)] bg-white sticky top-0 z-0"
+          >
+            <!-- User info -->
+            <div class="flex items-center gap-3">
+              <img
+                :src="getOtherParticipant(selectedConversation)?.avatarUrl"
+                alt="avatar"
+                class="w-11 h-11 rounded-full object-cover shadow"
+              />
+
+              <div class="flex flex-col leading-tight">
+                <span class="font-semibold text-base">
+                  {{ getOtherParticipant(selectedConversation)?.name }}
+                </span>
+
+                <div class="flex items-center gap-1 text-xs text-gray-500">
+                  <span
+                    :class="[
+                      'inline-block w-2 h-2 rounded-full',
+                      otherUser?.isOnline ? 'bg-green-500' : 'bg-gray-400',
+                    ]"
+                  ></span>
+                  <span>
+                    {{
+                      otherUser?.isOnline
+                        ? "online"
+                        : timeAgo(otherUser?.lastSeen)
+                    }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
           <div
             ref="messagesContainer"
             class="flex-1 overflow-y-auto mb-2 space-y-2"

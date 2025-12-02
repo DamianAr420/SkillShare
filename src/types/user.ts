@@ -8,4 +8,6 @@ export interface User {
   email: string;
   avatarUrl: string;
   watchlist?: string[];
+  isOnline?: boolean;
+  lastSeen?: string;
 }

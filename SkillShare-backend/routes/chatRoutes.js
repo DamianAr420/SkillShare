@@ -9,7 +9,7 @@ router.get("/conversations", authMiddleware, async (req, res) => {
   const userId = req.user.userId;
   const conversations = await Conversation.find({
     participants: userId,
-  }).populate("participants", "name avatarUrl");
+  }).populate("participants", "name avatarUrl lastSeen");
   res.json(conversations);
 });
 
