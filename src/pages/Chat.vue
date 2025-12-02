@@ -8,6 +8,7 @@ import { io } from "socket.io-client";
 import { useBreakpoints } from "@/composables/useBreakpoints";
 import ArrowLeft from "@/assets/icons/ArrowLeft.vue";
 import { timeAgo } from "@/utils/time";
+import { type User } from "@/types/user";
 
 const { isMobile } = useBreakpoints();
 
@@ -70,6 +71,24 @@ socket.on("newMessage", (msg) => {
   }
 });
 
+socket.on("userOnlineStatus", (user: User) => {
+  chatStore.conversations.forEach((conv) => {
+    conv.participants.forEach((p: any) => {
+      if (p._id === user._id) {
+        p.lastSeen = user.lastSeen;
+      }
+    });
+  });
+});
+
+onMounted(() => {
+  socket.emit("heartbeat", { userId: auth.user?._id });
+
+  setInterval(() => {
+    socket.emit("heartbeat", { userId: auth.user?._id });
+  }, 30000);
+});
+
 const sendMessage = async () => {
   if (!selectedConversationId.value || !newMessage.value.trim()) return;
 
@@ -101,6 +120,16 @@ const getOtherParticipant = (conversation: any) => {
 const otherUser = computed(() =>
   getOtherParticipant(selectedConversation.value)
 );
+
+const otherUserIsOnline = computed(() => {
+  if (!otherUser.value?.lastSeen) return false;
+
+  const lastSeen = new Date(otherUser.value.lastSeen);
+  const now = new Date();
+  const diff = (now.getTime() - lastSeen.getTime()) / 1000;
+
+  return diff < 60;
+});
 
 const getLastMessage = (conversation: any) => {
   return conversation.messages.length
@@ -191,9 +220,7 @@ const getLastMessage = (conversation: any) => {
                 ></span>
                 <span>
                   {{
-                    otherUser?.isOnline
-                      ? "online"
-                      : timeAgo(otherUser?.lastSeen)
+                    otherUserIsOnline ? "online" : timeAgo(otherUser?.lastSeen)
                   }}
                 </span>
               </div>
@@ -316,7 +343,7 @@ const getLastMessage = (conversation: any) => {
                   ></span>
                   <span>
                     {{
-                      otherUser?.isOnline
+                      otherUserIsOnline
                         ? "online"
                         : timeAgo(otherUser?.lastSeen)
                     }}

@@ -54,6 +54,15 @@ export const initSocket = (server) => {
         });
       }
     });
+
+    socket.on("heartbeat", async (data) => {
+      const { userId } = data;
+
+      await User.findByIdAndUpdate(userId, { lastSeen: new Date() });
+
+      const user = await User.findById(userId);
+      io.emit("userOnlineStatus", user);
+    });
   });
 
   return io;
