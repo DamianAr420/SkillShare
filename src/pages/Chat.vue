@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from "vue";
+import { ref, computed, onMounted, watch, nextTick, onUnmounted } from "vue";
 import { useChatStore } from "@/stores/chatStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useRoute } from "vue-router";
@@ -23,6 +23,7 @@ const selectedConversationId = ref<string | null>(null);
 const newMessage = ref("");
 const messagesContainer = ref<HTMLElement | null>(null);
 const showMobileChat = ref(false);
+const onlineCheckInterval = ref<number | null>(null);
 
 onMounted(async () => {
   await chatStore.fetchConversations();
@@ -136,6 +137,14 @@ const getLastMessage = (conversation: any) => {
     ? conversation.messages[conversation.messages.length - 1]
     : null;
 };
+
+onMounted(() => {
+  onlineCheckInterval.value = window.setInterval(() => {}, 1000);
+});
+
+onUnmounted(() => {
+  if (onlineCheckInterval.value) clearInterval(onlineCheckInterval.value);
+});
 </script>
 
 <template>
