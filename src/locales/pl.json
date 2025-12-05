@@ -38,17 +38,23 @@
     "navigation": {
       "title": "Nawigacja",
       "home": "Strona główna",
-      "categories": "Kategorie"
+      "categories": "Szukaj"
     },
     "contact": {
       "title": "Kontakt",
-      "email": "Email: support@skillshare.com",
-      "phone": "Tel: +48 123 456 789"
+      "email1": "Email: ",
+      "email2": "damianarg2115@gmail.com",
+      "copyEmail": "E-mail: {email} został skopiowany!",
+      "phone": "Tel: +48 519 674 593"
     },
     "social": {
       "title": "Social Media"
     },
-    "copyright": "© {year} SkillShare. Wszelkie prawa zastrzeżone."
+    "copyright": "© {year} SkillShare. Wszelkie prawa zastrzeżone.",
+    "about": {
+      "title": "O serwisie",
+      "description": "SkillShare to platforma stworzona z myślą o osobach, które chcą wymieniać się umiejętnościami, usługami i pasjami. Naszym celem jest łączenie ludzi oraz ułatwianie współpracy w lokalnych społecznościach."
+    }
   },
 
   "LoginDialog": {

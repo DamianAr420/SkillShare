@@ -375,18 +375,20 @@ const normalizedAnnouncements = computed(() => {
           </button>
         </h3>
 
-        <p class="text-sm text-gray-600 flex-grow">{{ a.desc }}</p>
+        <p class="text-sm text-gray-600 flex-grow">
+          {{ a.desc }}
+        </p>
+
+        <span
+          v-if="a.price !== null"
+          class="text-[#F77821] font-bold text-lg sm:text-xl mt-2 text-right"
+        >
+          {{ a.price }} zł
+        </span>
 
         <div
           class="flex flex-col sm:flex-row sm:items-center justify-between mt-3 gap-2 sm:gap-4"
         >
-          <span
-            v-if="a.price !== null"
-            class="text-[#F77821] font-bold text-lg sm:text-xl"
-          >
-            {{ a.price }} zł
-          </span>
-
           <span
             class="px-2 py-1 rounded-full text-xs font-semibold border flex-shrink-0"
             :class="{
