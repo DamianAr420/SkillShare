@@ -115,29 +115,40 @@ const closeSettings = () => {
 
     <!-- Tabs -->
     <div class="mt-8">
-      <div class="flex flex-wrap gap-3 justify-center sm:justify-start">
-        <button
-          @click="selected = 'ann'"
-          class="py-2 px-6 rounded-full border border-[#F77821] font-medium transition-all duration-200"
-          :class="
-            selected === 'ann'
-              ? 'bg-[#F77821] text-white shadow-md'
-              : 'bg-white text-[#F77821] hover:bg-[#F77821]/10'
-          "
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <!-- Zakładki -->
+        <div class="flex flex-wrap gap-3 justify-center sm:justify-start">
+          <button
+            @click="selected = 'ann'"
+            class="py-2 px-6 rounded-full border border-[#F77821] font-medium transition-all duration-200"
+            :class="
+              selected === 'ann'
+                ? 'bg-[#F77821] text-white shadow-md'
+                : 'bg-white text-[#F77821] hover:bg-[#F77821]/10'
+            "
+          >
+            {{ t("Profile.announcements") }}
+          </button>
+          <button
+            @click="selected = 'follow'"
+            class="py-2 px-6 rounded-full border border-[#F77821] font-medium transition-all duration-200"
+            :class="
+              selected === 'follow'
+                ? 'bg-[#F77821] text-white shadow-md'
+                : 'bg-white text-[#F77821] hover:bg-[#F77821]/10'
+            "
+          >
+            {{ t("Profile.following") }}
+          </button>
+        </div>
+
+        <!-- Dodaj ogłoszenie -->
+        <RouterLink
+          to="/add-announcement"
+          class="inline-flex items-center justify-center px-5 py-2.5 bg-gradient-to-r from-[#F77821] to-[#ff973b] text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition cursor-pointer"
         >
-          {{ t("Profile.announcements") }}
-        </button>
-        <button
-          @click="selected = 'follow'"
-          class="py-2 px-6 rounded-full border border-[#F77821] font-medium transition-all duration-200"
-          :class="
-            selected === 'follow'
-              ? 'bg-[#F77821] text-white shadow-md'
-              : 'bg-white text-[#F77821] hover:bg-[#F77821]/10'
-          "
-        >
-          {{ t("Profile.following") }}
-        </button>
+          {{ t("announcements.addButton") }}
+        </RouterLink>
       </div>
 
       <div class="h-[2px] bg-[#F77821]/20 my-6"></div>
