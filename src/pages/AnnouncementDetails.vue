@@ -7,6 +7,7 @@ import Loader from "@/components/ui/Loader.vue";
 import { useI18n } from "vue-i18n";
 import { useToast } from "@/composables/useToast";
 import ConfirmDialog from "@/components/dialogs/ConfirmDialog.vue";
+import ImageDialog from "@/components/dialogs/ImageDialog.vue";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -17,6 +18,8 @@ const { showToast } = useToast();
 
 const isOwner = ref(false);
 const showConfirm = ref(false);
+const showImageModal = ref(false);
+const modalImageSrc = ref("");
 
 onMounted(async () => {
   const id = route.params.id as string;
@@ -159,8 +162,14 @@ const goToProfile = (userId: string) => {
             'https://via.placeholder.com/800x400?text=' +
               t('announcementDetails.noImage')
           "
-          class="w-full max-h-[400px] object-cover"
+          class="w-full max-h-[400px] object-cover cursor-pointer"
           alt="Announcement image"
+          @click="
+            () => {
+              modalImageSrc = announcementStore.selectedAnnouncement.imageUrl;
+              showImageModal = true;
+            }
+          "
         />
       </div>
 
@@ -301,6 +310,12 @@ const goToProfile = (userId: string) => {
     :cancelText="t('announcementDetails.confirmDelete.no')"
     @confirm="confirmDelete"
     @cancel="showConfirm = false"
+  />
+
+  <ImageDialog
+    :src="modalImageSrc"
+    :visible="showImageModal"
+    @close="showImageModal = false"
   />
 </template>
 
