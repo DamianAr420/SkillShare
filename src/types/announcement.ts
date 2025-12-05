@@ -9,4 +9,6 @@ export interface Announcement {
   user: { _id: string; name: string } | string;
   category: { name: string } | string;
   type: string;
+  showPhone: boolean;
+  showEmail: boolean;
 }

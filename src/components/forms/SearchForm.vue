@@ -22,6 +22,8 @@ const location = ref("");
 const category = ref("");
 const imageFile = ref<File | null>(null);
 const previewUrl = ref("");
+const showPhone = ref(true);
+const showEmail = ref(true);
 
 const onFileChange = (e: Event) => {
   const target = e.target as HTMLInputElement;
@@ -46,8 +48,13 @@ const handleSubmit = async () => {
     formData.append("location", location.value);
     formData.append("category", category.value);
     formData.append("user", authStore.user?._id || "");
-    if (imageFile.value) formData.append("image", imageFile.value);
     formData.append("type", "search");
+    formData.append("showPhone", showPhone.value ? "true" : "false");
+    formData.append("showEmail", showEmail.value ? "true" : "false");
+
+    if (imageFile.value) {
+      formData.append("image", imageFile.value);
+    }
 
     await announcementStore.addAnnouncement(formData);
 
@@ -131,6 +138,75 @@ const handleSubmit = async () => {
           {{ t("addAnnouncement.imageHint") }}
         </p>
       </div>
+
+      <div class="flex flex-col sm:flex-row gap-6">
+        <!-- Telefon -->
+        <div
+          class="flex flex-col flex-1 justify-center items-center text-center"
+        >
+          <label class="font-medium text-gray-700 mb-2">
+            {{ t("addAnnouncement.showPhone") }}
+          </label>
+          <button
+            type="button"
+            @click="showPhone = !showPhone"
+            :class="showPhone ? 'bg-[#F77821]' : 'bg-gray-300'"
+            class="relative w-20 h-10 rounded-full cursor-pointer flex items-center px-1 justify-between transition-colors duration-200"
+          >
+            <span
+              class="font-medium ml-1"
+              :class="showPhone ? 'text-white' : 'text-gray-400'"
+            >
+              {{ t("addAnnouncement.yes") }}
+            </span>
+            <span
+              class="font-medium mr-1"
+              :class="!showPhone ? 'text-white' : 'text-gray-400'"
+            >
+              {{ t("addAnnouncement.no") }}
+            </span>
+
+            <div
+              class="absolute w-10 h-8 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out"
+              :class="showPhone ? 'translate-x-8' : 'translate-x-0'"
+            ></div>
+          </button>
+        </div>
+
+        <!-- Email -->
+        <div
+          class="flex flex-col flex-1 justify-center items-center text-center"
+        >
+          <label class="font-medium text-gray-700 mb-2">
+            {{ t("addAnnouncement.showEmail") }}
+          </label>
+          <button
+            type="button"
+            @click="showEmail = !showEmail"
+            :class="showEmail ? 'bg-[#F77821]' : 'bg-gray-300'"
+            class="relative w-20 h-10 rounded-full cursor-pointer flex items-center px-1 justify-between transition-colors duration-200"
+          >
+            <span
+              class="font-medium ml-1"
+              :class="showEmail ? 'text-white' : 'text-gray-400'"
+            >
+              {{ t("addAnnouncement.yes") }}
+            </span>
+            <span
+              class="font-medium mr-1"
+              :class="!showEmail ? 'text-white' : 'text-gray-400'"
+            >
+              {{ t("addAnnouncement.no") }}
+            </span>
+
+            <div
+              class="absolute w-10 h-8 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out"
+              :class="showEmail ? 'translate-x-8' : 'translate-x-0'"
+            ></div>
+          </button>
+        </div>
+      </div>
+
       <button
         type="submit"
         class="mt-6 bg-[#F77821] hover:bg-[#ff973b] text-white font-semibold py-4 rounded-2xl shadow-lg transition-all duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"

@@ -89,7 +89,17 @@ router.get("/filter", async (req, res) => {
 
 router.post("/add", uploadAnnouncement.single("image"), async (req, res) => {
   try {
-    const { title, desc, price, location, category, user, type } = req.body;
+    const {
+      title,
+      desc,
+      price,
+      location,
+      category,
+      user,
+      type,
+      showPhone,
+      showEmail,
+    } = req.body;
 
     if (!title || !desc || !category || !user || !type) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -111,6 +121,9 @@ router.post("/add", uploadAnnouncement.single("image"), async (req, res) => {
 
     const imageUrl = req.file?.path || "";
 
+    const showPhoneBool = showPhone === "true" || showPhone === true;
+    const showEmailBool = showEmail === "true" || showEmail === true;
+
     const newAnnouncement = new Announcement({
       title,
       desc,
@@ -120,6 +133,8 @@ router.post("/add", uploadAnnouncement.single("image"), async (req, res) => {
       category: categoryId,
       user,
       type,
+      showPhone: showPhoneBool,
+      showEmail: showEmailBool,
     });
 
     await newAnnouncement.save();

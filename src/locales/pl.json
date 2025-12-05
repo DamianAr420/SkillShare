@@ -129,7 +129,11 @@
     "success": "✅ Ogłoszenie zostało dodane!",
     "error": "❌ Wystąpił błąd przy dodawaniu ogłoszenia.",
     "imageLabel": "Zdjęcie ogłoszenia",
-    "imageHint": "Kliknij, aby dodać zdjęcie"
+    "imageHint": "Kliknij, aby dodać zdjęcie",
+    "showPhone": "Czy chcesz, aby Twój numer telefonu był widoczny w ogłoszeniu?",
+    "showEmail": "Czy chcesz, aby Twój e-mail był widoczny w ogłoszeniu?",
+    "yes": "Tak",
+    "no": "Nie"
   },
 
   "announcementDetails": {

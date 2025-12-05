@@ -213,7 +213,10 @@ const goToProfile = (userId: string) => {
             </span>
           </div>
 
-          <div class="mt-6 flex justify-between items-center">
+          <div
+            v-if="announcementStore.selectedAnnouncement.price"
+            class="mt-6 flex justify-between items-center"
+          >
             <span class="text-3xl font-semibold text-[#F77821]">
               {{ announcementStore.selectedAnnouncement.price }} zł
             </span>
@@ -245,7 +248,7 @@ const goToProfile = (userId: string) => {
                 </p>
               </div>
 
-              <div>
+              <div v-if="announcementStore.selectedAnnouncement.showPhone">
                 <p class="text-gray-500 text-sm">
                   {{ t("announcementDetails.seller.phone") }}
                 </p>
@@ -257,7 +260,7 @@ const goToProfile = (userId: string) => {
                 </p>
               </div>
 
-              <div>
+              <div v-if="announcementStore.selectedAnnouncement.showEmail">
                 <p class="text-gray-500 text-sm">
                   {{ t("announcementDetails.seller.email") }}
                 </p>

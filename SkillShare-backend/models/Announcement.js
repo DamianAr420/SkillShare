@@ -13,6 +13,8 @@ const announcementSchema = new mongoose.Schema({
   },
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   type: { type: String, enum: ["offer", "search"], required: true },
+  showPhone: { type: Boolean, default: true },
+  showEmail: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now },
 });
 
