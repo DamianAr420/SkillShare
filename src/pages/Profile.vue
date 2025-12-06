@@ -187,7 +187,10 @@ const closeSettings = () => {
               <h3 class="text-lg font-semibold mb-1">{{ a.title }}</h3>
               <p class="text-sm text-gray-600 flex-grow">{{ a.desc }}</p>
               <div class="flex items-center justify-between mt-3">
-                <span class="text-[#F77821] font-semibold text-xl">
+                <span
+                  v-if="a.price"
+                  class="text-[#F77821] font-semibold text-xl"
+                >
                   {{ a.price }} zł
                 </span>
               </div>
@@ -227,7 +230,10 @@ const closeSettings = () => {
               <h3 class="text-lg font-semibold mb-1">{{ a.title }}</h3>
               <p class="text-sm text-gray-600 flex-grow">{{ a.desc }}</p>
               <div class="flex items-center justify-between mt-3">
-                <span class="text-[#F77821] font-semibold text-xl">
+                <span
+                  v-if="a.price"
+                  class="text-[#F77821] font-semibold text-xl"
+                >
                   {{ a.price }} zł
                 </span>
               </div>
