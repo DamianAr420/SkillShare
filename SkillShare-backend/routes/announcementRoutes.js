@@ -119,7 +119,8 @@ router.post("/add", uploadAnnouncement.single("image"), async (req, res) => {
       categoryId = foundCategory._id;
     }
 
-    const imageUrl = req.file?.path || "";
+    const imageUrl = req.file.path;
+    const publicId = req.file.filename;
 
     const showPhoneBool = showPhone === "true" || showPhone === true;
     const showEmailBool = showEmail === "true" || showEmail === true;
@@ -130,6 +131,7 @@ router.post("/add", uploadAnnouncement.single("image"), async (req, res) => {
       price,
       location,
       imageUrl,
+      imagePublicId: publicId,
       category: categoryId,
       user,
       type,
@@ -244,7 +246,6 @@ router.put("/:id", uploadAnnouncement.single("image"), async (req, res) => {
       return res.status(404).json({ message: "Announcement not found" });
     }
 
-    // Przygotowanie danych do aktualizacji
     const updateData = {
       title: req.body.title,
       desc: req.body.desc,
@@ -253,28 +254,37 @@ router.put("/:id", uploadAnnouncement.single("image"), async (req, res) => {
       category: req.body.category,
     };
 
-    // Jeśli wysłano nowe zdjęcie
     if (req.file) {
-      // Usuń stare zdjęcie z Cloudinary, jeśli istnieje
-      if (
-        announcement.imageUrl &&
-        announcement.imageUrl.includes("cloudinary")
-      ) {
+      if (announcement.imagePublicId) {
         try {
-          const urlParts = announcement.imageUrl.split("/");
-          const fileName = urlParts[urlParts.length - 1].split(".")[0];
-          const publicId = `announcements/${fileName}`;
-
-          await cloudinary.uploader.destroy(publicId);
-          console.log("🗑️ Old image removed:", publicId);
-        } catch (deleteErr) {
-          console.error("Failed to delete old image:", deleteErr);
+          await cloudinary.uploader.destroy(announcement.imagePublicId);
+          console.log("🗑️ Old image removed:", announcement.imagePublicId);
+        } catch (err) {
+          console.error("❌ Failed to delete old image:", err);
         }
       }
 
-      // Dodaj nowe zdjęcie z cloudinary
       updateData.imageUrl = req.file.path;
+      updateData.imagePublicId = req.file.filename;
     }
+
+    let priceValue = null;
+
+    if ("price" in req.body) {
+      if (
+        req.body.price !== "" &&
+        req.body.price !== "null" &&
+        req.body.price !== null &&
+        req.body.price !== undefined
+      ) {
+        priceValue = Number(req.body.price);
+        if (isNaN(priceValue)) {
+          return res.status(400).json({ message: "Invalid price format" });
+        }
+      }
+    }
+
+    updateData.price = priceValue;
 
     const updated = await Announcement.findByIdAndUpdate(
       req.params.id,

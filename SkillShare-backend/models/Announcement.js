@@ -3,9 +3,10 @@ import mongoose from "mongoose";
 const announcementSchema = new mongoose.Schema({
   title: { type: String, required: true },
   desc: { type: String, required: true },
-  price: { type: Number },
+  price: Number,
   location: String,
   imageUrl: String,
+  imagePublicId: String,
   category: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Category",

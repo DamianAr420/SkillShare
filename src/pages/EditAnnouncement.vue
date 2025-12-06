@@ -103,9 +103,9 @@ const handleUpdate = async () => {
 
       <div class="flex flex-col sm:flex-row gap-4">
         <input
+          v-if="announcementStore.selectedAnnouncement.price"
           v-model="price"
           type="number"
-          required
           :placeholder="t('addAnnouncement.pricePlaceholder')"
           class="border border-gray-300 p-4 rounded-xl flex-1"
         />
