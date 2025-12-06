@@ -166,7 +166,9 @@
     "watchError": "Nie udało się zaobserwować tego ogłoszenia!",
     "watchSuccess": "Ogłoszenie zostało zaobserwowane!",
     "unwatchSuccess": "Ogłoszenie nie jest już obserwowane!",
-    "loginToWatch": "Zaloguj się aby zaobserwować to ogłoszenie!"
+    "loginToWatch": "Zaloguj się aby zaobserwować to ogłoszenie!",
+    "copied": "Email: {email} został skopiowany!",
+    "copyError": "Nie udało się skopiować"
   },
 
   "Profile": {

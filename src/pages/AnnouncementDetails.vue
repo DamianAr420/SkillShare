@@ -112,28 +112,38 @@ const goToProfile = (userId: string) => {
     router.push(`/profile`);
   }
 };
+
+const copyToClipboard = async (text: string) => {
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast(t("announcementDetails.copied", { email: text }), "success");
+  } catch (err) {
+    showToast(t("announcementDetails.copyError"), "error");
+  }
+};
 </script>
 
 <template>
   <div class="max-w-6xl mx-auto p-6">
-    <div class="flex justify-between mb-6">
+    <div class="flex flex-col gap-3 mb-6 md:flex-row md:justify-between">
       <button
         @click="router.back()"
-        class="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#F77821]/10 text-[#F77821] font-medium hover:bg-[#F77821]/20 transition-all duration-200 shadow-sm"
+        class="flex items-center gap-2 px-4 py-2 w-full md:w-auto rounded-lg bg-[#F77821]/10 text-[#F77821] font-medium hover:bg-[#F77821]/20 transition-all duration-200 shadow-sm"
       >
         ⬅ {{ t("announcementDetails.back") }}
       </button>
 
-      <div v-if="isOwner" class="flex gap-3">
+      <div v-if="isOwner" class="flex gap-3 w-full md:w-auto">
         <button
           @click="handleEdit"
-          class="px-4 py-2 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition-all duration-200 shadow-sm"
+          class="px-4 py-2 w-full md:w-auto rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition-all duration-200 shadow-sm"
         >
           ✏️ {{ t("announcementDetails.edit") }}
         </button>
+
         <button
           @click="handleDelete"
-          class="px-4 py-2 rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition-all duration-200 shadow-sm"
+          class="px-4 py-2 w-full md:w-auto rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition-all duration-200 shadow-sm"
         >
           🗑 {{ t("announcementDetails.delete") }}
         </button>
@@ -273,7 +283,14 @@ const goToProfile = (userId: string) => {
                 <p class="text-gray-500 text-sm">
                   {{ t("announcementDetails.seller.email") }}
                 </p>
-                <p class="text-gray-800 font-medium break-words">
+                <p
+                  class="text-gray-800 font-medium break-words cursor-pointer hover:underline"
+                  @click="
+                    copyToClipboard(
+                      announcementStore.selectedAnnouncement.user.email
+                    )
+                  "
+                >
                   {{
                     announcementStore.selectedAnnouncement.user.email ||
                     t("announcementDetails.seller.no")
