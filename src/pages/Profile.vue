@@ -6,11 +6,13 @@ import { useI18n } from "vue-i18n";
 import Settings from "@/assets/icons/Settings.vue";
 import Loader from "@/components/ui/Loader.vue";
 import ProfileSettingsDialog from "@/components/dialogs/ProfileSettingsDialog.vue";
-import { type Announcement } from "@/types/announcement";
+import AnnouncementCard from "@/components/AnnouncementCard.vue";
+import { useBreakpoints } from "@/composables/useBreakpoints";
 
 const auth = useAuthStore();
 const announcementStore = useAnnouncementStore();
 const { t } = useI18n();
+const { isMobile } = useBreakpoints();
 
 const username = ref("");
 const desc = ref("");
@@ -18,43 +20,38 @@ const selected = ref<"ann" | "follow">("ann");
 const userLoading = ref(true);
 const showSettings = ref(false);
 
-const followedAnnouncements = ref<Announcement[]>([]);
+// Aktualizuj username i opis po zmianach użytkownika
+const updateUserInfo = () => {
+  username.value = auth.user?.name || "Użytkownik";
+  desc.value = auth.user?.desc || "Brak opisu użytkownika.";
+};
+
+// Załaduj dane użytkownika i ogłoszenia
+const loadProfileData = async () => {
+  userLoading.value = true;
+
+  try {
+    await auth.fetchUser();
+    updateUserInfo();
+
+    if (auth.user?._id) {
+      await announcementStore.fetchUserAnnouncements(auth.user._id);
+      if (auth.user.watchlist?.length) {
+        await announcementStore.fetchFollowedAnnouncements(auth.user.watchlist);
+      }
+    }
+  } catch (err) {
+    console.error("❌ Failed to load profile data:", err);
+  } finally {
+    userLoading.value = false;
+  }
+};
 
 onMounted(async () => {
-  userLoading.value = true;
-  await auth.fetchUser();
-  username.value = auth.user?.name || "Użytkownik";
-  desc.value = auth.user?.desc || "Brak opisu użytkownika.";
-  userLoading.value = false;
-
-  if (auth.user?._id) {
-    await announcementStore.fetchUserAnnouncements(auth.user._id);
-  }
-
-  await loadFollowedAnnouncements();
+  await loadProfileData();
 });
 
-const loadFollowedAnnouncements = async () => {
-  if (!auth.user?.watchlist || auth.user.watchlist.length === 0) {
-    followedAnnouncements.value = [];
-    return;
-  }
-  try {
-    followedAnnouncements.value =
-      await announcementStore.fetchAnnouncementsByIds(auth.user.watchlist);
-    console.log(followedAnnouncements.value);
-  } catch (err) {
-    console.error("❌ Failed to load followed announcements:", err);
-    followedAnnouncements.value = [];
-  }
-};
-
-const handleUpdated = async () => {
-  await auth.fetchUser();
-  username.value = auth.user?.name || "Użytkownik";
-  desc.value = auth.user?.desc || "Brak opisu użytkownika.";
-};
-
+// Obsługa ustawień profilu
 const openSettings = () => {
   showSettings.value = true;
   document.body.style.overflow = "hidden";
@@ -64,12 +61,17 @@ const closeSettings = () => {
   showSettings.value = false;
   document.body.style.overflow = "";
 };
+
+// Odśwież dane po aktualizacji profilu
+const handleUpdated = async () => {
+  await loadProfileData();
+};
 </script>
 
 <template>
   <ProfileSettingsDialog
     :show="showSettings"
-    @close="closeSettings()"
+    @close="closeSettings"
     @updated="handleUpdated"
   />
 
@@ -155,7 +157,7 @@ const closeSettings = () => {
 
       <!-- Content -->
       <div class="min-h-[300px] bg-white rounded-2xl shadow p-6 text-gray-600">
-        <!-- Twoje ogłoszenia -->
+        <!-- Własne ogłoszenia -->
         <div v-if="selected === 'ann'">
           <div v-if="announcementStore.loading">
             <Loader text="Ładuję Twoje ogłoszenia..." />
@@ -169,75 +171,47 @@ const closeSettings = () => {
           </div>
 
           <div v-else class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div
+            <AnnouncementCard
               v-for="a in announcementStore.announcements"
-              :key="a._id"
-              @click="$router.push(`/announcement/${a._id}`)"
-              class="bg-white rounded-xl shadow-[0_0_5px_1px_rgba(0,0,0,0.25)] hover:shadow-[0_0_8px_1px_rgba(0,0,0,0.25)] hover:shadow-[#F77821] transition p-4 flex flex-col cursor-pointer"
-            >
-              <img
-                :src="
-                  a.imageUrl ||
-                  'https://via.placeholder.com/300x200?text=' +
-                    t('announcements.noImage')
-                "
-                class="h-40 w-full object-cover rounded mb-3"
-                alt="img"
-              />
-              <h3 class="text-lg font-semibold mb-1">{{ a.title }}</h3>
-              <p class="text-sm text-gray-600 flex-grow">{{ a.desc }}</p>
-              <div class="flex items-center justify-between mt-3">
-                <span
-                  v-if="a.price"
-                  class="text-[#F77821] font-semibold text-xl"
-                >
-                  {{ a.price }} zł
-                </span>
-              </div>
-            </div>
+              :key="
+                a._id ||
+                a.title + (typeof a.user === 'string' ? a.user : a.user._id)
+              "
+              :announcement="a"
+              :isMobile="isMobile"
+              :isOwner="announcementStore.isOwner"
+              :isWatched="announcementStore.isWatched"
+              :toggleWatch="announcementStore.toggleWatch"
+            />
           </div>
         </div>
 
-        <!-- Obserwowane -->
+        <!-- Obserwowane ogłoszenia -->
         <div v-else-if="selected === 'follow'">
-          <div v-if="userLoading">
+          <div v-if="announcementStore.loading">
             <Loader text="Ładuję obserwowane ogłoszenia..." />
           </div>
 
           <div
-            v-else-if="followedAnnouncements.length === 0"
+            v-else-if="announcementStore.followedAnnouncements.length === 0"
             class="text-center text-gray-500 py-10"
           >
             {{ t("Profile.noFollowed") || "Brak obserwowanych ogłoszeń." }}
           </div>
 
           <div v-else class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div
-              v-for="a in followedAnnouncements"
-              :key="a._id"
-              @click="$router.push(`/announcement/${a._id}`)"
-              class="bg-white rounded-xl shadow-[0_0_5px_1px_rgba(0,0,0,0.25)] hover:shadow-[0_0_8px_1px_rgba(0,0,0,0.25)] hover:shadow-[#F77821] transition p-4 flex flex-col cursor-pointer"
-            >
-              <img
-                :src="
-                  a.imageUrl ||
-                  'https://via.placeholder.com/300x200?text=' +
-                    t('announcements.noImage')
-                "
-                class="h-40 w-full object-cover rounded mb-3"
-                alt="img"
-              />
-              <h3 class="text-lg font-semibold mb-1">{{ a.title }}</h3>
-              <p class="text-sm text-gray-600 flex-grow">{{ a.desc }}</p>
-              <div class="flex items-center justify-between mt-3">
-                <span
-                  v-if="a.price"
-                  class="text-[#F77821] font-semibold text-xl"
-                >
-                  {{ a.price }} zł
-                </span>
-              </div>
-            </div>
+            <AnnouncementCard
+              v-for="a in announcementStore.followedAnnouncements"
+              :key="
+                a._id ||
+                a.title + (typeof a.user === 'string' ? a.user : a.user?._id)
+              "
+              :announcement="a"
+              :isMobile="isMobile"
+              :isOwner="announcementStore.isOwner"
+              :isWatched="announcementStore.isWatched"
+              :toggleWatch="announcementStore.toggleWatch"
+            />
           </div>
         </div>
       </div>

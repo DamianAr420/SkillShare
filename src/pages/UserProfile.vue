@@ -3,11 +3,14 @@ import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useAuthStore } from "@/stores/authStore";
 import { useAnnouncementStore } from "@/stores/announcementStore";
+import AnnouncementCard from "@/components/AnnouncementCard.vue";
 import Loader from "@/components/ui/Loader.vue";
+import { useBreakpoints } from "@/composables/useBreakpoints";
 
 const route = useRoute();
 const auth = useAuthStore();
 const announcementStore = useAnnouncementStore();
+const { isMobile } = useBreakpoints();
 
 const userId = route.params.id as string;
 const userLoading = ref(true);
@@ -30,6 +33,7 @@ onMounted(async () => {
 
 <template>
   <div class="max-w-5xl mx-auto p-6">
+    <!-- PROFILE HEADER -->
     <div
       class="bg-white rounded-2xl shadow-md p-6 flex flex-col sm:flex-row gap-6 items-center min-h-[200px]"
     >
@@ -58,6 +62,7 @@ onMounted(async () => {
       </template>
     </div>
 
+    <!-- USER ANNOUNCEMENTS -->
     <div class="mt-8">
       <h3 class="text-xl font-semibold mb-4">Ogłoszenia użytkownika</h3>
 
@@ -72,28 +77,31 @@ onMounted(async () => {
         Brak ogłoszeń.
       </div>
 
-      <div v-else class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div
-          v-for="a in announcementStore.announcements"
-          :key="a._id"
-          @click="$router.push(`/announcement/${a._id}`)"
-          class="bg-white rounded-xl shadow-[0_0_5px_1px_rgba(0,0,0,0.25)] hover:shadow-[0_0_8px_1px_rgba(0,0,0,0.25)] hover:shadow-[#F77821] transition p-4 flex flex-col cursor-pointer"
-        >
-          <img
-            :src="
-              a.imageUrl ||
-              'https://via.placeholder.com/300x200?text=Brak+zdjęcia'
-            "
-            class="h-40 w-full object-cover rounded mb-3"
-            alt="img"
+      <div v-else>
+        <!-- MOBILE VIEW -->
+        <div v-if="isMobile" class="flex flex-col gap-4">
+          <AnnouncementCard
+            v-for="a in announcementStore.announcements"
+            :key="a._id"
+            :announcement="a"
+            :isMobile="true"
+            :isOwner="announcementStore.isOwner"
+            :isWatched="announcementStore.isWatched"
+            :toggleWatch="announcementStore.toggleWatch"
           />
-          <h3 class="text-lg font-semibold mb-1">{{ a.title }}</h3>
-          <p class="text-sm text-gray-600 flex-grow">{{ a.desc }}</p>
-          <div class="flex items-center justify-between mt-3">
-            <span v-if="a.price" class="text-[#F77821] font-semibold text-xl"
-              >{{ a.price }} zł</span
-            >
-          </div>
+        </div>
+
+        <!-- DESKTOP VIEW -->
+        <div v-else class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <AnnouncementCard
+            v-for="a in announcementStore.announcements"
+            :key="a._id"
+            :announcement="a"
+            :isMobile="false"
+            :isOwner="announcementStore.isOwner"
+            :isWatched="announcementStore.isWatched"
+            :toggleWatch="announcementStore.toggleWatch"
+          />
         </div>
       </div>
     </div>

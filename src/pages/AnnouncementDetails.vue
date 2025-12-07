@@ -1,115 +1,123 @@
 <script setup lang="ts">
-import { watch, onMounted, ref, computed } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAnnouncementStore } from "@/stores/announcementStore";
 import { useAuthStore } from "@/stores/authStore";
-import Loader from "@/components/ui/Loader.vue";
-import { useI18n } from "vue-i18n";
 import { useToast } from "@/composables/useToast";
-import ConfirmDialog from "@/components/dialogs/ConfirmDialog.vue";
-import ImageDialog from "@/components/dialogs/ImageDialog.vue";
+import { useI18n } from "vue-i18n";
+import { useChatStore } from "@/stores/chatStore";
+import { StarIcon as StarSolid } from "@heroicons/vue/24/solid";
+import { StarIcon as StarOutline } from "@heroicons/vue/24/outline";
 
-const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const announcementStore = useAnnouncementStore();
 const auth = useAuthStore();
 const { showToast } = useToast();
+const { t } = useI18n();
+const chatStore = useChatStore();
 
-const isOwner = ref(false);
+import Loader from "@/components/ui/Loader.vue";
+import ConfirmDialog from "@/components/dialogs/ConfirmDialog.vue";
+import ImageDialog from "@/components/dialogs/ImageDialog.vue";
+
+import type { Announcement } from "@/types/announcement";
+
+interface Seller {
+  _id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+}
+
 const showConfirm = ref(false);
+const seller = ref<Seller | null>(null);
+const sellerLoading = ref(false);
+
 const showImageModal = ref(false);
 const modalImageSrc = ref("");
+
+const isOwner = computed(() => seller.value?._id === auth.user?._id);
+
+const ann = computed<Announcement>(() => {
+  return (
+    announcementStore.selectedAnnouncement ?? {
+      _id: "",
+      title: t("announcementDetails.notFound"),
+      desc: "",
+      price: 0,
+      location: "",
+      createdAt: "",
+      imageUrl: "",
+      user: { _id: "", name: "" },
+      category: { name: t("announcementDetails.unknownCategory") },
+      type: "",
+      showPhone: false,
+      showEmail: false,
+    }
+  );
+});
+
+const loadSeller = async () => {
+  if (!ann.value) return;
+  const sellerId =
+    typeof ann.value.user === "string" ? ann.value.user : ann.value.user._id;
+  if (!sellerId) return;
+  sellerLoading.value = true;
+  seller.value = await auth.fetchUserById(sellerId);
+  sellerLoading.value = false;
+};
+
+watch(() => announcementStore.selectedAnnouncement, loadSeller);
 
 onMounted(async () => {
   const id = route.params.id as string;
   await announcementStore.fetchAnnouncementById(id);
-
-  if (auth.isAuthenticated) {
-    await auth.fetchWatchlist();
-  }
+  if (auth.isAuthenticated) await auth.fetchWatchlist();
+  await loadSeller();
 });
-
-watch(
-  () => announcementStore.selectedAnnouncement,
-  (announcement) => {
-    if (!announcement) {
-      isOwner.value = false;
-      return;
-    }
-
-    const announcementUserId = announcement.user?._id;
-    const currentUserId = auth.user?._id;
-    isOwner.value =
-      Boolean(announcementUserId && currentUserId) &&
-      announcementUserId === currentUserId;
-  },
-  { immediate: true }
-);
 
 const isWatched = computed(() => {
-  const selectedId = announcementStore.selectedAnnouncement?._id?.toString();
-  if (!auth.user?.watchlist || !selectedId) return false;
-
-  return auth.user.watchlist.some((item: any) => {
-    const id = typeof item === "string" ? item : item._id?.toString();
-    return id === selectedId;
-  });
-});
-
-const handleEdit = () => {
-  if (!announcementStore.selectedAnnouncement) return;
-  router.push(
-    `/announcement/edit/${announcementStore.selectedAnnouncement._id}`
+  const id = ann.value._id;
+  if (!id || !auth.user?.watchlist) return false;
+  return auth.user.watchlist.some(
+    (item: any) => (typeof item === "string" ? item : item._id) === id
   );
-};
-
-const handleDelete = () => {
-  showConfirm.value = true;
-};
-
-const confirmDelete = async () => {
-  try {
-    if (!announcementStore.selectedAnnouncement) return;
-    await announcementStore.deleteAnnouncement(
-      announcementStore.selectedAnnouncement._id
-    );
-    router.push("/Profile");
-    showToast(t("announcementDetails.annDelete.success"), "success");
-  } catch (error) {
-    showToast(t("announcementDetails.annDelete.error"), "error");
-    console.error(error);
-  } finally {
-    showConfirm.value = false;
-  }
-};
+});
 
 const toggleWatch = async () => {
   if (!auth.isAuthenticated) {
     showToast(t("announcementDetails.loginToWatch"), "error");
     return;
   }
+  if (!ann.value._id) return;
   try {
-    await auth.toggleWatchlist(announcementStore.selectedAnnouncement!._id);
-
+    await auth.toggleWatchlist(ann.value._id);
     await auth.fetchWatchlist();
-
     showToast(
       isWatched.value
         ? t("announcementDetails.watchSuccess")
         : t("announcementDetails.unwatchSuccess"),
-      "success"
+      isWatched.value ? "success" : "info"
     );
-  } catch (err) {
+  } catch {
     showToast(t("announcementDetails.watchError"), "error");
   }
 };
 
-const goToProfile = (userId: string) => {
-  if (!isOwner.value) {
-    router.push(`/profile/${userId}`);
-  } else {
-    router.push(`/profile`);
+const handleEdit = () => router.push(`/announcement/edit/${ann.value._id}`);
+const handleDelete = () => (showConfirm.value = true);
+
+const confirmDelete = async () => {
+  if (!ann.value._id) return;
+  try {
+    await announcementStore.deleteAnnouncement(ann.value._id);
+    router.push("/Profile");
+    showToast(t("announcementDetails.annDelete.success"), "success");
+  } catch {
+    showToast(t("announcementDetails.annDelete.error"), "error");
+  } finally {
+    showConfirm.value = false;
   }
 };
 
@@ -117,227 +125,199 @@ const copyToClipboard = async (text: string) => {
   try {
     await navigator.clipboard.writeText(text);
     showToast(t("announcementDetails.copied", { email: text }), "success");
-  } catch (err) {
+  } catch {
     showToast(t("announcementDetails.copyError"), "error");
+  }
+};
+
+const goToProfile = (id: string) =>
+  isOwner.value ? router.push("/profile") : router.push(`/profile/${id}`);
+const openImage = (src: string) => {
+  modalImageSrc.value = src;
+  showImageModal.value = true;
+};
+
+const goToChat = async (userId: string) => {
+  if (!auth.isAuthenticated) {
+    showToast(t("announcementDetails.loginToWatch"), "error");
+    return;
+  }
+
+  try {
+    const conversationId = await chatStore.startConversation(userId);
+    if (conversationId) {
+      router.push(`/chat/${conversationId}`);
+    }
+  } catch {
+    showToast("Nie udało się rozpocząć rozmowy", "error");
   }
 };
 </script>
 
 <template>
-  <div class="max-w-6xl mx-auto p-6">
-    <div class="flex flex-col gap-3 mb-6 md:flex-row md:justify-between">
-      <button
-        @click="router.back()"
-        class="flex items-center gap-2 px-4 py-2 w-full md:w-auto rounded-lg bg-[#F77821]/10 text-[#F77821] font-medium hover:bg-[#F77821]/20 transition-all duration-200 shadow-sm"
+  <div class="max-w-5xl mx-auto p-4 space-y-6">
+    <!-- Back button -->
+    <button
+      class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition duration-300 shadow cursor-pointer"
+      @click="router.back()"
+    >
+      {{ t("announcementDetails.back") }}
+    </button>
+
+    <Loader v-if="announcementStore.loading" />
+
+    <div v-else class="space-y-6">
+      <!-- Image -->
+      <div
+        class="w-full rounded-2xl overflow-hidden shadow-xl cursor-pointer"
+        @click="openImage(ann.imageUrl || t('announcementDetails.noImage'))"
       >
-        ⬅ {{ t("announcementDetails.back") }}
-      </button>
-
-      <div v-if="isOwner" class="flex gap-3 w-full md:w-auto">
-        <button
-          @click="handleEdit"
-          class="px-4 py-2 w-full md:w-auto rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition-all duration-200 shadow-sm"
-        >
-          ✏️ {{ t("announcementDetails.edit") }}
-        </button>
-
-        <button
-          @click="handleDelete"
-          class="px-4 py-2 w-full md:w-auto rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition-all duration-200 shadow-sm"
-        >
-          🗑 {{ t("announcementDetails.delete") }}
-        </button>
-      </div>
-    </div>
-
-    <div v-if="announcementStore.loading" class="flex justify-center py-10">
-      <Loader :text="t('announcementDetails.loading')" />
-    </div>
-
-    <div
-      v-else-if="!announcementStore.selectedAnnouncement"
-      class="text-center text-gray-500 py-10"
-    >
-      {{ t("announcementDetails.notFound") }}
-    </div>
-
-    <div
-      v-else
-      class="bg-white shadow-lg rounded-2xl overflow-hidden flex flex-col gap-6"
-    >
-      <div class="w-full bg-gray-50 flex items-center justify-center">
         <img
-          :src="
-            announcementStore.selectedAnnouncement.imageUrl ||
-            'https://via.placeholder.com/800x400?text=' +
-              t('announcementDetails.noImage')
-          "
-          class="w-full max-h-[400px] object-cover cursor-pointer"
-          alt="Announcement image"
-          @click="
-            () => {
-              modalImageSrc = announcementStore.selectedAnnouncement.imageUrl;
-              showImageModal = true;
-            }
-          "
+          :src="ann.imageUrl || ''"
+          :alt="ann.title"
+          class="w-full h-80 md:h-96 object-cover transition duration-500"
         />
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
-        <div class="md:col-span-2 flex flex-col gap-4">
-          <h1 class="text-3xl font-bold text-gray-900">
-            {{ announcementStore.selectedAnnouncement.title }}
-          </h1>
-          <p class="text-gray-700 text-lg leading-relaxed">
-            {{ announcementStore.selectedAnnouncement.desc }}
-          </p>
+      <!-- Info panel -->
+      <div class="bg-white rounded-2xl shadow-xl p-6 space-y-4">
+        <h1
+          class="text-4xl font-extrabold text-gray-900 transition duration-300"
+        >
+          {{ ann.title }}
+        </h1>
+        <p class="text-gray-700 leading-relaxed">{{ ann.desc }}</p>
 
-          <div v-if="!isOwner" class="flex justify-end mt-2">
-            <button
-              @click="toggleWatch"
-              class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm"
-              :class="
-                isWatched
-                  ? 'bg-yellow-400/20 text-yellow-600 hover:bg-yellow-400/30'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              "
-            >
-              {{
-                isWatched
-                  ? "★ " + t("announcementDetails.watching")
-                  : "☆ " + t("announcementDetails.watch")
-              }}
-            </button>
-          </div>
-
-          <div class="flex flex-wrap gap-3 text-sm text-gray-500 mt-4">
-            <span
-              class="bg-[#F77821]/10 text-[#F77821] px-3 py-1 rounded-full font-medium"
-            >
-              {{
-                announcementStore.selectedAnnouncement.category?.name ||
-                t("announcementDetails.unknownCategory")
-              }}
-            </span>
-            <span
-              >📍 {{ announcementStore.selectedAnnouncement.location }}</span
-            >
-            <span>
-              🕒
-              {{
-                new Date(
-                  announcementStore.selectedAnnouncement.createdAt || ""
-                ).toLocaleDateString()
-              }}
-            </span>
-          </div>
-
-          <div
-            v-if="announcementStore.selectedAnnouncement.price"
-            class="mt-6 flex justify-between items-center"
+        <!-- Watch button -->
+        <div
+          v-if="
+            auth.isAuthenticated &&
+            !announcementStore.isOwner(announcementStore.selectedAnnouncement)
+          "
+          class="flex justify-end mt-4"
+        >
+          <button
+            class="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-2xl cursor-pointer"
+            @click="toggleWatch"
           >
-            <span class="text-3xl font-semibold text-[#F77821]">
-              {{ announcementStore.selectedAnnouncement.price }} zł
+            <component
+              :is="isWatched ? StarSolid : StarOutline"
+              class="w-6 h-6 text-yellow-300 transition-colors duration-300 hover:text-yellow-100"
+            />
+            <span
+              class="select-none transition-colors duration-300 hover:text-white"
+            >
+              {{
+                isWatched
+                  ? t("announcementDetails.watching")
+                  : t("announcementDetails.watch")
+              }}
             </span>
-          </div>
+          </button>
         </div>
 
-        <div class="bg-gray-50 rounded-xl p-4">
-          <h3 class="font-semibold text-lg mb-3">
-            {{ t("announcementDetails.sellerData") }}
-          </h3>
-
-          <div v-if="auth.loading">
-            <Loader text="Ładowanie danych użytkownika..." />
+        <!-- Stats cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+          <div class="p-4 rounded-xl shadow-inner">
+            <p class="text-gray-500 uppercase tracking-wide text-sm">
+              {{ t("announcementDetails.price") }}
+            </p>
+            <p class="text-2xl font-bold">{{ ann.price }} zł</p>
           </div>
-
-          <div v-if="announcementStore.selectedAnnouncement.user">
-            <div class="space-y-2">
-              <div>
-                <p class="text-gray-500 text-sm">
-                  {{ t("announcementDetails.seller.name") }}
-                </p>
-                <p
-                  class="text-gray-800 font-medium cursor-pointer hover:underline"
-                  @click="
-                    goToProfile(announcementStore.selectedAnnouncement.user._id)
-                  "
-                >
-                  {{ announcementStore.selectedAnnouncement.user.name }}
-                </p>
-              </div>
-
-              <div v-if="announcementStore.selectedAnnouncement.showPhone">
-                <p class="text-gray-500 text-sm">
-                  {{ t("announcementDetails.seller.phone") }}
-                </p>
-                <p class="text-gray-800 font-medium">
-                  {{
-                    announcementStore.selectedAnnouncement.user.phone ||
-                    t("announcementDetails.seller.no")
-                  }}
-                </p>
-              </div>
-
-              <div v-if="announcementStore.selectedAnnouncement.showEmail">
-                <p class="text-gray-500 text-sm">
-                  {{ t("announcementDetails.seller.email") }}
-                </p>
-                <p
-                  class="text-gray-800 font-medium break-words cursor-pointer hover:underline"
-                  @click="
-                    copyToClipboard(
-                      announcementStore.selectedAnnouncement.user.email
-                    )
-                  "
-                >
-                  {{
-                    announcementStore.selectedAnnouncement.user.email ||
-                    t("announcementDetails.seller.no")
-                  }}
-                </p>
-              </div>
-              <button
-                v-if="
-                  auth.isAuthenticated &&
-                  !isOwner &&
-                  announcementStore.selectedAnnouncement?.user?._id
-                "
-                @click="
-                  $router.push(
-                    `/chat/${announcementStore.selectedAnnouncement.user._id}`
-                  )
-                "
-                class="bg-[#F77821] text-white px-4 py-2 rounded"
-              >
-                Napisz do sprzedawcy
-              </button>
-            </div>
+          <div class="p-4 rounded-xl shadow-inner">
+            <p class="text-gray-500 uppercase tracking-wide text-sm">
+              {{ t("announcementDetails.location") }}
+            </p>
+            <p class="text-xl font-semibold">{{ ann.location }}</p>
+          </div>
+          <div class="p-4 rounded-xl shadow-inner">
+            <p class="text-gray-500 uppercase tracking-wide text-sm">
+              {{ t("announcementDetails.category") }}
+            </p>
+            <p class="text-xl font-semibold">
+              {{
+                typeof ann.category === "string"
+                  ? ann.category
+                  : ann.category.name
+              }}
+            </p>
+          </div>
+          <div class="p-4 rounded-xl shadow-inner">
+            <p class="text-gray-500 uppercase tracking-wide text-sm">
+              {{ t("announcementDetails.type") }}
+            </p>
+            <p class="text-xl font-semibold">{{ ann.type }}</p>
           </div>
         </div>
       </div>
+
+      <!-- Seller panel -->
+      <div v-if="seller" class="rounded-2xl shadow-xl p-6 space-y-4">
+        <h2 class="text-2xl font-semibold text-gray-800">
+          {{ t("announcementDetails.sellerData") }}
+        </h2>
+        <p>
+          <strong>{{ t("announcementDetails.seller.name") }}</strong>
+          {{ seller.name }}
+        </p>
+        <p v-if="ann.showEmail && seller.email">
+          <strong>{{ t("announcementDetails.seller.email") }}</strong>
+          <span
+            class="cursor-pointer text-blue-600 hover:underline transition duration-300"
+            @click="copyToClipboard(seller.email)"
+          >
+            {{ seller.email }}
+          </span>
+        </p>
+        <p v-if="ann.showPhone && seller.phone">
+          <strong>{{ t("announcementDetails.seller.phone") }}</strong>
+          {{ seller.phone }}
+        </p>
+        <div class="flex flex-wrap gap-3 mt-2">
+          <button
+            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-300 cursor-pointer"
+            @click="goToProfile(seller._id)"
+          >
+            {{ t("announcementDetails.goToProfile") }}
+          </button>
+          <button
+            class="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition duration-300 cursor-pointer"
+            @click="goToChat(seller._id)"
+          >
+            {{ t("announcementDetails.chat.startChat") }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Owner actions -->
+      <div v-if="isOwner" class="flex flex-wrap gap-3 mt-4">
+        <button
+          class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition duration-300 cursor-pointer"
+          @click="handleEdit"
+        >
+          {{ t("announcementDetails.edit") }}
+        </button>
+        <button
+          class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition duration-300 cursor-pointer"
+          @click="handleDelete"
+        >
+          {{ t("announcementDetails.delete") }}
+        </button>
+      </div>
     </div>
+
+    <ConfirmDialog
+      :visible="showConfirm"
+      :title="t('announcementDetails.confirmDelete.title')"
+      :message="t('announcementDetails.confirmDelete.message')"
+      @confirm="confirmDelete"
+      @close="showConfirm = false"
+    />
+
+    <ImageDialog
+      :visible="showImageModal"
+      :src="modalImageSrc"
+      @close="showImageModal = false"
+    />
   </div>
-
-  <ConfirmDialog
-    :visible="showConfirm"
-    :title="t('announcementDetails.confirmDelete.title')"
-    :message="t('announcementDetails.confirmDelete.message')"
-    :confirmText="t('announcementDetails.confirmDelete.yes')"
-    :cancelText="t('announcementDetails.confirmDelete.no')"
-    @confirm="confirmDelete"
-    @cancel="showConfirm = false"
-  />
-
-  <ImageDialog
-    :src="modalImageSrc"
-    :visible="showImageModal"
-    @close="showImageModal = false"
-  />
 </template>
-
-<style scoped>
-button:active {
-  transform: scale(0.97);
-}
-</style>

@@ -151,6 +151,10 @@
     "unknownCategory": "Nieznana kategoria",
     "edit": "Edytuj",
     "delete": "Usuń",
+    "price": "Cena",
+    "location": "Lokalizacja",
+    "category": "Kategoria",
+    "type": "Typ",
     "confirmDelete": {
       "title": "Potwierdź usunięcie",
       "message": "Czy na pewno chcesz usunąć to ogłoszenie? Tej operacji nie można cofnąć.",
@@ -168,7 +172,11 @@
     "unwatchSuccess": "Ogłoszenie nie jest już obserwowane!",
     "loginToWatch": "Zaloguj się aby zaobserwować to ogłoszenie!",
     "copied": "Email: {email} został skopiowany!",
-    "copyError": "Nie udało się skopiować"
+    "copyError": "Nie udało się skopiować",
+    "chat": {
+      "startChat": "Napisz do ogłoszeniodawcy"
+    },
+    "goToProfile": "Przejdź do profilu ogłoszeniodawcy"
   },
 
   "Profile": {
