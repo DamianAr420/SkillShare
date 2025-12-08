@@ -21,6 +21,8 @@ const location = ref<string>("");
 const category = ref<string>("");
 const imageFile = ref<File | null>(null);
 const previewUrl = ref<string>("");
+const showPhone = ref(true);
+const showEmail = ref(true);
 
 const onFileChange = (e: Event) => {
   const file = (e.target as HTMLInputElement).files?.[0];
@@ -47,6 +49,8 @@ onMounted(async () => {
   description.value = ann.desc;
   price.value = ann.price ?? null;
   location.value = ann.location ?? "";
+  showEmail.value = ann.showEmail;
+  showPhone.value = ann.showPhone;
 
   // 🔥 Category może być stringiem lub { name }
   let catName = "";
@@ -71,6 +75,8 @@ const handleUpdate = async () => {
     formData.append("price", price.value?.toString() || "");
     formData.append("location", location.value);
     formData.append("category", category.value);
+    formData.append("showPhone", showPhone.value ? "true" : "false");
+    formData.append("showEmail", showEmail.value ? "true" : "false");
 
     if (imageFile.value) {
       formData.append("image", imageFile.value);
@@ -182,6 +188,74 @@ const handleUpdate = async () => {
         <p class="text-lg text-gray-400">
           {{ t("editAnnouncement.imageHint") }}
         </p>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-6">
+        <!-- Telefon -->
+        <div
+          class="flex flex-col flex-1 justify-center items-center text-center"
+        >
+          <label class="font-medium text-gray-700 mb-2">
+            {{ t("addAnnouncement.showPhone") }}
+          </label>
+          <button
+            type="button"
+            @click="showPhone = !showPhone"
+            :class="showPhone ? 'bg-[#F77821]' : 'bg-gray-300'"
+            class="relative w-20 h-10 rounded-full cursor-pointer flex items-center px-1 justify-between transition-colors duration-200"
+          >
+            <span
+              class="font-medium ml-1"
+              :class="showPhone ? 'text-white' : 'text-gray-400'"
+            >
+              {{ t("addAnnouncement.yes") }}
+            </span>
+            <span
+              class="font-medium mr-1"
+              :class="!showPhone ? 'text-white' : 'text-gray-400'"
+            >
+              {{ t("addAnnouncement.no") }}
+            </span>
+
+            <div
+              class="absolute w-10 h-8 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out"
+              :class="showPhone ? 'translate-x-8' : 'translate-x-0'"
+            ></div>
+          </button>
+        </div>
+
+        <!-- Email -->
+        <div
+          class="flex flex-col flex-1 justify-center items-center text-center"
+        >
+          <label class="font-medium text-gray-700 mb-2">
+            {{ t("addAnnouncement.showEmail") }}
+          </label>
+          <button
+            type="button"
+            @click="showEmail = !showEmail"
+            :class="showEmail ? 'bg-[#F77821]' : 'bg-gray-300'"
+            class="relative w-20 h-10 rounded-full cursor-pointer flex items-center px-1 justify-between transition-colors duration-200"
+          >
+            <span
+              class="font-medium ml-1"
+              :class="showEmail ? 'text-white' : 'text-gray-400'"
+            >
+              {{ t("addAnnouncement.yes") }}
+            </span>
+            <span
+              class="font-medium mr-1"
+              :class="!showEmail ? 'text-white' : 'text-gray-400'"
+            >
+              {{ t("addAnnouncement.no") }}
+            </span>
+
+            <div
+              class="absolute w-10 h-8 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out"
+              :class="showEmail ? 'translate-x-8' : 'translate-x-0'"
+            ></div>
+          </button>
+        </div>
       </div>
 
       <button
