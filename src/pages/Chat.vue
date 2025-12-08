@@ -145,15 +145,15 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="h-[80vh] max-w-6xl mx-auto">
+  <div class="h-[80vh] min-h-[400px] max-w-6xl mx-auto">
     <!-- ============ MOBILE ============ -->
     <template v-if="isMobile">
-      <!-- lista rozmów -->
+      <!-- LISTA ROZMÓW -->
       <div
         v-if="!showMobileChat"
-        class="bg-white shadow rounded p-4 overflow-y-auto h-full"
+        class="bg-white shadow-md rounded-xl p-4 overflow-y-auto h-full"
       >
-        <h3 class="font-bold mb-3 text-lg">Konwersacje</h3>
+        <h3 class="font-bold mb-4 text-xl">Konwersacje</h3>
         <Loader v-if="chatStore.loading" text="Ładowanie konwersacji..." />
 
         <div v-else>
@@ -161,16 +161,17 @@ onUnmounted(() => {
             v-for="c in chatStore.conversations"
             :key="c._id"
             @click="selectedConversationId = c._id"
-            class="flex items-center gap-3 my-2 p-2 rounded cursor-pointer hover:bg-gray-100 transition"
+            class="flex items-center gap-3 my-2 p-3 rounded-xl cursor-pointer active:scale-[0.97] transition bg-white border border-gray-100 shadow-sm hover:shadow-md"
           >
             <img
               v-if="getOtherParticipant(c)?.avatarUrl"
               :src="getOtherParticipant(c)?.avatarUrl"
               alt="avatar"
-              class="w-10 h-10 rounded-full object-cover"
+              class="w-12 h-12 rounded-full object-cover shadow-sm"
             />
+
             <div class="flex-1 min-w-0">
-              <div class="font-semibold truncate">
+              <div class="font-semibold text-base truncate">
                 {{ getOtherParticipant(c)?.name || "Nieznany" }}
               </div>
               <div class="text-gray-500 text-sm truncate">
@@ -191,12 +192,15 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- okno czatu -->
-      <div v-else class="bg-white shadow rounded p-4 flex flex-col h-full">
+      <!-- OKNO CZATU -->
+      <div
+        class="bg-white shadow-md rounded-xl p-0 flex flex-col h-full overflow-hidden"
+        v-else
+      >
+        <!-- HEADER -->
         <div
-          class="flex items-center h-16 px-4 mb-3 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.15)] bg-white sticky top-0 z-0"
+          class="flex items-center h-16 px-4 mb-2 shadow-md bg-white z-10 relative"
         >
-          <!-- Back button -->
           <button
             class="flex items-center justify-center w-10 h-10 bg-[#F77821] rounded-xl text-white active:scale-95 transition"
             @click="(showMobileChat = false), (selectedConversationId = null)"
@@ -204,16 +208,15 @@ onUnmounted(() => {
             <ArrowLeft class="w-6 h-6" />
           </button>
 
-          <!-- User info -->
-          <div class="flex items-center gap-3 mx-auto">
+          <div class="flex items-center gap-3 ml-4">
             <img
               :src="getOtherParticipant(selectedConversation)?.avatarUrl"
               alt="avatar"
-              class="w-11 h-11 rounded-full object-cover shadow"
+              class="w-11 h-11 rounded-full object-cover shadow-sm"
             />
 
             <div class="flex flex-col leading-tight">
-              <span class="font-semibold text-base">
+              <span class="font-semibold text-[15px]">
                 {{ getOtherParticipant(selectedConversation)?.name }}
               </span>
 
@@ -234,9 +237,10 @@ onUnmounted(() => {
           </div>
         </div>
 
+        <!-- WIADOMOŚCI -->
         <div
           ref="messagesContainer"
-          class="flex-1 overflow-y-auto mb-2 space-y-2"
+          class="flex-1 overflow-y-auto px-3 space-y-2 pb-2"
         >
           <div
             v-for="msg in selectedConversation?.messages || []"
@@ -252,23 +256,27 @@ onUnmounted(() => {
                 'bg-[#F77821] text-white': msg.senderId === auth.user?._id,
                 'bg-gray-200 text-gray-800': msg.senderId !== auth.user?._id,
               }"
-              class="px-4 py-2 rounded-lg max-w-[80%] break-words"
+              class="px-4 py-2 rounded-2xl max-w-[75%] text-[15px] leading-snug shadow-sm"
             >
               {{ msg.content }}
             </div>
           </div>
         </div>
 
-        <div class="flex gap-2 mt-2">
+        <!-- INPUT -->
+        <div
+          class="flex flex-row gap-2 items-center justify-center h-16 shadow-[0px_0px_6px_-1px_rgba(0,0,0,0.5)] bg-white px-3"
+        >
           <input
             v-model="newMessage"
             @keyup.enter="sendMessage"
             placeholder="Napisz wiadomość..."
-            class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#F77821]"
+            class="flex-1 w-[70%] h-10 border border-gray-300 rounded-full px-2 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-[#F77821]"
           />
+
           <button
             @click="sendMessage"
-            class="bg-[#F77821] text-white px-4 py-2 rounded-lg hover:bg-[#EA580C] transition"
+            class="bg-[#F77821] w-[30%] text-center h-10 px-4 text-white rounded-full text-sm font-semibold hover:bg-[#EA580C] active:scale-95 transition whitespace-nowrap"
           >
             Wyślij
           </button>

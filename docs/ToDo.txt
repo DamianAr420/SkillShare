@@ -1,6 +1,1 @@
-1. Przerobić wszystkie boxy ogłoszeń na jeden component i stosować go
-zamiast robienia wszędzie tych samych boxów.
-
-2. Poprawić styl na mobile
-
 3. Optymalizacja

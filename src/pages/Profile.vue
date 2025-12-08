@@ -75,17 +75,17 @@ const handleUpdated = async () => {
     @updated="handleUpdated"
   />
 
-  <div class="max-w-5xl mx-auto p-6">
+  <div class="max-w-6xl mx-auto p-4 sm:p-6">
     <!-- Header -->
     <div
-      class="bg-white rounded-2xl shadow-md p-6 flex flex-col sm:flex-row gap-6 items-center min-h-[200px]"
+      class="bg-white rounded-2xl shadow-md p-4 sm:p-6 flex flex-col sm:flex-row gap-6 items-center sm:items-start min-h-[180px]"
     >
       <Loader v-if="userLoading" text="Ładowanie profilu..." />
 
       <template v-else>
         <div class="relative">
           <img
-            class="w-40 h-40 object-cover border-4 border-[#F77821] rounded-2xl"
+            class="w-28 h-28 sm:w-40 sm:h-40 object-cover border-4 border-[#F77821] rounded-2xl"
             :src="
               auth.user?.avatarUrl ||
               'https://via.placeholder.com/200x200?text=Profile'
@@ -93,36 +93,47 @@ const handleUpdated = async () => {
             alt="Profile image"
           />
           <div
-            class="absolute bottom-2 right-2 bg-[#F77821] text-white text-xs px-2 py-1 rounded-full shadow"
+            class="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 bg-[#F77821] text-white text-[10px] sm:text-xs px-2 py-1 rounded-full shadow"
           >
             {{ t("Profile.active") }}
           </div>
         </div>
 
-        <div class="flex flex-col flex-1 gap-3">
-          <div class="flex justify-between items-start">
-            <h2 class="text-3xl font-bold text-gray-900">{{ username }}</h2>
+        <div
+          class="flex flex-col flex-1 gap-2 sm:gap-3 w-full text-center sm:text-left"
+        >
+          <div class="flex justify-between items-center w-full">
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 flex-1">
+              {{ username }}
+            </h2>
+
+            <!-- Settings button -->
             <button
               @click="openSettings()"
-              class="bg-[#F77821] hover:bg-[#EA580C] transition-all duration-200 p-2 rounded-xl shadow-sm hover:shadow-md"
+              class="bg-[#F77821] hover:bg-[#EA580C] transition-all duration-200 p-2 rounded-xl shadow-sm hover:shadow-md ml-3"
               title="Ustawienia"
             >
-              <Settings class="text-white w-6 h-6" />
+              <Settings class="text-white w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           </div>
-          <p class="text-gray-600 text-lg">{{ desc }}</p>
+
+          <p class="text-gray-600 text-sm sm:text-lg">
+            {{ desc }}
+          </p>
         </div>
       </template>
     </div>
 
     <!-- Tabs -->
-    <div class="mt-8">
-      <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="mt-6 sm:mt-8">
+      <div
+        class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+      >
         <!-- Zakładki -->
-        <div class="flex flex-wrap gap-3 justify-center sm:justify-start">
+        <div class="flex gap-3 justify-center sm:justify-start flex-wrap">
           <button
             @click="selected = 'ann'"
-            class="py-2 px-6 rounded-full border border-[#F77821] font-medium transition-all duration-200"
+            class="py-2 px-5 sm:px-6 rounded-full border border-[#F77821] font-medium transition-all duration-200 text-sm sm:text-base"
             :class="
               selected === 'ann'
                 ? 'bg-[#F77821] text-white shadow-md'
@@ -131,9 +142,10 @@ const handleUpdated = async () => {
           >
             {{ t("Profile.announcements") }}
           </button>
+
           <button
             @click="selected = 'follow'"
-            class="py-2 px-6 rounded-full border border-[#F77821] font-medium transition-all duration-200"
+            class="py-2 px-5 sm:px-6 rounded-full border border-[#F77821] font-medium transition-all duration-200 text-sm sm:text-base"
             :class="
               selected === 'follow'
                 ? 'bg-[#F77821] text-white shadow-md'
@@ -147,7 +159,7 @@ const handleUpdated = async () => {
         <!-- Dodaj ogłoszenie -->
         <RouterLink
           to="/add-announcement"
-          class="inline-flex items-center justify-center px-5 py-2.5 bg-gradient-to-r from-[#F77821] to-[#ff973b] text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition cursor-pointer"
+          class="inline-flex items-center justify-center w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-[#F77821] to-[#ff973b] text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition text-center"
         >
           {{ t("announcements.addButton") }}
         </RouterLink>
@@ -156,7 +168,9 @@ const handleUpdated = async () => {
       <div class="h-[2px] bg-[#F77821]/20 my-6"></div>
 
       <!-- Content -->
-      <div class="min-h-[300px] bg-white rounded-2xl shadow p-6 text-gray-600">
+      <div
+        class="min-h-[300px] bg-white rounded-2xl shadow p-4 sm:p-6 text-gray-600"
+      >
         <!-- Własne ogłoszenia -->
         <div v-if="selected === 'ann'">
           <div v-if="announcementStore.loading">
@@ -167,10 +181,12 @@ const handleUpdated = async () => {
             v-else-if="announcementStore.announcements.length === 0"
             class="text-center text-gray-500 py-10"
           >
-            {{ t("Profile.noAnnouncements") || "Brak ogłoszeń." }}
+            {{ t("Profile.noAnnouncements") }}
           </div>
 
-          <div v-else class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
+          >
             <AnnouncementCard
               v-for="a in announcementStore.announcements"
               :key="
@@ -186,7 +202,7 @@ const handleUpdated = async () => {
           </div>
         </div>
 
-        <!-- Obserwowane ogłoszenia -->
+        <!-- Obserwowane -->
         <div v-else-if="selected === 'follow'">
           <div v-if="announcementStore.loading">
             <Loader text="Ładuję obserwowane ogłoszenia..." />
@@ -196,10 +212,12 @@ const handleUpdated = async () => {
             v-else-if="announcementStore.followedAnnouncements.length === 0"
             class="text-center text-gray-500 py-10"
           >
-            {{ t("Profile.noFollowed") || "Brak obserwowanych ogłoszeń." }}
+            {{ t("Profile.noFollowed") }}
           </div>
 
-          <div v-else class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
+          >
             <AnnouncementCard
               v-for="a in announcementStore.followedAnnouncements"
               :key="

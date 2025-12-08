@@ -49,7 +49,7 @@ function logout() {
   <LoginDialog v-if="showLogin" @close="closeLogin" />
 
   <header
-    class="w-full flex justify-between items-center px-6 py-4 shadow-md relative"
+    class="w-full h-[12vh] flex justify-between items-center px-6 py-4 shadow-md relative"
   >
     <button @click="$router.push({ name: 'Home' })">
       <img
@@ -118,7 +118,7 @@ function logout() {
   >
     <div
       v-if="mobileMenuOpen"
-      class="md:hidden bg-[#F9FAFB] shadow-md w-full absolute top-22 left-0 flex flex-col items-center gap-4 py-4 z-40"
+      class="md:hidden bg-[#F9FAFB] shadow-md w-full absolute top-[12vh] left-0 flex flex-col items-center gap-4 py-4 z-40"
     >
       <button
         @click="
@@ -129,6 +129,7 @@ function logout() {
       >
         {{ t("NavBar.buttons.home") }}
       </button>
+
       <button
         @click="
           $router.push({ name: 'Categories' });
@@ -138,6 +139,7 @@ function logout() {
       >
         {{ t("NavBar.buttons.categories") }}
       </button>
+
       <button
         v-if="!isLoggedIn"
         @click="openLogin()"
@@ -145,6 +147,7 @@ function logout() {
       >
         {{ t("NavBar.buttons.logIn") }}
       </button>
+
       <button
         v-else
         @click="goToProfile()"
@@ -152,6 +155,7 @@ function logout() {
       >
         {{ username }}
       </button>
+
       <button
         v-if="isLoggedIn"
         @click="
