@@ -218,7 +218,7 @@ const goToChat = async (userId: string) => {
 
         <!-- Stats cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-          <div class="p-4 rounded-xl shadow-inner">
+          <div v-if="ann.type !== 'search'" class="p-4 rounded-xl shadow-inner">
             <p class="text-gray-500 uppercase tracking-wide text-sm">
               {{ t("announcementDetails.price") }}
             </p>

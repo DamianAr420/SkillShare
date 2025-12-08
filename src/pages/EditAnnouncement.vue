@@ -14,13 +14,13 @@ const categoryStore = useCategoryStore();
 const announcementStore = useAnnouncementStore();
 const { showToast } = useToast();
 
-const title = ref("");
-const description = ref("");
-const price = ref("");
-const location = ref("");
-const category = ref("");
+const title = ref<string>("");
+const description = ref<string>("");
+const price = ref<number | null>(null);
+const location = ref<string>("");
+const category = ref<string>("");
 const imageFile = ref<File | null>(null);
-const previewUrl = ref("");
+const previewUrl = ref<string>("");
 
 const onFileChange = (e: Event) => {
   const file = (e.target as HTMLInputElement).files?.[0];
@@ -45,9 +45,20 @@ onMounted(async () => {
 
   title.value = ann.title;
   description.value = ann.desc;
-  price.value = ann.price;
-  location.value = ann.location;
-  category.value = ann.category?._id ?? "";
+  price.value = ann.price ?? null;
+  location.value = ann.location ?? "";
+
+  // 🔥 Category może być stringiem lub { name }
+  let catName = "";
+  if (typeof ann.category === "string") {
+    catName = ann.category;
+  } else {
+    catName = ann.category.name;
+  }
+
+  // 🔥 Znajdujemy kategorię w bazie po nazwie i ustawiamy ID
+  const found = categoryStore.categories.find((c) => c.name === catName);
+  category.value = found?._id ?? "";
 });
 
 const handleUpdate = async () => {
@@ -57,7 +68,7 @@ const handleUpdate = async () => {
     const formData = new FormData();
     formData.append("title", title.value);
     formData.append("desc", description.value);
-    formData.append("price", price.value);
+    formData.append("price", price.value?.toString() || "");
     formData.append("location", location.value);
     formData.append("category", category.value);
 
@@ -75,6 +86,7 @@ const handleUpdate = async () => {
   }
 };
 </script>
+
 <template>
   <div class="max-w-3xl mx-auto px-4 py-10">
     <h1 class="text-4xl font-extrabold mb-10 text-center text-gray-800">
@@ -103,8 +115,8 @@ const handleUpdate = async () => {
 
       <div class="flex flex-col sm:flex-row gap-4">
         <input
-          v-if="announcementStore.selectedAnnouncement.price"
-          v-model="price"
+          v-if="announcementStore.selectedAnnouncement?.type !== 'search'"
+          v-model.number="price"
           type="number"
           :placeholder="t('addAnnouncement.pricePlaceholder')"
           class="border border-gray-300 p-4 rounded-xl flex-1"
@@ -124,6 +136,7 @@ const handleUpdate = async () => {
         class="border border-gray-300 p-4 rounded-xl"
       >
         <option value="">{{ t("addAnnouncement.selectCategory") }}</option>
+
         <option
           v-for="cat in categoryStore.categories"
           :key="cat._id"
@@ -133,28 +146,24 @@ const handleUpdate = async () => {
         </option>
       </select>
 
-      <!-- IMAGE UPLOAD SPIĘTY Z previewUrl -->
       <div class="flex flex-col items-center">
         <label class="text-xl text-gray-500 mb-2 font-medium">
           {{ t("editAnnouncement.image") }}
         </label>
 
         <div class="relative w-full h-full mb-3">
-          <!-- Nowy podgląd -->
           <img
             v-if="previewUrl"
             :src="previewUrl"
             class="w-32 h-32 object-cover rounded-2xl border-2 border-gray-200 shadow-sm"
           />
 
-          <!-- Stare zdjęcie (gdy nie wybrano nowego) -->
           <img
             v-else-if="announcementStore.selectedAnnouncement?.imageUrl"
             :src="announcementStore.selectedAnnouncement.imageUrl"
             class="w-full h-full object-cover rounded-2xl border-2 border-gray-200 shadow-sm"
           />
 
-          <!-- Placeholder -->
           <div
             v-else
             class="w-32 h-32 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-400 text-3xl border-2 border-gray-200"

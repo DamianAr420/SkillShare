@@ -109,7 +109,7 @@ const toggleWatchLocal = async (announcementId: string) => {
     </p>
 
     <span
-      v-if="announcement.price !== null"
+      v-if="announcement.type !== 'search'"
       class="text-[#F77821] font-bold text-2xl"
     >
       {{ announcement.price }} zł
@@ -119,7 +119,7 @@ const toggleWatchLocal = async (announcementId: string) => {
   <!-- DESKTOP CARD -->
   <div
     v-else
-    class="bg-white rounded-xl shadow-[0_0_5px_1px_rgba(0,0,0,0.25)] hover:shadow-[0_0_8px_1px_rgba(0,0,0,0.25)] hover:shadow-[#F77821] transition p-4 flex flex-col relative"
+    class="bg-white rounded-xl shadow-[0_0_5px_1px_rgba(0,0,0,0.25)] hover:shadow-[0_8px_16px_rgba(0,0,0,0.20)] hover:-translate-y-1 transition duration-300 p-4 flex flex-col relative"
   >
     <img
       :src="
@@ -147,7 +147,7 @@ const toggleWatchLocal = async (announcementId: string) => {
     </p>
 
     <span
-      v-if="announcement.price !== null"
+      v-if="announcement.type !== 'search'"
       class="text-[#F77821] font-bold text-lg sm:text-xl mt-2 text-right"
     >
       {{ announcement.price }} zł
