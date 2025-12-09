@@ -151,7 +151,7 @@ const goToChat = async (userId: string) => {
       router.push(`/chat/${conversationId}`);
     }
   } catch {
-    showToast("Nie udało się rozpocząć rozmowy", "error");
+    showToast(t("announcementDetails.chatError"), "error");
   }
 };
 </script>

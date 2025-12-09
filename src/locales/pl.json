@@ -178,7 +178,8 @@
       "startChat": "Napisz do ogłoszeniodawcy"
     },
     "goToProfile": "Przejdź do profilu ogłoszeniodawcy",
-    "views": "Wyświetlenia:"
+    "views": "Wyświetlenia:",
+    "chatError": "Nie udało się połączyć z czatem!"
   },
 
   "Profile": {
