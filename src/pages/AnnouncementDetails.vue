@@ -148,7 +148,7 @@ const goToChat = async (userId: string) => {
   try {
     const conversationId = await chatStore.startConversation(userId);
     if (conversationId) {
-      router.push(`/chat/${conversationId}`);
+      router.push(`/chat/${userId}`);
     }
   } catch {
     showToast(t("announcementDetails.chatError"), "error");
