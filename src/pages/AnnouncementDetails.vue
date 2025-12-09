@@ -283,6 +283,7 @@ const goToChat = async (userId: string) => {
             {{ t("announcementDetails.goToProfile") }}
           </button>
           <button
+            v-if="!isOwner"
             class="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition duration-300 cursor-pointer"
             @click="goToChat(seller._id)"
           >
