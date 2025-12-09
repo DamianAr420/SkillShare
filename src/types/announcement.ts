@@ -11,4 +11,5 @@ export interface Announcement {
   type: string;
   showPhone: boolean;
   showEmail: boolean;
+  views: number;
 }

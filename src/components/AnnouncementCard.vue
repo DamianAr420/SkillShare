@@ -119,15 +119,15 @@ const toggleWatchLocal = async (announcementId: string) => {
   <!-- DESKTOP CARD -->
   <div
     v-else
-    class="bg-white rounded-xl shadow-[0_0_5px_1px_rgba(0,0,0,0.25)] hover:shadow-[0_8px_16px_rgba(0,0,0,0.20)] hover:-translate-y-1 transition duration-300 p-4 flex flex-col relative"
+    class="bg-white rounded-xl shadow-[0_0_5px_1px_rgba(0,0,0,0.25)] hover:shadow-[0_8px_16px_rgba(0,0,0,0.20)] hover:-translate-y-1 transition duration-300 p-4 flex flex-col relative cursor-pointer"
+    @click="$router.push(`/announcement/${announcement._id}`)"
   >
     <img
       :src="
         announcement.imageUrl ||
         'https://via.placeholder.com/300x200?text=' + t('announcements.noImage')
       "
-      class="h-40 w-full object-cover rounded mb-3 cursor-pointer"
-      @click="$router.push(`/announcement/${announcement._id}`)"
+      class="h-40 w-full object-cover rounded mb-3"
     />
 
     <h3 class="text-lg font-semibold mb-1 flex items-center justify-between">

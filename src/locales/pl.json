@@ -171,12 +171,14 @@
     "watchSuccess": "Ogłoszenie zostało zaobserwowane!",
     "unwatchSuccess": "Ogłoszenie nie jest już obserwowane!",
     "loginToWatch": "Zaloguj się aby zaobserwować to ogłoszenie!",
+    "loginToChat": "Zaloguj się aby napisać wiadomość!",
     "copied": "Email: {email} został skopiowany!",
     "copyError": "Nie udało się skopiować",
     "chat": {
       "startChat": "Napisz do ogłoszeniodawcy"
     },
-    "goToProfile": "Przejdź do profilu ogłoszeniodawcy"
+    "goToProfile": "Przejdź do profilu ogłoszeniodawcy",
+    "views": "Wyświetlenia:"
   },
 
   "Profile": {

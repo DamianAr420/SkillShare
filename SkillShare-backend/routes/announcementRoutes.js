@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import Announcement from "../models/Announcement.js";
 import Category from "../models/Category.js";
 import User from "../models/User.js";
+import ViewLog from "../models/ViewLog.js";
 import { uploadAnnouncement } from "../middleware/upload.js";
 import cloudinary from "../config/cloudinary.js";
 
@@ -301,6 +302,38 @@ router.put("/:id", uploadAnnouncement.single("image"), async (req, res) => {
   } catch (err) {
     console.error("Error updating announcement:", err);
     res.status(500).json({ error: "Update failed" });
+  }
+});
+
+router.post("/:id/view", async (req, res) => {
+  try {
+    const listingId = req.params.id;
+    const ip =
+      req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.remoteAddress;
+
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+    // Znajdź ostatnie wejście IP na to ogłoszenie
+    const log = await ViewLog.findOne({ listingId, ip });
+
+    if (!log || log.lastView < oneHourAgo) {
+      // zwiększ licznik
+      await Announcement.findByIdAndUpdate(listingId, {
+        $inc: { views: 1 },
+      });
+
+      // zapisz/aktualizuj log
+      await ViewLog.findOneAndUpdate(
+        { listingId, ip },
+        { lastView: new Date() },
+        { upsert: true }
+      );
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("View counter error:", err);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 

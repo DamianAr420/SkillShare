@@ -54,6 +54,7 @@ const ann = computed<Announcement>(() => {
       type: "",
       showPhone: false,
       showEmail: false,
+      views: 0,
     }
   );
 });
@@ -75,6 +76,7 @@ onMounted(async () => {
   await announcementStore.fetchAnnouncementById(id);
   if (auth.isAuthenticated) await auth.fetchWatchlist();
   await loadSeller();
+  await announcementStore.countView(id);
 });
 
 const isWatched = computed(() => {
@@ -139,7 +141,7 @@ const openImage = (src: string) => {
 
 const goToChat = async (userId: string) => {
   if (!auth.isAuthenticated) {
-    showToast(t("announcementDetails.loginToWatch"), "error");
+    showToast(t("announcementDetails.loginToChat"), "error");
     return;
   }
 
@@ -287,6 +289,11 @@ const goToChat = async (userId: string) => {
             {{ t("announcementDetails.chat.startChat") }}
           </button>
         </div>
+      </div>
+
+      <div class="w-fit flex flex-row gap-2 mx-auto items-center">
+        <p>{{ t("announcementDetails.views") }}</p>
+        <p>{{ ann.views }}</p>
       </div>
 
       <!-- Owner actions -->

@@ -231,6 +231,14 @@ export const useAnnouncementStore = defineStore("announcement", {
       }
     },
 
+    async countView(id: string) {
+      try {
+        await api.post(`/announcements/${id}/view`);
+      } catch (err) {
+        console.error("❌ Error counting view:", err);
+      }
+    },
+
     // Sprawdź czy użytkownik jest właścicielem
     isOwner(announcement: Announcement | null | undefined) {
       const auth = useAuthStore();

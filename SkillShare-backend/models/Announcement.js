@@ -16,6 +16,7 @@ const announcementSchema = new mongoose.Schema({
   type: { type: String, enum: ["offer", "search"], required: true },
   showPhone: { type: Boolean, default: true },
   showEmail: { type: Boolean, default: true },
+  views: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now },
 });
 
