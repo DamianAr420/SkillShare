@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, watch, nextTick, onUnmounted } from "vue";
 import { useChatStore } from "@/stores/chatStore";
 import { useAuthStore } from "@/stores/authStore";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import Loader from "@/components/ui/Loader.vue";
 import { io } from "socket.io-client";
 import { useBreakpoints } from "@/composables/useBreakpoints";
@@ -15,6 +15,7 @@ const { isMobile } = useBreakpoints();
 const chatStore = useChatStore();
 const auth = useAuthStore();
 const route = useRoute();
+const router = useRouter();
 const socket = io("https://skillshare-tgfy.onrender.com", {
   transports: ["websocket"],
 });
@@ -28,11 +29,10 @@ const onlineCheckInterval = ref<number | null>(null);
 onMounted(async () => {
   await chatStore.fetchConversations();
 
-  const userIdFromRoute = route.params.id as string;
-  if (userIdFromRoute) {
-    selectedConversationId.value = await chatStore.startConversation(
-      userIdFromRoute
-    );
+  const convId = route.query.id as string;
+  if (convId) {
+    selectedConversationId.value = convId;
+    await chatStore.fetchConversation(convId);
   }
 
   await nextTick();
@@ -59,6 +59,17 @@ watch(selectedConversationId, (id) => {
     socket.emit("joinRoom", id);
     if (isMobile.value) showMobileChat.value = true;
   }
+});
+
+watch(selectedConversationId, (newVal) => {
+  if (!newVal) return;
+
+  router.replace({
+    name: "chat",
+    query: {
+      id: newVal,
+    },
+  });
 });
 
 socket.on("newMessage", (msg) => {

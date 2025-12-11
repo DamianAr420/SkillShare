@@ -56,12 +56,14 @@ export const useChatStore = defineStore("chat", () => {
         c.participants.includes(userId) &&
         c.participants.includes(auth.user?._id!)
     );
-    if (existing) return existing._id;
-
-    const conv = await createConversationApi(userId);
-    conv.messages = conv.messages || [];
-    conversations.value.push(conv);
-    return conv._id;
+    if (existing) {
+      return existing._id;
+    } else {
+      const conv = await createConversationApi(userId);
+      conv.messages = conv.messages || [];
+      conversations.value.push(conv);
+      return conv._id;
+    }
   };
 
   const updateUserStatus = (userId: string, isOnline: boolean) => {
