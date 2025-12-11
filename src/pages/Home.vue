@@ -120,7 +120,7 @@ const normalizedAnnouncements = computed(() =>
     <!-- ================= HEADER ================= -->
     <div class="text-center sm:text-left mb-10">
       <h1
-        class="text-2xl sm:text-4xl font-extrabold bg-gradient-to-r from-[#F77821] to-[#ff9d4c] bg-clip-text text-transparent drop-shadow-sm"
+        class="text-2xl sm:text-4xl font-extrabold bg-gradient-to-r from-[#F77821] to-[#ff9d4c] bg-clip-text text-transparent py-2"
       >
         {{ t("Home.header.title") }}
       </h1>
