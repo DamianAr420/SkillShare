@@ -60,4 +60,24 @@ router.post("/conversations/:id/messages", authMiddleware, async (req, res) => {
   res.json(savedMessage);
 });
 
+// Usuń konwersację
+router.delete("/conversations/:id", authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.userId;
+
+  // rozmowę może usunąć tylko uczestnik
+  const conversation = await Conversation.findOne({
+    _id: id,
+    participants: userId,
+  });
+
+  if (!conversation) {
+    return res.status(404).json({ message: "Conversation not found" });
+  }
+
+  await Conversation.deleteOne({ _id: id });
+
+  res.json({ success: true });
+});
+
 export default router;

@@ -29,3 +29,8 @@ export const createConversationApi = async (
   const res = await api.post("/chat/conversations", { participantId });
   return res.data;
 };
+
+export const deleteConversationApi = async (id: string) => {
+  const res = await api.delete(`/chat/conversations/${id}`);
+  return res.data;
+};

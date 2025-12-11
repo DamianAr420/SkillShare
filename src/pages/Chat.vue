@@ -9,6 +9,8 @@ import { useBreakpoints } from "@/composables/useBreakpoints";
 import ArrowLeft from "@/assets/icons/ArrowLeft.vue";
 import { timeAgo } from "@/utils/time";
 import { type User } from "@/types/user";
+import ConfirmDialog from "@/components/dialogs/ConfirmDialog.vue";
+import { useI18n } from "vue-i18n";
 
 const { isMobile } = useBreakpoints();
 
@@ -16,6 +18,7 @@ const chatStore = useChatStore();
 const auth = useAuthStore();
 const route = useRoute();
 const router = useRouter();
+const { t } = useI18n();
 const socket = io("https://skillshare-tgfy.onrender.com", {
   transports: ["websocket"],
 });
@@ -25,6 +28,8 @@ const newMessage = ref("");
 const messagesContainer = ref<HTMLElement | null>(null);
 const showMobileChat = ref(false);
 const onlineCheckInterval = ref<number | null>(null);
+const confirmDeleteVisible = ref(false);
+let conversationToDelete = ref<string | null>(null);
 
 onMounted(async () => {
   await chatStore.fetchConversations();
@@ -135,6 +140,54 @@ const otherUserIsOnline = computed(() => {
   return diff < 60;
 });
 
+const menuState = ref<{ id: string | null; type: "list" | "chat" | null }>({
+  id: null,
+  type: null,
+});
+
+const toggleMenu = (id: string, type: "list" | "chat") => {
+  if (menuState.value.id === id && menuState.value.type === type) {
+    menuState.value = { id: null, type: null };
+  } else {
+    menuState.value = { id, type };
+  }
+};
+
+const closeMenu = () => {
+  menuState.value = { id: null, type: null };
+};
+
+document.addEventListener("click", closeMenu);
+
+const onArchive = (id: string) => {
+  console.log("archive", id);
+};
+
+const onMarkAsRead = (id: string) => {
+  console.log("markAsRead", id);
+};
+
+const onDelete = (id: string) => {
+  conversationToDelete.value = id;
+  confirmDeleteVisible.value = true;
+};
+
+document.addEventListener("click", closeMenu);
+
+const confirmDelete = async () => {
+  if (!conversationToDelete.value) return;
+
+  await chatStore.deleteConversation(conversationToDelete.value);
+
+  if (selectedConversationId.value === conversationToDelete.value) {
+    selectedConversationId.value = null;
+    router.replace({ name: "chat", query: {} });
+  }
+
+  confirmDeleteVisible.value = false;
+  conversationToDelete.value = null;
+};
+
 const getLastMessage = (conversation: any) => {
   return conversation.messages.length
     ? conversation.messages[conversation.messages.length - 1]
@@ -164,39 +217,75 @@ onUnmounted(() => {
         v-if="!showMobileChat"
         class="bg-white shadow-md rounded-xl p-4 overflow-y-auto h-full"
       >
-        <h3 class="font-bold mb-4 text-xl">Konwersacje</h3>
-        <Loader v-if="chatStore.loading" text="Ładowanie konwersacji..." />
+        <h3 class="font-bold mb-4 text-xl">{{ t("chat.conversations") }}</h3>
+        <Loader
+          v-if="chatStore.loading"
+          :text="t('chat.loadingConversations')"
+        />
 
         <div v-else>
           <div
             v-for="c in chatStore.conversations"
             :key="c._id"
+            class="flex items-center gap-3 my-2 p-3 rounded-xl cursor-pointer active:scale-[0.97] transition bg-white border border-gray-100 shadow-sm hover:shadow-md relative"
             @click="selectedConversationId = c._id"
-            class="flex items-center gap-3 my-2 p-3 rounded-xl cursor-pointer active:scale-[0.97] transition bg-white border border-gray-100 shadow-sm hover:shadow-md"
           >
             <img
               v-if="getOtherParticipant(c)?.avatarUrl"
               :src="getOtherParticipant(c)?.avatarUrl"
-              alt="avatar"
               class="w-12 h-12 rounded-full object-cover shadow-sm"
             />
 
             <div class="flex-1 min-w-0">
               <div class="font-semibold text-base truncate">
-                {{ getOtherParticipant(c)?.name || "Nieznany" }}
+                {{ getOtherParticipant(c)?.name || t("chat.unknownUser") }}
               </div>
               <div class="text-gray-500 text-sm truncate">
                 <span v-if="getLastMessage(c)">
                   <strong>
                     {{
                       getLastMessage(c)?.senderId === auth.user?._id
-                        ? "Ty"
-                        : getOtherParticipant(c)?.name || "Nieznany"
+                        ? t("chat.you")
+                        : getOtherParticipant(c)?.name || t("chat.unknownUser")
                     }}
                   </strong>
                   {{ getLastMessage(c)?.content }}
                 </span>
-                <span v-else class="italic">Brak wiadomości</span>
+                <span v-else class="italic">{{ t("chat.noMessages") }}</span>
+              </div>
+            </div>
+
+            <!-- MENU TRZY KROPKI -->
+            <div @click.stop class="relative">
+              <button
+                @click.stop="toggleMenu(c._id, 'list')"
+                class="text-xl px-2 py-1 rounded hover:bg-gray-200"
+              >
+                ⋮
+              </button>
+
+              <div
+                v-if="menuState.id === c._id && menuState.type === 'list'"
+                class="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-md z-20"
+              >
+                <button
+                  @click.stop="onArchive(c._id)"
+                  class="w-full text-left px-4 py-2 hover:bg-gray-100"
+                >
+                  {{ t("chat.archive") }}
+                </button>
+                <button
+                  @click.stop="onMarkAsRead(c._id)"
+                  class="w-full text-left px-4 py-2 hover:bg-gray-100"
+                >
+                  {{ t("chat.markAsRead") }}
+                </button>
+                <button
+                  @click.stop="onDelete(c._id)"
+                  class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
+                >
+                  {{ t("chat.deleteChat") }}
+                </button>
               </div>
             </div>
           </div>
@@ -240,9 +329,51 @@ onUnmounted(() => {
                 ></span>
                 <span>
                   {{
-                    otherUserIsOnline ? "online" : timeAgo(otherUser?.lastSeen)
+                    otherUserIsOnline
+                      ? t("chat.online")
+                      : timeAgo(otherUser?.lastSeen)
                   }}
                 </span>
+              </div>
+            </div>
+            <div class="relative" @click.stop>
+              <button
+                @click.stop="
+                  toggleMenu(
+                    selectedConversationId ? selectedConversationId : '',
+                    'chat'
+                  )
+                "
+                class="text-2xl px-2 py-1 rounded hover:bg-gray-200"
+              >
+                ⋮
+              </button>
+
+              <div
+                v-if="
+                  menuState.id === selectedConversationId &&
+                  menuState.type === 'chat'
+                "
+                class="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-md z-20"
+              >
+                <button
+                  @click.stop="onArchive(selectedConversationId!)"
+                  class="w-full text-left px-4 py-2 hover:bg-gray-100"
+                >
+                  {{ t("chat.archive") }}
+                </button>
+                <button
+                  @click.stop="onMarkAsRead(selectedConversationId!)"
+                  class="w-full text-left px-4 py-2 hover:bg-gray-100"
+                >
+                  {{ t("chat.markAsRead") }}
+                </button>
+                <button
+                  @click.stop="onDelete(selectedConversationId!)"
+                  class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
+                >
+                  {{ t("chat.deleteChat") }}
+                </button>
               </div>
             </div>
           </div>
@@ -281,7 +412,7 @@ onUnmounted(() => {
           <input
             v-model="newMessage"
             @keyup.enter="sendMessage"
-            placeholder="Napisz wiadomość..."
+            :placeholder="t('chat.writeMessage')"
             class="flex-1 w-[70%] h-10 border border-gray-300 rounded-full px-2 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-[#F77821]"
           />
 
@@ -289,7 +420,7 @@ onUnmounted(() => {
             @click="sendMessage"
             class="bg-[#F77821] w-[30%] text-center h-10 px-4 text-white rounded-full text-sm font-semibold hover:bg-[#EA580C] active:scale-95 transition whitespace-nowrap"
           >
-            Wyślij
+            {{ t("chat.send") }}
           </button>
         </div>
       </div>
@@ -300,40 +431,78 @@ onUnmounted(() => {
       <div class="flex flex-row h-full gap-4">
         <!-- lista -->
         <div class="w-1/3 bg-white shadow rounded p-4 overflow-y-auto">
-          <h3 class="font-bold mb-3 text-lg">Konwersacje</h3>
+          <h3 class="font-bold mb-3 text-lg">{{ t("chat.conversations") }}</h3>
 
-          <Loader v-if="chatStore.loading" text="Ładowanie konwersacji..." />
+          <Loader
+            v-if="chatStore.loading"
+            :text="t('chat.loadingConversations')"
+          />
 
           <div v-else>
             <div
               v-for="c in chatStore.conversations"
               :key="c._id"
+              class="flex items-center gap-3 my-2 p-2 rounded cursor-pointer hover:bg-gray-100 transition relative"
               @click="selectedConversationId = c._id"
-              class="flex items-center gap-3 my-2 p-2 rounded cursor-pointer hover:bg-gray-100 transition"
               :class="{ 'bg-gray-100': selectedConversationId === c._id }"
             >
               <img
                 v-if="getOtherParticipant(c)?.avatarUrl"
                 :src="getOtherParticipant(c)?.avatarUrl"
-                alt="avatar"
                 class="w-10 h-10 rounded-full object-cover"
               />
+
               <div class="flex-1 min-w-0">
                 <div class="font-semibold truncate">
-                  {{ getOtherParticipant(c)?.name || "Nieznany" }}
+                  {{ getOtherParticipant(c)?.name || t("chat.unknownUser") }}
                 </div>
                 <div class="text-gray-500 text-sm truncate">
                   <span v-if="getLastMessage(c)">
                     <strong>
                       {{
                         getLastMessage(c)?.senderId === auth.user?._id
-                          ? "Ty"
-                          : getOtherParticipant(c)?.name || "Nieznany"
+                          ? t("chat.you")
+                          : getOtherParticipant(c)?.name ||
+                            t("chat.unknownUser")
                       }}
                     </strong>
                     {{ getLastMessage(c)?.content }}
                   </span>
-                  <span v-else class="italic">Brak wiadomości</span>
+                  <span v-else class="italic">{{ t("chat.noMessages") }}</span>
+                </div>
+              </div>
+
+              <!-- === MENU TRZY KROPKI === -->
+              <div @click.stop class="relative">
+                <button
+                  @click.stop="toggleMenu(c._id, 'list')"
+                  class="text-xl px-2 py-1 rounded hover:bg-gray-200"
+                >
+                  ⋮
+                </button>
+
+                <div
+                  v-if="menuState.id === c._id && menuState.type === 'list'"
+                  class="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-md z-20"
+                >
+                  <button
+                    @click.stop="onArchive(c._id)"
+                    class="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                  >
+                    {{ t("chat.archive") }}
+                  </button>
+                  <button
+                    @click.stop="onMarkAsRead(c._id)"
+                    class="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                  >
+                    {{ t("chat.markAsRead") }}
+                  </button>
+                  <button
+                    @click.stop="onDelete(c._id)"
+                    class="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
+                  >
+                    {{ t("chat.deleteChat") }}
+                  </button>
                 </div>
               </div>
             </div>
@@ -369,11 +538,51 @@ onUnmounted(() => {
                   <span>
                     {{
                       otherUserIsOnline
-                        ? "online"
+                        ? t("chat.online")
                         : timeAgo(otherUser?.lastSeen)
                     }}
                   </span>
                 </div>
+              </div>
+            </div>
+            <div class="ml-auto relative" @click.stop>
+              <button
+                @click.stop="
+                  toggleMenu(
+                    selectedConversationId ? selectedConversationId : '',
+                    'chat'
+                  )
+                "
+                class="text-2xl px-2 py-1 rounded hover:bg-gray-200 cursor-pointer"
+              >
+                ⋮
+              </button>
+
+              <div
+                v-if="
+                  menuState.id === selectedConversationId &&
+                  menuState.type === 'chat'
+                "
+                class="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-md z-20"
+              >
+                <button
+                  @click.stop="onArchive(selectedConversationId!)"
+                  class="w-full text-left px-4 py-2 hover:bg-gray-100"
+                >
+                  {{ t("chat.archive") }}
+                </button>
+                <button
+                  @click.stop="onMarkAsRead(selectedConversationId!)"
+                  class="w-full text-left px-4 py-2 hover:bg-gray-100"
+                >
+                  {{ t("chat.markAsRead") }}
+                </button>
+                <button
+                  @click.stop="onDelete(selectedConversationId!)"
+                  class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
+                >
+                  {{ t("chat.deleteChat") }}
+                </button>
               </div>
             </div>
           </div>
@@ -406,20 +615,30 @@ onUnmounted(() => {
             <input
               v-model="newMessage"
               @keyup.enter="sendMessage"
-              placeholder="Napisz wiadomość..."
+              :placeholder="t('chat.writeMessage')"
               class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#F77821]"
             />
             <button
               @click="sendMessage"
               class="bg-[#F77821] text-white px-4 py-2 rounded-lg hover:bg-[#EA580C] transition"
             >
-              Wyślij
+              {{ t("chat.send") }}
             </button>
           </div>
         </div>
       </div>
     </template>
   </div>
+
+  <ConfirmDialog
+    :visible="confirmDeleteVisible"
+    :title="t('chat.deleteConversationTitle')"
+    :message="t('chat.deleteConversationMessage')"
+    :confirmText="t('chat.confirm')"
+    :cancelText="t('chat.cancel')"
+    @cancel="confirmDeleteVisible = false"
+    @confirm="confirmDelete"
+  />
 </template>
 
 <style scoped>

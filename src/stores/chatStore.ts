@@ -6,6 +6,7 @@ import {
   fetchConversationById,
   sendMessageApi,
   createConversationApi,
+  deleteConversationApi,
 } from "@/api/chat";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -74,6 +75,13 @@ export const useChatStore = defineStore("chat", () => {
     });
   };
 
+  const deleteConversation = async (id: string) => {
+    await deleteConversationApi(id);
+
+    // usuń lokalnie
+    conversations.value = conversations.value.filter((c) => c._id !== id);
+  };
+
   return {
     conversations,
     loading,
@@ -82,5 +90,6 @@ export const useChatStore = defineStore("chat", () => {
     sendMessage,
     startConversation,
     updateUserStatus,
+    deleteConversation,
   };
 });

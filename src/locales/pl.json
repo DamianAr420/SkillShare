@@ -214,5 +214,23 @@
     "error": "Wystąpił błąd podczas aktualizacji ogłoszenia.",
     "image": "Zdjęcie ogłoszenia",
     "imageHint": "Kliknij lub dotknij, aby dodać zdjęcie"
+  },
+
+  "chat": {
+    "conversations": "Konwersacje",
+    "loadingConversations": "Ładowanie konwersacji...",
+    "unknownUser": "Nieznany",
+    "noMessages": "Brak wiadomości",
+    "you": "Ty",
+    "archive": "Archiwizuj",
+    "markAsRead": "Oznacz jako przeczytane",
+    "deleteChat": "Usuń chat",
+    "online": "online",
+    "writeMessage": "Napisz wiadomość...",
+    "send": "Wyślij",
+    "deleteConversationTitle": "Usuń konwersację",
+    "deleteConversationMessage": "Czy na pewno chcesz usunąć ten chat? Tej operacji nie można cofnąć.",
+    "confirm": "Usuń",
+    "cancel": "Anuluj"
   }
 }
