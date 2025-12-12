@@ -30,6 +30,7 @@ const showMobileChat = ref(false);
 const onlineCheckInterval = ref<number | null>(null);
 const confirmDeleteVisible = ref(false);
 let conversationToDelete = ref<string | null>(null);
+const textareaRef = ref<HTMLTextAreaElement | null>(null);
 
 onMounted(async () => {
   await chatStore.fetchConversations();
@@ -112,6 +113,16 @@ const sendMessage = async () => {
   });
 
   newMessage.value = "";
+
+  await nextTick();
+  resetTextareaHeight();
+  scrollToEnd();
+};
+
+const resetTextareaHeight = () => {
+  if (!textareaRef.value) return;
+  const el = textareaRef.value;
+  el.style.height = "auto";
 };
 
 const selectedConversation = computed(() => {
@@ -405,7 +416,7 @@ const autoResize = (event: Event) => {
                 'bg-[#F77821] text-white': msg.senderId === auth.user?._id,
                 'bg-gray-200 text-gray-800': msg.senderId !== auth.user?._id,
               }"
-              class="px-4 py-2 rounded-2xl max-w-[75%] text-[15px] leading-snug shadow-sm"
+              class="px-4 py-2 rounded-2xl max-w-[75%] text-[15px] leading-snug shadow-sm break-words break-all"
             >
               {{ msg.content }}
             </div>
@@ -418,6 +429,7 @@ const autoResize = (event: Event) => {
         >
           <div class="flex-1 relative w-full flex items-end">
             <textarea
+              ref="textareaRef"
               v-model="newMessage"
               @keyup.enter="sendMessage"
               @input="autoResize"
@@ -525,7 +537,9 @@ const autoResize = (event: Event) => {
         </div>
 
         <!-- okno czatu -->
-        <div class="flex-1 bg-white shadow rounded p-4 flex flex-col">
+        <div
+          class="flex-1 bg-white shadow rounded p-4 flex flex-col max-w-[70vw]"
+        >
           <div
             v-if="selectedConversation"
             class="flex items-center h-16 px-4 mb-3 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.15)] bg-white sticky top-0 z-0"
@@ -619,7 +633,7 @@ const autoResize = (event: Event) => {
                   'bg-[#F77821] text-white': msg.senderId === auth.user?._id,
                   'bg-gray-200 text-gray-800': msg.senderId !== auth.user?._id,
                 }"
-                class="mess px-4 py-2 rounded-lg max-w-[80%] break-words"
+                class="mess px-4 py-2 rounded-lg max-w-[80%] break-words break-all"
               >
                 {{ msg.content }}
               </div>
@@ -629,6 +643,7 @@ const autoResize = (event: Event) => {
           <div class="flex gap-2 mt-2 w-full items-end">
             <div class="flex-1 relative w-full flex items-end">
               <textarea
+                ref="textareaRef"
                 v-model="newMessage"
                 @keyup.enter="sendMessage"
                 @input="autoResize"
