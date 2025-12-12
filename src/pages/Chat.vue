@@ -206,6 +206,13 @@ onMounted(() => {
 onUnmounted(() => {
   if (onlineCheckInterval.value) clearInterval(onlineCheckInterval.value);
 });
+
+const autoResize = (event: Event) => {
+  const target = event.target as HTMLTextAreaElement;
+  target.style.height = "auto";
+  target.style.height = target.scrollHeight + "px";
+  scrollToEnd();
+};
 </script>
 
 <template>
@@ -405,20 +412,28 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- INPUT -->
+        <!-- MOBILE INPUT -->
         <div
-          class="flex flex-row gap-2 items-center justify-center h-16 shadow-[0px_0px_6px_-1px_rgba(0,0,0,0.5)] bg-white px-3"
+          class="flex gap-2 mt-2 w-full items-end p-3 bg-white shadow-[0px_0px_6px_-1px_rgba(0,0,0,0.5)]"
         >
-          <input
-            v-model="newMessage"
-            @keyup.enter="sendMessage"
-            :placeholder="t('chat.writeMessage')"
-            class="flex-1 w-[70%] h-10 border border-gray-300 rounded-full px-2 py-2 text-[15px] focus:outline-none focus:ring-2 focus:ring-[#F77821]"
-          />
+          <div class="flex-1 relative w-full flex items-end">
+            <textarea
+              v-model="newMessage"
+              @keyup.enter="sendMessage"
+              @input="autoResize"
+              :placeholder="t('chat.writeMessage')"
+              maxlength="500"
+              class="w-full border border-gray-300 rounded-lg px-2 pt-2 pb-3 focus:outline-none focus:ring-2 focus:ring-[#F77821] resize-none overflow-y-auto text-[15px] max-h-50"
+              rows="1"
+            ></textarea>
+            <span class="absolute right-3 bottom-0 text-xs text-gray-400">
+              {{ newMessage.length }}/500
+            </span>
+          </div>
 
           <button
             @click="sendMessage"
-            class="bg-[#F77821] w-[30%] text-center h-10 px-4 text-white rounded-full text-sm font-semibold hover:bg-[#EA580C] active:scale-95 transition whitespace-nowrap"
+            class="w-16 bg-[#F77821] text-center text-xs text-white px-4 py-2 rounded-lg hover:bg-[#EA580C] transition cursor-pointer"
           >
             {{ t("chat.send") }}
           </button>
@@ -593,7 +608,7 @@ onUnmounted(() => {
             <div
               v-for="msg in selectedConversation?.messages || []"
               :key="msg._id"
-              class="flex"
+              class="messBox flex"
               :class="{
                 'justify-end': msg.senderId === auth.user?._id,
                 'justify-start': msg.senderId !== auth.user?._id,
@@ -604,23 +619,32 @@ onUnmounted(() => {
                   'bg-[#F77821] text-white': msg.senderId === auth.user?._id,
                   'bg-gray-200 text-gray-800': msg.senderId !== auth.user?._id,
                 }"
-                class="px-4 py-2 rounded-lg max-w-[80%] break-words"
+                class="mess px-4 py-2 rounded-lg max-w-[80%] break-words"
               >
                 {{ msg.content }}
               </div>
             </div>
           </div>
 
-          <div class="flex gap-2 mt-2">
-            <input
-              v-model="newMessage"
-              @keyup.enter="sendMessage"
-              :placeholder="t('chat.writeMessage')"
-              class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#F77821]"
-            />
+          <div class="flex gap-2 mt-2 w-full items-end">
+            <div class="flex-1 relative w-full flex items-end">
+              <textarea
+                v-model="newMessage"
+                @keyup.enter="sendMessage"
+                @input="autoResize"
+                :placeholder="t('chat.writeMessage')"
+                maxlength="500"
+                class="w-full border border-gray-300 rounded-lg px-4 pt-2 pb-3 focus:outline-none focus:ring-2 focus:ring-[#F77821] resize-none overflow-hidden text-[15px]"
+                rows="1"
+              ></textarea>
+              <span class="absolute right-3 bottom-0 text-xs text-gray-400">
+                {{ newMessage.length }}/500
+              </span>
+            </div>
+
             <button
               @click="sendMessage"
-              class="bg-[#F77821] text-white px-4 py-2 rounded-lg hover:bg-[#EA580C] transition"
+              class="w-24 bg-[#F77821] text-white px-4 py-2 rounded-lg hover:bg-[#EA580C] transition cursor-pointer"
             >
               {{ t("chat.send") }}
             </button>
@@ -655,5 +679,9 @@ onUnmounted(() => {
 
 button:active {
   transform: scale(0.97);
+}
+
+.messBox:last-child .mess:last-child {
+  margin-bottom: 8px;
 }
 </style>
