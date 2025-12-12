@@ -63,6 +63,25 @@ export const initSocket = (server) => {
       const user = await User.findById(userId);
       io.emit("userOnlineStatus", user);
     });
+
+    socket.on("markRead", async ({ conversationId, userId }) => {
+      const conversation = await Conversation.findById(conversationId);
+      if (!conversation) return;
+
+      let updated = false;
+
+      conversation.messages.forEach((msg) => {
+        if (!msg.readBy.includes(userId)) {
+          msg.readBy.push(userId);
+          updated = true;
+        }
+      });
+
+      if (updated) {
+        await conversation.save();
+        io.to(conversationId).emit("messagesRead", { conversationId, userId });
+      }
+    });
   });
 
   return io;

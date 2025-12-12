@@ -7,10 +7,23 @@ const router = express.Router();
 // Pobierz wszystkie konwersacje użytkownika
 router.get("/conversations", authMiddleware, async (req, res) => {
   const userId = req.user.userId;
+
   const conversations = await Conversation.find({
     participants: userId,
   }).populate("participants", "name avatarUrl lastSeen");
-  res.json(conversations);
+
+  const result = conversations.map((conv) => {
+    const unreadCount = conv.messages.filter(
+      (msg) => !msg.readBy.includes(userId)
+    ).length;
+
+    return {
+      ...conv.toObject(),
+      unreadCount,
+    };
+  });
+
+  res.json(result);
 });
 
 // Pobierz wiadomości z konwersacji
@@ -51,7 +64,11 @@ router.post("/conversations/:id/messages", authMiddleware, async (req, res) => {
   if (!conversation)
     return res.status(404).json({ message: "Conversation not found" });
 
-  const message = { senderId: userId, content };
+  const message = {
+    senderId: userId,
+    content,
+    readBy: [userId],
+  };
   conversation.messages.push(message);
   await conversation.save();
 
@@ -79,5 +96,28 @@ router.delete("/conversations/:id", authMiddleware, async (req, res) => {
 
   res.json({ success: true });
 });
+
+router.post(
+  "/conversations/:id/mark-read",
+  authMiddleware,
+  async (req, res) => {
+    const userId = req.user.userId;
+    const { id } = req.params;
+
+    const conversation = await Conversation.findById(id);
+    if (!conversation)
+      return res.status(404).json({ message: "Conversation not found" });
+
+    conversation.messages.forEach((msg) => {
+      if (!msg.readBy.includes(userId)) {
+        msg.readBy.push(userId);
+      }
+    });
+
+    await conversation.save();
+
+    res.json({ success: true });
+  }
+);
 
 export default router;

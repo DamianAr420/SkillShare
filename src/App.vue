@@ -4,16 +4,30 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, onUnmounted } from "vue";
 import Toast from "@/components/ui/Toast.vue";
-import { io } from "socket.io-client";
+import { socket } from "@/utils/socket";
 import { useChatStore } from "@/stores/chatStore";
 
 const chatStore = useChatStore();
-const socket = io("https://skillshare-tgfy.onrender.com", {
-  transports: ["websocket"],
+
+const handleUserStatusChanged = (user: {
+  userId: string;
+  isOnline?: boolean;
+  lastSeen?: string;
+}) => {
+  const isOnlineStatus = user.isOnline ?? false;
+
+  const lastSeenDate = user.lastSeen ? new Date(user.lastSeen) : undefined;
+
+  chatStore.updateUserStatus(user.userId, isOnlineStatus, lastSeenDate);
+};
+
+onMounted(() => {
+  socket.on("userStatusChanged", handleUserStatusChanged);
 });
 
-socket.on("userStatusChanged", ({ userId, isOnline }) => {
-  chatStore.updateUserStatus(userId, isOnline);
+onUnmounted(() => {
+  socket.off("userStatusChanged", handleUserStatusChanged);
 });
 </script>

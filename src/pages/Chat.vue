@@ -4,7 +4,7 @@ import { useChatStore } from "@/stores/chatStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useRoute, useRouter } from "vue-router";
 import Loader from "@/components/ui/Loader.vue";
-import { io } from "socket.io-client";
+import { socket } from "@/utils/socket";
 import { useBreakpoints } from "@/composables/useBreakpoints";
 import ArrowLeft from "@/assets/icons/ArrowLeft.vue";
 import { timeAgo } from "@/utils/time";
@@ -19,26 +19,33 @@ const auth = useAuthStore();
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
-const socket = io("https://skillshare-tgfy.onrender.com", {
-  transports: ["websocket"],
+
+// Używamy activeConversationId ze Store do dwukierunkowej synchronizacji
+const selectedConversationId = computed({
+  get: () => chatStore.activeConversationId,
+  set: (id) => {
+    chatStore.setActiveConversation(id); // Wywołanie akcji w Store
+  },
 });
 
-const selectedConversationId = ref<string | null>(null);
 const newMessage = ref("");
 const messagesContainer = ref<HTMLElement | null>(null);
 const showMobileChat = ref(false);
-const onlineCheckInterval = ref<number | null>(null);
+const heartbeatInterval = ref<number | null>(null);
 const confirmDeleteVisible = ref(false);
 let conversationToDelete = ref<string | null>(null);
 const textareaRef = ref<HTMLTextAreaElement | null>(null);
 
 onMounted(async () => {
-  await chatStore.fetchConversations();
+  if (chatStore.conversations.length === 0) {
+    await chatStore.fetchConversations();
+  }
 
   const convId = route.query.id as string;
   if (convId) {
-    selectedConversationId.value = convId;
+    chatStore.setActiveConversation(convId);
     await chatStore.fetchConversation(convId);
+    if (isMobile.value) showMobileChat.value = true;
   }
 
   await nextTick();
@@ -52,6 +59,7 @@ const scrollToEnd = async () => {
   }
 };
 
+// Obserwacja zmian w ID lub długości wiadomości w aktywnej konwersacji, aby przewinąć do końca
 watch(
   () => [
     selectedConversationId.value,
@@ -60,57 +68,31 @@ watch(
   scrollToEnd
 );
 
+// Synchronizacja URL i widoku mobilnego po zmianie aktywnej konwersacji
 watch(selectedConversationId, (id) => {
   if (id) {
-    socket.emit("joinRoom", id);
     if (isMobile.value) showMobileChat.value = true;
-  }
-});
-
-watch(selectedConversationId, (newVal) => {
-  if (!newVal) return;
-
-  router.replace({
-    name: "chat",
-    query: {
-      id: newVal,
-    },
-  });
-});
-
-socket.on("newMessage", (msg) => {
-  const conv = chatStore.conversations.find(
-    (c) => c._id === msg.conversationId
-  );
-  if (conv) {
-    if (!conv.messages) conv.messages = [];
-    conv.messages.push(msg);
-    nextTick(() => scrollToEnd());
-  }
-});
-
-socket.on("userOnlineStatus", (user: User) => {
-  chatStore.conversations.forEach((conv) => {
-    conv.participants.forEach((p: any) => {
-      if (p._id === user._id) {
-        p.lastSeen = user.lastSeen;
-      }
+    router.replace({
+      name: "chat",
+      query: { id: id },
     });
-  });
+  } else {
+    router.replace({ name: "chat", query: {} });
+  }
+});
+
+// Nasłuchiwanie na globalne zmiany statusu użytkowników (np. lastSeen)
+socket.on("userOnlineStatus", (user: User) => {
+  const lastSeenDate = user.lastSeen ? new Date(user.lastSeen) : undefined;
+
+  chatStore.updateUserStatus(user._id, user.isOnline ?? false, lastSeenDate);
 });
 
 const sendMessage = async () => {
   if (!selectedConversationId.value || !newMessage.value.trim()) return;
 
-  const msg = await chatStore.sendMessage(
-    selectedConversationId.value,
-    newMessage.value
-  );
-
-  socket.emit("sendMessage", {
-    conversationId: selectedConversationId.value,
-    message: msg,
-  });
+  // Wysyłanie wiadomości za pomocą Store (obsługuje API i Socket)
+  await chatStore.sendMessage(selectedConversationId.value, newMessage.value);
 
   newMessage.value = "";
 
@@ -125,6 +107,7 @@ const resetTextareaHeight = () => {
   el.style.height = "auto";
 };
 
+// Aktywna konwersacja z danych w Store
 const selectedConversation = computed(() => {
   return (
     chatStore.conversations.find(
@@ -133,6 +116,7 @@ const selectedConversation = computed(() => {
   );
 });
 
+// Znajdź drugiego uczestnika konwersacji
 const getOtherParticipant = (conversation: any) => {
   return conversation.participants.find((p: any) => p._id !== auth.user?._id);
 };
@@ -141,6 +125,7 @@ const otherUser = computed(() =>
   getOtherParticipant(selectedConversation.value)
 );
 
+// Sprawdź, czy drugi użytkownik jest online
 const otherUserIsOnline = computed(() => {
   if (!otherUser.value?.lastSeen) return false;
 
@@ -148,9 +133,10 @@ const otherUserIsOnline = computed(() => {
   const now = new Date();
   const diff = (now.getTime() - lastSeen.getTime()) / 1000;
 
-  return diff < 60;
+  return diff < 60; // Online, jeśli widziany w ciągu ostatniej minuty
 });
 
+// Stan rozwijanego menu (trzy kropki)
 const menuState = ref<{ id: string | null; type: "list" | "chat" | null }>({
   id: null,
   type: null,
@@ -168,22 +154,24 @@ const closeMenu = () => {
   menuState.value = { id: null, type: null };
 };
 
+// Zamykanie menu po kliknięciu poza nim
 document.addEventListener("click", closeMenu);
 
 const onArchive = (id: string) => {
   console.log("archive", id);
+  closeMenu();
 };
 
 const onMarkAsRead = (id: string) => {
-  console.log("markAsRead", id);
+  // Oznaczenie jako przeczytane za pomocą Store
+  chatStore.markConversationAsRead(id);
+  closeMenu();
 };
 
 const onDelete = (id: string) => {
   conversationToDelete.value = id;
   confirmDeleteVisible.value = true;
 };
-
-document.addEventListener("click", closeMenu);
 
 const confirmDelete = async () => {
   if (!conversationToDelete.value) return;
@@ -192,7 +180,6 @@ const confirmDelete = async () => {
 
   if (selectedConversationId.value === conversationToDelete.value) {
     selectedConversationId.value = null;
-    router.replace({ name: "chat", query: {} });
   }
 
   confirmDeleteVisible.value = false;
@@ -205,19 +192,11 @@ const getLastMessage = (conversation: any) => {
     : null;
 };
 
-onMounted(() => {
-  socket.emit("heartbeat", { userId: auth.user?._id });
-  setInterval(() => {
-    socket.emit("heartbeat", { userId: auth.user?._id });
-  }, 30000);
-
-  onlineCheckInterval.value = window.setInterval(() => {}, 1000);
-});
-
 onUnmounted(() => {
-  if (onlineCheckInterval.value) clearInterval(onlineCheckInterval.value);
+  if (heartbeatInterval.value) clearInterval(heartbeatInterval.value);
 });
 
+// Automatyczne dopasowanie wysokości textarea
 const autoResize = (event: Event) => {
   const target = event.target as HTMLTextAreaElement;
   target.style.height = "auto";
@@ -228,9 +207,7 @@ const autoResize = (event: Event) => {
 
 <template>
   <div class="h-[80vh] min-h-[400px] max-w-6xl mx-auto">
-    <!-- ============ MOBILE ============ -->
     <template v-if="isMobile">
-      <!-- LISTA ROZMÓW -->
       <div
         v-if="!showMobileChat"
         class="bg-white shadow-md rounded-xl p-4 overflow-y-auto h-full"
@@ -258,7 +235,11 @@ const autoResize = (event: Event) => {
               <div class="font-semibold text-base truncate">
                 {{ getOtherParticipant(c)?.name || t("chat.unknownUser") }}
               </div>
-              <div class="text-gray-500 text-sm truncate">
+
+              <div
+                class="text-gray-500 text-sm truncate"
+                :class="{ 'font-semibold text-gray-800': c.unreadCount > 0 }"
+              >
                 <span v-if="getLastMessage(c)">
                   <strong>
                     {{
@@ -273,7 +254,13 @@ const autoResize = (event: Event) => {
               </div>
             </div>
 
-            <!-- MENU TRZY KROPKI -->
+            <div
+              v-if="c.unreadCount > 0"
+              class="w-6 h-6 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold shrink-0 ml-auto"
+            >
+              {{ c.unreadCount > 99 ? "99+" : c.unreadCount }}
+            </div>
+
             <div @click.stop class="relative">
               <button
                 @click.stop="toggleMenu(c._id, 'list')"
@@ -310,12 +297,10 @@ const autoResize = (event: Event) => {
         </div>
       </div>
 
-      <!-- OKNO CZATU -->
       <div
         class="bg-white shadow-md rounded-xl p-0 flex flex-col h-full overflow-hidden"
         v-else
       >
-        <!-- HEADER -->
         <div
           class="flex items-center h-16 px-4 mb-2 shadow-md bg-white z-10 relative"
         >
@@ -354,7 +339,8 @@ const autoResize = (event: Event) => {
                 </span>
               </div>
             </div>
-            <div class="relative" @click.stop>
+
+            <div class="relative ml-auto" @click.stop>
               <button
                 @click.stop="
                   toggleMenu(
@@ -397,7 +383,6 @@ const autoResize = (event: Event) => {
           </div>
         </div>
 
-        <!-- WIADOMOŚCI -->
         <div
           ref="messagesContainer"
           class="flex-1 overflow-y-auto px-3 space-y-2 pb-2"
@@ -419,11 +404,17 @@ const autoResize = (event: Event) => {
               class="px-4 py-2 rounded-2xl max-w-[75%] text-[15px] leading-snug shadow-sm break-words break-all"
             >
               {{ msg.content }}
+
+              <div
+                v-if="msg.senderId === auth.user?._id && msg.readBy.length > 1"
+                class="text-xs text-right opacity-70 mt-1"
+              >
+                ✓✓
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- MOBILE INPUT -->
         <div
           class="flex gap-2 mt-2 w-full items-end p-3 bg-white shadow-[0px_0px_6px_-1px_rgba(0,0,0,0.5)]"
         >
@@ -431,7 +422,7 @@ const autoResize = (event: Event) => {
             <textarea
               ref="textareaRef"
               v-model="newMessage"
-              @keyup.enter="sendMessage"
+              @keyup.enter.prevent="sendMessage"
               @input="autoResize"
               :placeholder="t('chat.writeMessage')"
               maxlength="500"
@@ -453,10 +444,8 @@ const autoResize = (event: Event) => {
       </div>
     </template>
 
-    <!-- ============ DESKTOP ============ -->
     <template v-else>
       <div class="flex flex-row h-full gap-4">
-        <!-- lista -->
         <div class="w-1/3 bg-white shadow rounded p-4 overflow-y-auto">
           <h3 class="font-bold mb-3 text-lg">{{ t("chat.conversations") }}</h3>
 
@@ -483,7 +472,11 @@ const autoResize = (event: Event) => {
                 <div class="font-semibold truncate">
                   {{ getOtherParticipant(c)?.name || t("chat.unknownUser") }}
                 </div>
-                <div class="text-gray-500 text-sm truncate">
+
+                <div
+                  class="text-gray-500 text-sm truncate"
+                  :class="{ 'font-semibold text-gray-800': c.unreadCount > 0 }"
+                >
                   <span v-if="getLastMessage(c)">
                     <strong>
                       {{
@@ -499,7 +492,13 @@ const autoResize = (event: Event) => {
                 </div>
               </div>
 
-              <!-- === MENU TRZY KROPKI === -->
+              <span
+                v-if="c.unreadCount > 0"
+                class="w-5 h-5 flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold shrink-0 ml-2"
+              >
+                {{ c.unreadCount > 99 ? "99+" : c.unreadCount }}
+              </span>
+
               <div @click.stop class="relative">
                 <button
                   @click.stop="toggleMenu(c._id, 'list')"
@@ -536,7 +535,6 @@ const autoResize = (event: Event) => {
           </div>
         </div>
 
-        <!-- okno czatu -->
         <div
           class="flex-1 bg-white shadow rounded p-4 flex flex-col max-w-[70vw]"
         >
@@ -544,7 +542,6 @@ const autoResize = (event: Event) => {
             v-if="selectedConversation"
             class="flex items-center h-16 px-4 mb-3 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.15)] bg-white sticky top-0 z-0"
           >
-            <!-- User info -->
             <div class="flex items-center gap-3">
               <img
                 :src="getOtherParticipant(selectedConversation)?.avatarUrl"
@@ -574,6 +571,7 @@ const autoResize = (event: Event) => {
                 </div>
               </div>
             </div>
+
             <div class="ml-auto relative" @click.stop>
               <button
                 @click.stop="
@@ -615,12 +613,21 @@ const autoResize = (event: Event) => {
               </div>
             </div>
           </div>
+
           <div
+            v-if="!selectedConversation"
+            class="flex flex-col items-center justify-center flex-1 text-gray-500"
+          >
+            <p>{{ t("chat.selectConversation") }}</p>
+          </div>
+
+          <div
+            v-else
             ref="messagesContainer"
             class="flex-1 overflow-y-auto mb-2 space-y-2"
           >
             <div
-              v-for="msg in selectedConversation?.messages || []"
+              v-for="msg in selectedConversation.messages || []"
               :key="msg._id"
               class="messBox flex"
               :class="{
@@ -636,16 +643,27 @@ const autoResize = (event: Event) => {
                 class="mess px-4 py-2 rounded-lg max-w-[80%] break-words break-all"
               >
                 {{ msg.content }}
+                <div
+                  v-if="
+                    msg.senderId === auth.user?._id && msg.readBy.length > 1
+                  "
+                  class="text-xs text-right opacity-70 mt-1"
+                >
+                  ✓✓
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="flex gap-2 mt-2 w-full items-end">
+          <div
+            v-if="selectedConversation"
+            class="flex gap-2 mt-2 w-full items-end"
+          >
             <div class="flex-1 relative w-full flex items-end">
               <textarea
                 ref="textareaRef"
                 v-model="newMessage"
-                @keyup.enter="sendMessage"
+                @keyup.enter.prevent="sendMessage"
                 @input="autoResize"
                 :placeholder="t('chat.writeMessage')"
                 maxlength="500"

@@ -1,13 +1,18 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/authStore";
+import { useChatStore } from "@/stores/chatStore";
+import { socket } from "@/utils/socket";
 
 const router = useRouter();
 const auth = useAuthStore();
+const chatStore = useChatStore();
 
 const posX = ref(0);
 const posY = ref(0);
+
+const heartbeatInterval = ref<number | null>(null);
 
 let startX = 0;
 let startY = 0;
@@ -17,6 +22,13 @@ let dragMoved = false;
 const transitionEnabled = ref(true);
 const shadowActive = ref(false);
 const snappedSide = ref<"left" | "right">("right");
+
+const unreadTotal = computed(() => {
+  return chatStore.conversations.reduce(
+    (sum, conv) => sum + (conv.unreadCount || 0),
+    0
+  );
+});
 
 const goToChat = () => {
   if (!dragMoved) router.push("/chat");
@@ -35,27 +47,51 @@ const savePosition = () => {
   localStorage.setItem("chatBubbleY", posY.value.toString());
 };
 
-onMounted(() => {
+const handleResize = () => {
+  const bubbleWidth = 90;
+  const bubbleHeight = 90;
+
+  posY.value = Math.min(posY.value, window.innerHeight - bubbleHeight);
+
+  transitionEnabled.value = true;
+
+  if (snappedSide.value === "left") {
+    posX.value = 10;
+  } else {
+    posX.value = window.innerWidth - bubbleWidth;
+  }
+
+  savePosition();
+};
+
+onMounted(async () => {
   loadSavedPosition();
-
-  const handleResize = () => {
-    const bubbleWidth = 90;
-    const bubbleHeight = 90;
-
-    posY.value = Math.min(posY.value, window.innerHeight - bubbleHeight);
-
-    transitionEnabled.value = true;
-
-    if (snappedSide.value === "left") {
-      posX.value = 10;
-    } else {
-      posX.value = window.innerWidth - bubbleWidth;
-    }
-
-    savePosition();
-  };
   snappedSide.value = posX.value < window.innerWidth / 2 ? "left" : "right";
   window.addEventListener("resize", handleResize);
+
+  if (auth.isAuthenticated && auth.user) {
+    chatStore.initializeSocketListeners();
+
+    if (chatStore.conversations.length === 0) {
+      chatStore.fetchConversations();
+    }
+
+    socket.emit("userOnline", auth.user._id);
+    socket.emit("heartbeat", { userId: auth.user?._id });
+
+    heartbeatInterval.value = window.setInterval(() => {
+      socket.emit("heartbeat", { userId: auth.user?._id });
+    }, 30000);
+  }
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", handleResize);
+
+  if (heartbeatInterval.value) {
+    clearInterval(heartbeatInterval.value);
+    heartbeatInterval.value = null;
+  }
 });
 
 const startDrag = (e: MouseEvent | TouchEvent) => {
@@ -161,7 +197,8 @@ const stopDrag = () => {
       @mousedown="startDrag"
       @touchstart="startDrag"
       @click="goToChat"
-      class="w-16 h-16 rounded-full bg-orange-500 text-white flex items-center justify-center active:scale-95"
+      class="w-16 h-16 rounded-full bg-orange-500 text-white flex items-center justify-center relative transition-transform"
+      :class="{ 'active:scale-95': !dragging }"
       :style="{
         boxShadow: shadowActive
           ? '0 14px 30px rgba(0,0,0,0.35)'
@@ -169,6 +206,12 @@ const stopDrag = () => {
       }"
     >
       💬
+      <span
+        v-if="unreadTotal > 0"
+        class="absolute -top-1 -right-1 w-6 h-6 flex items-center justify-center rounded-full bg-red-600 text-white text-xs font-bold pointer-events-none transform translate-x-1/4 -translate-y-1/4"
+      >
+        {{ unreadTotal > 99 ? "99+" : unreadTotal }}
+      </span>
     </button>
   </div>
 </template>

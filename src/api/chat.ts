@@ -34,3 +34,7 @@ export const deleteConversationApi = async (id: string) => {
   const res = await api.delete(`/chat/conversations/${id}`);
   return res.data;
 };
+
+export const markConversationAsReadApi = async (id: string) => {
+  await api.post(`/chat/conversations/${id}/mark-read`);
+};
