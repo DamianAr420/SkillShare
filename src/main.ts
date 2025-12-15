@@ -26,17 +26,12 @@ app.use(router).use(i18n).use(MotionPlugin).use(pinia).mount("#app");
       const socket = connectSocket(authStore.token);
       chatStore.setSocket(socket);
 
-      // 1. Ustaw nasłuchiwanie na eventy Socket.io
       chatStore.initializeSocketListeners();
 
-      // 2. Pobierz listę konwersacji (ASYNCHRONICZNIE)
       await chatStore.fetchConversations();
 
-      // 3. DOŁĄCZ DO POKOJÓW PO ZAOADOWANIU DANYCH!
-      // Wywołaj, aby dołączyć od razu, jeśli socket jest już połączony
       chatStore.rejoinRooms();
 
-      // 4. Ustaw listener na ponowne dołączenie przy każdym zerwaniu/nawiązaniu połączenia
       socket.on("connect", () => {
         console.log("Socket reconnected, rejoining rooms...");
         chatStore.rejoinRooms();

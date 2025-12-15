@@ -114,17 +114,15 @@ export const useChatStore = defineStore("chat", () => {
     }
   };
 
-  // --- POPRAWIONA FUNKCJA (Fixed Type Safety) ---
   const handleIncomingMessage = async (message: Message) => {
     console.log("ODEBRANO NOWĄ WIADOMOŚĆ:", message);
     const conversationIndex = conversations.value.findIndex(
       (c) => c._id === message.conversationId
     );
 
-    let updatedConversations: Conversation[] = [...conversations.value]; // Utwórz kopię tablicy
+    let updatedConversations: Conversation[] = [...conversations.value];
 
     if (conversationIndex === -1) {
-      // CASE 1: Nowa konwersacja
       const fetched = await fetchConversationById(message.conversationId);
       const newConv = normalizeConversation(fetched);
 
@@ -135,18 +133,15 @@ export const useChatStore = defineStore("chat", () => {
 
       updatedConversations.unshift(newConv);
     } else {
-      // CASE 2: Konwersacja istnieje
       const conv = updatedConversations[conversationIndex];
 
       if (!conv) return;
 
-      // Stwórz kopię OBIEKTU konwersacji (KLUCZOWE dla reaktywności)
       let updatedConv: Conversation = {
         ...conv,
-        messages: [...conv.messages], // Opcjonalnie, ale bezpieczniej, jeśli messages jest refem wewnątrz
+        messages: [...conv.messages],
       };
 
-      // Sprawdzenie duplikatów (jeśli wiadomość nie jest tymczasowa lub już dodana)
       if (!updatedConv.messages.some((m) => m._id === message._id)) {
         updatedConv.messages.push(message);
       }
@@ -158,18 +153,14 @@ export const useChatStore = defineStore("chat", () => {
         updatedConv.unreadCount++;
       } else {
         markConversationAsRead(message.conversationId);
-        // Przewijanie tylko, jeśli to aktywny czat
         scrollFunction.value?.();
       }
 
-      // Usuń starą konwersację z listy
       updatedConversations.splice(conversationIndex, 1);
 
-      // Dodaj zaktualizowaną na początek
       updatedConversations.unshift(updatedConv);
     }
 
-    // Wymuś reaktywną aktualizację całej tablicy, przypisując nową instancję
     conversations.value = updatedConversations;
   };
 
@@ -242,19 +233,15 @@ export const useChatStore = defineStore("chat", () => {
       const conv = conversations.value[idx];
       if (!conv) return;
 
-      // Stwórz kopię konwersacji (KLUCZOWE)
       let updatedConv = { ...conv };
 
-      // Dodaj wiadomość i zaktualizuj pola
       updatedConv.messages.push(msg);
       updatedConv.lastActivity = new Date().toISOString();
       updatedConv.lastMessage = msg;
 
-      // Aktualizacja tablicy konwersacji w reaktywny sposób
       conversations.value.splice(idx, 1);
       conversations.value.unshift(updatedConv);
 
-      // --- KLUCZOWA POPRAWKA PRZEWIJANIA LOKALNEGO ---
       if (msg.conversationId === activeConversationId.value) {
         scrollFunction.value?.();
       }

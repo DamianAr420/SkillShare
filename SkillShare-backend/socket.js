@@ -10,8 +10,10 @@ let io;
 export const initSocket = (server) => {
   io = new Server(server, {
     cors: {
-      // Upewnij się, że ten origin jest poprawny
-      origin: "https://damianar420.github.io",
+      origin: [
+        "https://damianar420.github.io",
+        "http://localhost:5173", // <-- DODAJ TĘ LINIĘ
+      ],
       credentials: true,
     },
   });

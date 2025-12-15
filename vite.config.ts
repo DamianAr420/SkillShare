@@ -16,16 +16,5 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  server: {
-    proxy:
-      mode === "development"
-        ? {
-            "/api": {
-              target: "http://localhost:5000",
-              changeOrigin: true,
-              secure: false,
-            },
-          }
-        : undefined,
-  },
+  server: {},
 }));

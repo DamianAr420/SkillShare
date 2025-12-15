@@ -12,9 +12,13 @@ import { initSocket } from "./socket.js";
 dotenv.config();
 
 const app = express();
+const allowedOrigins = [
+  "https://damianar420.github.io",
+  "http://localhost:5173/SkillShare",
+];
 app.use(
   cors({
-    origin: "https://damianar420.github.io",
+    origin: allowedOrigins,
     credentials: true,
   })
 );
