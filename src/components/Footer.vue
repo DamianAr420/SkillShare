@@ -7,11 +7,9 @@ const { t } = useI18n();
 const { showToast } = useToast();
 
 const copyEmail = () => {
-  navigator.clipboard.writeText(t("Footer.contact.email"));
-  showToast(
-    t("Footer.contact.copyEmail", { email: t("Footer.contact.email2") }),
-    "success"
-  );
+  const email = "damianarg2115@gmail.com";
+  navigator.clipboard.writeText(email);
+  showToast(`${email} został skopiowany!`, "success");
 };
 </script>
 
@@ -53,8 +51,8 @@ const copyEmail = () => {
         <p
           class="text-gray-300 text-sm cursor-pointer hover:text-[#F77821] transition-colors"
         >
-          <span>{{ t("Footer.contact.email1") }}</span>
-          <span @click="copyEmail">{{ t("Footer.contact.email2") }}</span>
+          <span>Email: </span>
+          <span @click="copyEmail">damianarg2115@gmail.com</span>
         </p>
         <p class="text-gray-300 text-sm">
           {{ t("Footer.contact.phone") }}

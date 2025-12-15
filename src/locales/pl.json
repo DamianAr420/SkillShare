@@ -42,9 +42,7 @@
     },
     "contact": {
       "title": "Kontakt",
-      "email1": "Email: ",
-      "email2": "damianarg2115@gmail.com",
-      "copyEmail": "E-mail: {email} został skopiowany!",
+      "copyEmail": "E-mail został skopiowany!",
       "phone": "Tel: +48 519 674 593"
     },
     "social": {
