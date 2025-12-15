@@ -38,7 +38,6 @@ export const useChatStore = defineStore("chat", () => {
         const bTime = bLastMessage
           ? new Date(bLastMessage.createdAt).getTime()
           : 0;
-        // ---------------------------------------------
         return bTime - aTime;
       });
     } finally {

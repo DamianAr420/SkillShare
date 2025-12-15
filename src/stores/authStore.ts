@@ -11,11 +11,7 @@ import {
 } from "@/api/auth";
 import { parseAuthError, type FormError } from "@/utils/errorHandler";
 import type { User } from "@/types/user";
-import { io } from "socket.io-client";
-
-const socket = io("https://skillshare-tgfy.onrender.com", {
-  transports: ["websocket"],
-});
+import { socket } from "@/utils/socket";
 
 export const useAuthStore = defineStore("auth", () => {
   const token = ref<string | null>(localStorage.getItem("token"));
