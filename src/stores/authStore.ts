@@ -11,7 +11,6 @@ import {
 } from "@/api/auth";
 import { parseAuthError, type FormError } from "@/utils/errorHandler";
 import type { User } from "@/types/user";
-import { socket } from "@/utils/socket";
 
 export const useAuthStore = defineStore("auth", () => {
   const token = ref<string | null>(localStorage.getItem("token"));
@@ -58,7 +57,6 @@ export const useAuthStore = defineStore("auth", () => {
   async function fetchUser() {
     try {
       user.value = await getCurrentUser();
-      socket.emit("userOnline", user.value._id);
     } catch (err: any) {
       console.error("❌ Failed to fetch user:", err);
       logout();
@@ -117,14 +115,9 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   function logout() {
-    if (user.value?._id) socket.emit("userOffline", user.value._id);
     token.value = null;
     user.value = null;
     localStorage.removeItem("token");
-  }
-
-  if (token.value) {
-    fetchUser();
   }
 
   return {

@@ -37,8 +37,6 @@ const routes: Array<RouteRecordRaw> = [
         name: "announcement-edit",
         component: EditAnnouncement,
       },
-      { path: "/chat/:id", name: "chat-with-user", component: Chat },
-
       { path: "/chat", name: "chat", component: Chat },
     ],
   },

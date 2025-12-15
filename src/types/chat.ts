@@ -16,4 +16,5 @@ export interface Conversation {
   messages: Message[];
   unreadCount: number;
   lastActivity?: string;
+  lastMessage?: Message | null;
 }

@@ -216,13 +216,15 @@
 
   "chat": {
     "conversations": "Konwersacje",
+    "noConversations": "Brak konwersacji",
+    "selectToStart": "Wybierz czat aby wysłać wiadomość",
     "loadingConversations": "Ładowanie konwersacji...",
     "unknownUser": "Nieznany",
     "noMessages": "Brak wiadomości",
     "you": "Ty",
     "archive": "Archiwizuj",
     "markAsRead": "Oznacz jako przeczytane",
-    "deleteChat": "Usuń chat",
+    "delete": "Usuń chat",
     "online": "online",
     "writeMessage": "Napisz wiadomość...",
     "send": "Wyślij",

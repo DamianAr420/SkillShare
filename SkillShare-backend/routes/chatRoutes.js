@@ -27,6 +27,21 @@ router.get("/conversations", authMiddleware, async (req, res) => {
   res.json(result);
 });
 
+router.get("/conversations/:id", authMiddleware, async (req, res) => {
+  const conv = await Conversation.findById(req.params.id).populate(
+    "participants",
+    "name avatarUrl lastSeen"
+  );
+
+  if (!conv) return res.status(404).json({ message: "Not found" });
+
+  const unreadCount = conv.messages.filter(
+    (m) => !m.readBy.includes(req.user.userId)
+  ).length;
+
+  res.json({ ...conv.toObject(), unreadCount });
+});
+
 // Pobierz wiadomości z konwersacji
 router.get("/conversations/:id/messages", authMiddleware, async (req, res) => {
   const { id } = req.params;
@@ -82,7 +97,16 @@ router.post("/conversations/:id/messages", authMiddleware, async (req, res) => {
     conversationId: id,
   };
 
-  io.to(id).emit("newMessage", payload);
+  if (!io) {
+    return res.status(500).json({ message: "Socket not initialized" });
+  }
+
+  console.log(
+    `[REST] Sending 'newMessage' to room: ${id} with payload:`,
+    payload.content
+  );
+
+  io.emit("newMessage", payload);
 
   res.json(payload);
 });
@@ -129,6 +153,10 @@ router.post(
 
     if (updated) {
       await conversation.save();
+
+      if (!io) {
+        return res.status(500).json({ message: "Socket not initialized" });
+      }
 
       io.to(id).emit("messagesRead", {
         conversationId: id,

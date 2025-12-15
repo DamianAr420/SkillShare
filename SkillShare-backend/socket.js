@@ -1,67 +1,126 @@
-import { Server as SocketIOServer } from "socket.io";
+import { Server } from "socket.io";
+import jwt from "jsonwebtoken";
 import User from "./models/User.js";
 import Conversation from "./models/Conversation.js";
+import { createClient } from "redis"; // Import klienta Redis
+import { createAdapter } from "@socket.io/redis-adapter"; // Import Adaptera
 
 let io;
 
 export const initSocket = (server) => {
-  io = new SocketIOServer(server, {
-    cors: { origin: "*" },
+  io = new Server(server, {
+    cors: {
+      // Upewnij się, że ten origin jest poprawny
+      origin: "https://damianar420.github.io",
+      credentials: true,
+    },
   });
 
-  const onlineUsers = new Map();
+  // --- KONFIGURACJA REDIS ADAPTERA ---
+  const redisUrl = process.env.REDIS_URL;
 
-  io.on("connection", (socket) => {
-    console.log("User connected:", socket.id);
+  if (redisUrl) {
+    console.log("Redis URL found. Initializing Redis Adapter...");
+
+    const pubClient = createClient({ url: redisUrl });
+    const subClient = pubClient.duplicate();
+
+    // Obsługa błędów Redis (ważne, jeśli Redis padnie)
+    pubClient.on("error", (err) =>
+      console.error("Redis Pub Client Error:", err)
+    );
+    subClient.on("error", (err) =>
+      console.error("Redis Sub Client Error:", err)
+    );
+
+    // Połącz klientów Redis
+    Promise.all([pubClient.connect(), subClient.connect()])
+      .then(() => {
+        // Ustaw Adapter
+        io.adapter(createAdapter(pubClient, subClient));
+        console.log(
+          "Socket.IO successfully configured with Redis Adapter (Multi-Instance support enabled)."
+        );
+      })
+      .catch((err) => {
+        console.error("Failed to connect Redis clients (FATAL):", err);
+        // Serwer uruchomi się w trybie single-instance, ale będzie logował błąd.
+      });
+  } else {
+    console.warn(
+      "REDIS_URL not found. Running Socket.IO in single-instance mode (Likely to fail on Render scaling)."
+    );
+  }
+  // -----------------------------------
+
+  io.use((socket, next) => {
+    const token = socket.handshake.auth?.token;
+    if (!token) return next(new Error("Unauthorized"));
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      socket.userId = decoded.userId;
+      next();
+    } catch {
+      next(new Error("Invalid token"));
+    }
+  });
+
+  io.on("connection", async (socket) => {
+    const userId = socket.userId;
+
+    // ... reszta logiki on connection jest bez zmian ...
+    await User.findByIdAndUpdate(userId, {
+      isOnline: true,
+      lastSeen: new Date(),
+    });
+
+    socket.broadcast.emit("userStatus", {
+      userId,
+      isOnline: true,
+    });
 
     socket.on("joinRoom", (conversationId) => {
+      console.log(`[SOCKET] User ${userId} joining room: ${conversationId}`); // Możesz to usunąć po testach
       socket.join(conversationId);
     });
 
-    socket.on("userOnline", async (userId) => {
-      onlineUsers.set(userId, socket.id);
-      await User.findByIdAndUpdate(userId, {
-        isOnline: true,
-        lastSeen: new Date(),
+    socket.on("markRead", async ({ conversationId }) => {
+      // ... (logika markRead jest OK)
+      const conv = await Conversation.findById(conversationId);
+      if (!conv) return;
+
+      let updated = false;
+
+      conv.messages.forEach((msg) => {
+        if (!msg.readBy.includes(userId)) {
+          msg.readBy.push(userId);
+          updated = true;
+        }
       });
 
-      io.emit("userStatus", { userId, isOnline: true });
-    });
-
-    socket.on("heartbeat", async ({ userId }) => {
-      const user = await User.findByIdAndUpdate(
-        userId,
-        { isOnline: true, lastSeen: new Date() },
-        { new: true }
-      );
-
-      io.emit("userStatus", {
-        userId: user._id,
-        isOnline: true,
-        lastSeen: user.lastSeen,
-      });
+      if (updated) {
+        await conv.save();
+        // Ta wiadomość również zostanie rozesłana przez Redis
+        io.to(conversationId).emit("messagesRead", {
+          conversationId,
+          userId,
+        });
+      }
     });
 
     socket.on("disconnect", async () => {
-      const userId = [...onlineUsers.entries()].find(
-        ([, id]) => id === socket.id
-      )?.[0];
-
-      if (!userId) return;
-
       await User.findByIdAndUpdate(userId, {
         isOnline: false,
         lastSeen: new Date(),
       });
 
-      io.emit("userStatus", {
+      socket.broadcast.emit("userStatus", {
         userId,
         isOnline: false,
         lastSeen: new Date(),
       });
     });
-
-    socket.on("leaveRoom", (id) => socket.leave(id));
   });
 
   return io;
