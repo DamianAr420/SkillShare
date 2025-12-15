@@ -22,9 +22,6 @@ export const useChatStore = defineStore("chat", () => {
   let initialized = false;
   let currentRoom: string | null = null;
 
-  // =====================
-  // FETCH
-  // =====================
   const fetchConversations = async () => {
     loading.value = true;
     try {
@@ -54,9 +51,31 @@ export const useChatStore = defineStore("chat", () => {
     else conversations.value.push(normalized);
   };
 
-  // =====================
-  // SOCKET INIT
-  // =====================
+  const startConversation = async (participantId: string) => {
+    const existing = conversations.value.find((c) =>
+      c.participants.some((p) => p._id === participantId)
+    );
+
+    if (existing) {
+      setActiveConversation(existing._id);
+      return existing;
+    }
+
+    const conv = await createConversationApi(participantId);
+
+    const normalized: Conversation = {
+      ...conv,
+      messages: conv.messages || [],
+      unreadCount: 0,
+    };
+
+    conversations.value.unshift(normalized);
+
+    setActiveConversation(normalized._id);
+
+    return normalized;
+  };
+
   const initializeSocketListeners = () => {
     if (initialized) return;
     initialized = true;
@@ -72,9 +91,6 @@ export const useChatStore = defineStore("chat", () => {
     socket.on("userStatus", handleUserStatus);
   };
 
-  // =====================
-  // ACTIVE CONVERSATION
-  // =====================
   const setActiveConversation = (conversationId: string | null) => {
     if (currentRoom) socket.emit("leaveRoom", currentRoom);
 
@@ -87,9 +103,6 @@ export const useChatStore = defineStore("chat", () => {
     }
   };
 
-  // =====================
-  // SEND MESSAGE
-  // =====================
   const sendMessage = async (conversationId: string, content: string) => {
     const tempId = crypto.randomUUID();
     const senderId = auth.user!._id;
@@ -111,9 +124,6 @@ export const useChatStore = defineStore("chat", () => {
     }
   };
 
-  // =====================
-  // SOCKET HANDLERS
-  // =====================
   const handleIncomingMessage = (message: Message) => {
     const conv = conversations.value.find(
       (c) => c._id === message.conversationId
@@ -170,9 +180,6 @@ export const useChatStore = defineStore("chat", () => {
     });
   };
 
-  // =====================
-  // HELPERS
-  // =====================
   const addMessageLocally = (msg: Message) => {
     const conv = conversations.value.find((c) => c._id === msg.conversationId);
     if (!conv) return;
@@ -230,5 +237,6 @@ export const useChatStore = defineStore("chat", () => {
     setActiveConversation,
     initializeSocketListeners,
     deleteConversation,
+    startConversation,
   };
 });

@@ -26,7 +26,9 @@ export const sendMessageApi = async (
 export const createConversationApi = async (
   participantId: string
 ): Promise<Conversation> => {
-  const res = await api.post("/chat/conversations", { participantId });
+  const res = await api.post("/chat/conversations", {
+    participantId,
+  });
   return res.data;
 };
 

@@ -146,13 +146,11 @@ const goToChat = async (userId: string) => {
   }
 
   try {
-    const conversationId = await chatStore.startConversation(userId);
-    if (conversationId) {
-      router.push({
-        name: `chat`,
-        query: { id: conversationId },
-      });
-    }
+    await chatStore.startConversation(userId);
+    router.push({
+      name: "chat",
+      query: { id: chatStore.activeConversationId },
+    });
   } catch {
     showToast(t("announcementDetails.chatError"), "error");
   }
