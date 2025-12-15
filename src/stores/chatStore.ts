@@ -14,10 +14,17 @@ import { socket } from "@/utils/socket";
 
 export const useChatStore = defineStore("chat", () => {
   const auth = useAuthStore();
+
   const conversations = ref<Conversation[]>([]);
   const loading = ref(false);
   const activeConversationId = ref<string | null>(null);
 
+  let initialized = false;
+  let currentRoom: string | null = null;
+
+  // =====================
+  // FETCH
+  // =====================
   const fetchConversations = async () => {
     loading.value = true;
     try {
@@ -27,201 +34,190 @@ export const useChatStore = defineStore("chat", () => {
         messages: c.messages || [],
         unreadCount: c.unreadCount ?? 0,
       }));
-
-      conversations.value.sort((a, b) => {
-        const aLastMessage = a.messages[a.messages.length - 1];
-        const bLastMessage = b.messages[b.messages.length - 1];
-
-        const aTime = aLastMessage
-          ? new Date(aLastMessage.createdAt).getTime()
-          : 0;
-        const bTime = bLastMessage
-          ? new Date(bLastMessage.createdAt).getTime()
-          : 0;
-        return bTime - aTime;
-      });
     } finally {
       loading.value = false;
     }
   };
 
   const fetchConversation = async (conversationId: string) => {
-    loading.value = true;
-    try {
-      const conv = await fetchConversationById(conversationId);
-      const newConv: Conversation = {
-        ...conv,
-        messages: conv.messages || [],
-        unreadCount: conv.unreadCount ?? 0,
-      };
+    const conv = await fetchConversationById(conversationId);
 
-      const index = conversations.value.findIndex((c) => c._id === conv._id);
+    const normalized: Conversation = {
+      ...conv,
+      messages: conv.messages || [],
+      unreadCount: conv.unreadCount ?? 0,
+    };
 
-      if (index !== -1) conversations.value[index] = newConv;
-      else conversations.value.push(newConv);
+    const idx = conversations.value.findIndex((c) => c._id === conversationId);
 
-      if (
-        conversationId === activeConversationId.value &&
-        newConv.unreadCount > 0
-      ) {
-        await markConversationAsRead(conversationId);
-      }
-    } finally {
-      loading.value = false;
+    if (idx !== -1) conversations.value[idx] = normalized;
+    else conversations.value.push(normalized);
+  };
+
+  // =====================
+  // SOCKET INIT
+  // =====================
+  const initializeSocketListeners = () => {
+    if (initialized) return;
+    initialized = true;
+
+    socket.emit("userOnline", auth.user!._id);
+
+    setInterval(() => {
+      socket.emit("heartbeat", { userId: auth.user!._id });
+    }, 30000);
+
+    socket.on("newMessage", handleIncomingMessage);
+    socket.on("messagesRead", handleMessagesRead);
+    socket.on("userStatus", handleUserStatus);
+  };
+
+  // =====================
+  // ACTIVE CONVERSATION
+  // =====================
+  const setActiveConversation = (conversationId: string | null) => {
+    if (currentRoom) socket.emit("leaveRoom", currentRoom);
+
+    activeConversationId.value = conversationId;
+
+    if (conversationId) {
+      socket.emit("joinRoom", conversationId);
+      currentRoom = conversationId;
+      markConversationAsRead(conversationId);
     }
   };
 
+  // =====================
+  // SEND MESSAGE
+  // =====================
   const sendMessage = async (conversationId: string, content: string) => {
-    const msg: Message = await sendMessageApi(conversationId, content);
+    const tempId = crypto.randomUUID();
+    const senderId = auth.user!._id;
 
-    const conv = conversations.value.find((c) => c._id === conversationId);
-    if (conv) {
-      if (!conv.messages) conv.messages = [];
-      conv.messages.push(msg);
+    addMessageLocally({
+      _id: tempId,
+      senderId,
+      content,
+      createdAt: new Date().toISOString(),
+      readBy: [senderId],
+      conversationId,
+    } as Message);
 
-      conv.unreadCount = 0;
-
-      conversations.value = [
-        conv,
-        ...conversations.value.filter((c) => c._id !== conversationId),
-      ];
+    try {
+      const finalMsg = await sendMessageApi(conversationId, content);
+      replaceMessage(conversationId, tempId, finalMsg);
+    } catch {
+      removeMessage(conversationId, tempId);
     }
-
-    socket.emit("sendMessage", { conversationId, message: msg });
-
-    return msg;
   };
 
-  const startConversation = async (userId: string): Promise<string | null> => {
-    const existing = conversations.value.find(
-      (c) =>
-        c.participants.map((p) => p._id).includes(userId) &&
-        c.participants.map((p) => p._id).includes(auth.user?._id!)
+  // =====================
+  // SOCKET HANDLERS
+  // =====================
+  const handleIncomingMessage = (message: Message) => {
+    const conv = conversations.value.find(
+      (c) => c._id === message.conversationId
     );
-    if (existing) {
-      return existing._id;
+    if (!conv) return;
+
+    conv.messages.push(message);
+
+    if (message.conversationId !== activeConversationId.value) {
+      conv.unreadCount++;
     } else {
-      const conv = await createConversationApi(userId);
-      conv.messages = conv.messages || [];
-      conv.unreadCount = 0;
-      conversations.value.push(conv);
-      return conv._id;
+      markConversationAsRead(message.conversationId);
     }
+
+    conversations.value = [
+      conv,
+      ...conversations.value.filter((c) => c._id !== conv._id),
+    ];
   };
 
-  const updateUserStatus = (
-    userId: string,
-    isOnline: boolean,
-    lastSeen?: Date
-  ) => {
+  const handleMessagesRead = ({
+    conversationId,
+    userId,
+  }: {
+    conversationId: string;
+    userId: string;
+  }) => {
+    const conv = conversations.value.find((c) => c._id === conversationId);
+    if (!conv) return;
+
+    conv.messages.forEach((msg) => {
+      if (!msg.readBy.includes(userId)) {
+        msg.readBy.push(userId);
+      }
+    });
+  };
+
+  const handleUserStatus = ({
+    userId,
+    isOnline,
+    lastSeen,
+  }: {
+    userId: string;
+    isOnline: boolean;
+    lastSeen?: string;
+  }) => {
     conversations.value.forEach((conv) => {
       conv.participants.forEach((p) => {
         if (p._id === userId) {
           p.isOnline = isOnline;
-          if (lastSeen) p.lastSeen = lastSeen.toISOString();
+          if (lastSeen) p.lastSeen = lastSeen;
         }
       });
     });
   };
 
-  const deleteConversation = async (id: string) => {
-    await deleteConversationApi(id);
-    conversations.value = conversations.value.filter((c) => c._id !== id);
+  // =====================
+  // HELPERS
+  // =====================
+  const addMessageLocally = (msg: Message) => {
+    const conv = conversations.value.find((c) => c._id === msg.conversationId);
+    if (!conv) return;
+
+    conv.messages.push(msg);
+    conv.unreadCount = 0;
+  };
+
+  const replaceMessage = (
+    conversationId: string,
+    tempId: string,
+    finalMsg: Message
+  ) => {
+    const conv = conversations.value.find((c) => c._id === conversationId);
+    if (!conv) return;
+
+    const idx = conv.messages.findIndex((m) => m._id === tempId);
+    if (idx !== -1) conv.messages[idx] = finalMsg;
+  };
+
+  const removeMessage = (conversationId: string, tempId: string) => {
+    const conv = conversations.value.find((c) => c._id === conversationId);
+    if (!conv) return;
+
+    conv.messages = conv.messages.filter((m) => m._id !== tempId);
   };
 
   const markConversationAsRead = async (conversationId: string) => {
     const conv = conversations.value.find((c) => c._id === conversationId);
-    if (!conv || !auth.user || conv.unreadCount === 0) return;
+    if (!conv || conv.unreadCount === 0) return;
 
-    try {
-      await markConversationAsReadApi(conversationId);
+    await markConversationAsReadApi(conversationId);
+    conv.unreadCount = 0;
 
-      socket.emit("markRead", {
-        conversationId,
-        userId: auth.user._id,
-      });
-
-      conv.unreadCount = 0;
-    } catch (error) {
-      console.error(
-        "Błąd podczas oznaczania wiadomości jako przeczytane:",
-        error
-      );
-    }
+    socket.emit("markRead", {
+      conversationId,
+      userId: auth.user!._id,
+    });
   };
 
-  const setActiveConversation = (conversationId: string | null) => {
-    activeConversationId.value = conversationId;
-    if (conversationId) {
-      markConversationAsRead(conversationId);
-      socket.emit("joinRoom", conversationId);
-    }
-  };
-
-  const handleIncomingMessage = (payload: any) => {
-    const { conversationId, ...message } = payload;
-    const conv = conversations.value.find((c) => c._id === conversationId);
-
-    const isSentByMe = message.senderId === auth.user?._id;
-
-    if (conv) {
-      if (!conv.messages) conv.messages = [];
-      conv.messages.push(message as unknown as Message);
-
-      if (conversationId !== activeConversationId.value) {
-        if (!isSentByMe) {
-          conv.unreadCount = (conv.unreadCount || 0) + 1;
-        }
-      } else {
-        if (!isSentByMe) {
-          markConversationAsRead(conversationId);
-        }
-      }
-
-      conversations.value = [
-        conv,
-        ...conversations.value.filter((c) => c._id !== conversationId),
-      ];
-    }
-  };
-
-  const handleMessagesRead = (payload: {
-    conversationId: string;
-    userId: string;
-  }) => {
-    const { conversationId, userId } = payload;
-    const conv = conversations.value.find((c) => c._id === conversationId);
-
-    if (conv) {
-      conv.messages.forEach((msg) => {
-        if (!msg.readBy) msg.readBy = [];
-        if (!msg.readBy.includes(userId)) {
-          msg.readBy.push(userId);
-        }
-      });
-    }
-  };
-
-  const initializeSocketListeners = () => {
-    socket.on("newMessage", handleIncomingMessage);
-    socket.on("messagesRead", handleMessagesRead);
-
-    socket.on(
-      "userStatusChanged",
-      (user: { userId: string; isOnline?: boolean; lastSeen?: string }) => {
-        const lastSeenDate = user.lastSeen
-          ? new Date(user.lastSeen)
-          : undefined;
-        const isOnlineStatus = user.isOnline ?? false;
-
-        updateUserStatus(user.userId, isOnlineStatus, lastSeenDate);
-      }
+  const deleteConversation = async (conversationId: string) => {
+    await deleteConversationApi(conversationId);
+    conversations.value = conversations.value.filter(
+      (c) => c._id !== conversationId
     );
-  };
-
-  const removeSocketListeners = () => {
-    socket.off("newMessage", handleIncomingMessage);
-    socket.off("messagesRead", handleMessagesRead);
   };
 
   return {
@@ -231,12 +227,8 @@ export const useChatStore = defineStore("chat", () => {
     fetchConversations,
     fetchConversation,
     sendMessage,
-    startConversation,
-    updateUserStatus,
-    deleteConversation,
-    initializeSocketListeners,
-    markConversationAsRead,
     setActiveConversation,
-    removeSocketListeners,
+    initializeSocketListeners,
+    deleteConversation,
   };
 });

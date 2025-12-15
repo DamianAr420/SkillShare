@@ -7,6 +7,7 @@ export interface Message {
   content: string;
   createdAt: string;
   readBy: string[];
+  conversationId: string;
 }
 
 export interface Conversation {

@@ -1,8 +1,11 @@
 import { Server as SocketIOServer } from "socket.io";
 import User from "./models/User.js";
+import Conversation from "./models/Conversation.js";
+
+let io;
 
 export const initSocket = (server) => {
-  const io = new SocketIOServer(server, {
+  io = new SocketIOServer(server, {
     cors: { origin: "*" },
   });
 
@@ -11,28 +14,32 @@ export const initSocket = (server) => {
   io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
 
+    socket.on("joinRoom", (conversationId) => {
+      socket.join(conversationId);
+    });
+
     socket.on("userOnline", async (userId) => {
       onlineUsers.set(userId, socket.id);
-
       await User.findByIdAndUpdate(userId, {
         isOnline: true,
         lastSeen: new Date(),
       });
 
-      io.emit("userStatusChanged", {
+      io.emit("userStatus", { userId, isOnline: true });
+    });
+
+    socket.on("heartbeat", async ({ userId }) => {
+      const user = await User.findByIdAndUpdate(
         userId,
+        { isOnline: true, lastSeen: new Date() },
+        { new: true }
+      );
+
+      io.emit("userStatus", {
+        userId: user._id,
         isOnline: true,
+        lastSeen: user.lastSeen,
       });
-    });
-
-    socket.on("joinRoom", (conversationId) => {
-      socket.join(conversationId);
-    });
-
-    socket.on("sendMessage", ({ conversationId, message }) => {
-      socket
-        .to(conversationId)
-        .emit("newMessage", { ...message, conversationId });
     });
 
     socket.on("disconnect", async () => {
@@ -40,49 +47,24 @@ export const initSocket = (server) => {
         ([, id]) => id === socket.id
       )?.[0];
 
-      if (userId) {
-        onlineUsers.delete(userId);
+      if (!userId) return;
 
-        await User.findByIdAndUpdate(userId, {
-          isOnline: false,
-          lastSeen: new Date(),
-        });
-
-        io.emit("userStatusChanged", {
-          userId,
-          isOnline: false,
-        });
-      }
-    });
-
-    socket.on("heartbeat", async (data) => {
-      const { userId } = data;
-
-      await User.findByIdAndUpdate(userId, { lastSeen: new Date() });
-
-      const user = await User.findById(userId);
-      io.emit("userOnlineStatus", user);
-    });
-
-    socket.on("markRead", async ({ conversationId, userId }) => {
-      const conversation = await Conversation.findById(conversationId);
-      if (!conversation) return;
-
-      let updated = false;
-
-      conversation.messages.forEach((msg) => {
-        if (!msg.readBy.includes(userId)) {
-          msg.readBy.push(userId);
-          updated = true;
-        }
+      await User.findByIdAndUpdate(userId, {
+        isOnline: false,
+        lastSeen: new Date(),
       });
 
-      if (updated) {
-        await conversation.save();
-        io.to(conversationId).emit("messagesRead", { conversationId, userId });
-      }
+      io.emit("userStatus", {
+        userId,
+        isOnline: false,
+        lastSeen: new Date(),
+      });
     });
+
+    socket.on("leaveRoom", (id) => socket.leave(id));
   });
 
   return io;
 };
+
+export { io };

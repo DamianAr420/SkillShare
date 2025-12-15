@@ -3,7 +3,6 @@ import { ref, onMounted, computed, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/authStore";
 import { useChatStore } from "@/stores/chatStore";
-import { socket } from "@/utils/socket";
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -23,12 +22,12 @@ const transitionEnabled = ref(true);
 const shadowActive = ref(false);
 const snappedSide = ref<"left" | "right">("right");
 
-const unreadTotal = computed(() => {
-  return chatStore.conversations.reduce(
+const unreadTotal = computed(() =>
+  chatStore.conversations.reduce(
     (sum, conv) => sum + (conv.unreadCount || 0),
     0
-  );
-});
+  )
+);
 
 const goToChat = () => {
   if (!dragMoved) router.push("/chat");
@@ -68,21 +67,6 @@ onMounted(async () => {
   loadSavedPosition();
   snappedSide.value = posX.value < window.innerWidth / 2 ? "left" : "right";
   window.addEventListener("resize", handleResize);
-
-  if (auth.isAuthenticated && auth.user) {
-    chatStore.initializeSocketListeners();
-
-    if (chatStore.conversations.length === 0) {
-      chatStore.fetchConversations();
-    }
-
-    socket.emit("userOnline", auth.user._id);
-    socket.emit("heartbeat", { userId: auth.user?._id });
-
-    heartbeatInterval.value = window.setInterval(() => {
-      socket.emit("heartbeat", { userId: auth.user?._id });
-    }, 30000);
-  }
 });
 
 onUnmounted(() => {

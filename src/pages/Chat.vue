@@ -4,11 +4,9 @@ import { useChatStore } from "@/stores/chatStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useRoute, useRouter } from "vue-router";
 import Loader from "@/components/ui/Loader.vue";
-import { socket } from "@/utils/socket";
 import { useBreakpoints } from "@/composables/useBreakpoints";
 import ArrowLeft from "@/assets/icons/ArrowLeft.vue";
 import { timeAgo } from "@/utils/time";
-import { type User } from "@/types/user";
 import ConfirmDialog from "@/components/dialogs/ConfirmDialog.vue";
 import { useI18n } from "vue-i18n";
 
@@ -26,6 +24,16 @@ const selectedConversationId = computed({
   set: (id) => {
     chatStore.setActiveConversation(id); // Wywołanie akcji w Store
   },
+});
+
+const conversationList = computed(() => {
+  // Mapowanie wymusza na Vue śledzenie zależności
+  return chatStore.conversations.map((c) => ({
+    ...c,
+    // Dodanie unreadCount jako jawnej zależności w computed
+    unreadCount: c.unreadCount,
+    lastMessage: getLastMessage(c),
+  }));
 });
 
 const newMessage = ref("");
@@ -79,13 +87,6 @@ watch(selectedConversationId, (id) => {
   } else {
     router.replace({ name: "chat", query: {} });
   }
-});
-
-// Nasłuchiwanie na globalne zmiany statusu użytkowników (np. lastSeen)
-socket.on("userOnlineStatus", (user: User) => {
-  const lastSeenDate = user.lastSeen ? new Date(user.lastSeen) : undefined;
-
-  chatStore.updateUserStatus(user._id, user.isOnline ?? false, lastSeenDate);
 });
 
 const sendMessage = async () => {
@@ -154,17 +155,20 @@ const closeMenu = () => {
   menuState.value = { id: null, type: null };
 };
 
-// Zamykanie menu po kliknięciu poza nim
-document.addEventListener("click", closeMenu);
+onMounted(() => {
+  document.addEventListener("click", closeMenu);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("click", closeMenu);
+});
 
 const onArchive = (id: string) => {
   console.log("archive", id);
   closeMenu();
 };
 
-const onMarkAsRead = (id: string) => {
-  // Oznaczenie jako przeczytane za pomocą Store
-  chatStore.markConversationAsRead(id);
+const onMarkAsRead = () => {
   closeMenu();
 };
 
@@ -220,7 +224,7 @@ const autoResize = (event: Event) => {
 
         <div v-else>
           <div
-            v-for="c in chatStore.conversations"
+            v-for="c in conversationList"
             :key="c._id"
             class="flex items-center gap-3 my-2 p-3 rounded-xl cursor-pointer active:scale-[0.97] transition bg-white border border-gray-100 shadow-sm hover:shadow-md relative"
             @click="selectedConversationId = c._id"
@@ -240,15 +244,15 @@ const autoResize = (event: Event) => {
                 class="text-gray-500 text-sm truncate"
                 :class="{ 'font-semibold text-gray-800': c.unreadCount > 0 }"
               >
-                <span v-if="getLastMessage(c)">
+                <span v-if="c.lastMessage">
                   <strong>
                     {{
-                      getLastMessage(c)?.senderId === auth.user?._id
+                      c.lastMessage.senderId === auth.user?._id
                         ? t("chat.you")
                         : getOtherParticipant(c)?.name || t("chat.unknownUser")
                     }}
                   </strong>
-                  {{ getLastMessage(c)?.content }}
+                  {{ c.lastMessage.content }}
                 </span>
                 <span v-else class="italic">{{ t("chat.noMessages") }}</span>
               </div>
@@ -280,7 +284,7 @@ const autoResize = (event: Event) => {
                   {{ t("chat.archive") }}
                 </button>
                 <button
-                  @click.stop="onMarkAsRead(c._id)"
+                  @click.stop="onMarkAsRead()"
                   class="w-full text-left px-4 py-2 hover:bg-gray-100"
                 >
                   {{ t("chat.markAsRead") }}
@@ -367,7 +371,7 @@ const autoResize = (event: Event) => {
                   {{ t("chat.archive") }}
                 </button>
                 <button
-                  @click.stop="onMarkAsRead(selectedConversationId!)"
+                  @click.stop="onMarkAsRead()"
                   class="w-full text-left px-4 py-2 hover:bg-gray-100"
                 >
                   {{ t("chat.markAsRead") }}
@@ -456,7 +460,7 @@ const autoResize = (event: Event) => {
 
           <div v-else>
             <div
-              v-for="c in chatStore.conversations"
+              v-for="c in conversationList"
               :key="c._id"
               class="flex items-center gap-3 my-2 p-2 rounded cursor-pointer hover:bg-gray-100 transition relative"
               @click="selectedConversationId = c._id"
@@ -477,16 +481,16 @@ const autoResize = (event: Event) => {
                   class="text-gray-500 text-sm truncate"
                   :class="{ 'font-semibold text-gray-800': c.unreadCount > 0 }"
                 >
-                  <span v-if="getLastMessage(c)">
+                  <span v-if="c.lastMessage">
                     <strong>
                       {{
-                        getLastMessage(c)?.senderId === auth.user?._id
+                        c.lastMessage.senderId === auth.user?._id
                           ? t("chat.you")
                           : getOtherParticipant(c)?.name ||
                             t("chat.unknownUser")
                       }}
                     </strong>
-                    {{ getLastMessage(c)?.content }}
+                    {{ c.lastMessage.content }}
                   </span>
                   <span v-else class="italic">{{ t("chat.noMessages") }}</span>
                 </div>
@@ -518,7 +522,7 @@ const autoResize = (event: Event) => {
                     {{ t("chat.archive") }}
                   </button>
                   <button
-                    @click.stop="onMarkAsRead(c._id)"
+                    @click.stop="onMarkAsRead()"
                     class="block w-full text-left px-4 py-2 hover:bg-gray-100"
                   >
                     {{ t("chat.markAsRead") }}
@@ -599,7 +603,7 @@ const autoResize = (event: Event) => {
                   {{ t("chat.archive") }}
                 </button>
                 <button
-                  @click.stop="onMarkAsRead(selectedConversationId!)"
+                  @click.stop="onMarkAsRead()"
                   class="w-full text-left px-4 py-2 hover:bg-gray-100"
                 >
                   {{ t("chat.markAsRead") }}

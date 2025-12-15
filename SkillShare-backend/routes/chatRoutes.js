@@ -1,6 +1,7 @@
 import express from "express";
 import Conversation from "../models/Conversation.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
+import { io } from "../socket.js";
 
 const router = express.Router();
 
@@ -68,13 +69,22 @@ router.post("/conversations/:id/messages", authMiddleware, async (req, res) => {
     senderId: userId,
     content,
     readBy: [userId],
+    createdAt: new Date(),
   };
+
   conversation.messages.push(message);
   await conversation.save();
 
   const savedMessage = conversation.messages[conversation.messages.length - 1];
 
-  res.json(savedMessage);
+  const payload = {
+    ...savedMessage.toObject(),
+    conversationId: id,
+  };
+
+  io.to(id).emit("newMessage", payload);
+
+  res.json(payload);
 });
 
 // Usuń konwersację
@@ -108,13 +118,23 @@ router.post(
     if (!conversation)
       return res.status(404).json({ message: "Conversation not found" });
 
+    let updated = false;
+
     conversation.messages.forEach((msg) => {
       if (!msg.readBy.includes(userId)) {
         msg.readBy.push(userId);
+        updated = true;
       }
     });
 
-    await conversation.save();
+    if (updated) {
+      await conversation.save();
+
+      io.to(id).emit("messagesRead", {
+        conversationId: id,
+        userId,
+      });
+    }
 
     res.json({ success: true });
   }
