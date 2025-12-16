@@ -12,6 +12,7 @@ export const initSocket = (server) => {
     cors: {
       origin: [
         "https://damianar420.github.io",
+        "http://localhost:5173",
         "http://localhost:5173/SkillShare",
       ],
       credentials: true,
