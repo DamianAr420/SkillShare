@@ -128,6 +128,11 @@ export const initSocket = (server) => {
         lastSeen: new Date(),
       });
     });
+
+    socket.on("leaveRoom", (conversationId) => {
+      console.log(`[SOCKET] User ${userId} leaving room: ${conversationId}`);
+      socket.leave(conversationId);
+    });
   });
 
   return io;

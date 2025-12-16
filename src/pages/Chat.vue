@@ -92,6 +92,9 @@ onMounted(() => {
 
 onUnmounted(() => {
   chatStore.setScrollFunction(null);
+  if (selectedConversationId.value) {
+    chatStore.setActiveConversation(null);
+  }
 });
 
 const handleBackToConversations = () => {
@@ -233,14 +236,26 @@ const lastSentMessageIndex = computed(() => {
   }
   return -1;
 });
+
+const resetChatSelection = () => {
+  if (isMobile.value) return;
+
+  selectedConversationId.value = null;
+  router.replace({ name: "chat", query: {} });
+};
 </script>
 
 <template>
   <div
-    class="h-[80vh] w-full max-w-7xl mx-auto flex bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100"
+    class="relative w-full max-w-7xl mx-auto bg-white md:rounded-3xl shadow-2xl overflow-hidden md:border border-gray-100 flex"
+    :class="[
+      isMobile
+        ? 'h-[calc(100dvh-5rem)] rounded-none border-0'
+        : 'h-[82vh] rounded-3xl',
+    ]"
   >
     <div
-      class="flex flex-col border-r border-gray-100 bg-gray-50/50 transition-all duration-300 absolute md:relative z-20 w-full md:w-80 lg:w-96 h-full"
+      class="flex flex-col border-r border-gray-100 bg-white transition-all duration-300 absolute md:relative z-20 w-full md:w-80 lg:w-96 h-full"
       :class="[
         isMobile && selectedConversationId
           ? '-translate-x-full'
@@ -248,14 +263,18 @@ const lastSentMessageIndex = computed(() => {
       ]"
     >
       <div
-        class="p-4 border-b border-gray-100 flex justify-between items-center bg-white"
+        @click="!isMobile && resetChatSelection()"
+        class="h-20 px-6 border-b border-gray-100 flex justify-between items-center bg-white"
       >
-        <h2 class="text-xl font-bold text-gray-800">
+        <h2
+          class="text-2xl font-bold text-gray-800 transition duration-150"
+          :class="{ 'cursor-pointer hover:text-[#F77821]': !isMobile }"
+        >
           {{ t("chat.conversations") }}
         </h2>
       </div>
 
-      <div class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
+      <div class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
         <Loader v-if="chatStore.loading" class="mt-4" />
 
         <div
@@ -269,42 +288,47 @@ const lastSentMessageIndex = computed(() => {
           v-for="c in conversationList"
           :key="c._id"
           @click="selectedConversationId = c._id"
-          class="group flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200"
+          class="group flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all duration-200"
           :class="
             selectedConversationId === c._id
               ? 'bg-orange-50 ring-1 ring-[#F77821]/20'
-              : 'hover:bg-white hover:shadow-sm'
+              : 'hover:bg-gray-50'
           "
         >
-          <div class="relative">
+          <div class="relative shrink-0">
             <img
               :src="getOtherParticipant(c)?.avatarUrl || '/default-avatar.png'"
-              class="w-12 h-12 rounded-full object-cover border border-gray-200"
+              class="w-12 h-12 md:w-14 md:h-14 rounded-full object-cover border border-gray-200 shadow-sm"
             />
 
             <span
               v-if="getOtherParticipant(c)?.isOnline"
-              class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"
+              class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"
             ></span>
           </div>
 
           <div class="flex-1 min-w-0">
-            <div class="flex justify-between items-baseline mb-0.5">
+            <div class="flex justify-between items-baseline mb-1">
               <span
-                class="font-semibold text-gray-900 truncate"
-                :class="{ 'font-bold': c.unreadCount > 0 }"
+                class="text-[15px] text-gray-900 truncate"
+                :class="{
+                  'font-bold': c.unreadCount > 0,
+                  'font-semibold': c.unreadCount === 0,
+                }"
               >
                 {{ getOtherParticipant(c)?.name || t("chat.unknownUser") }}
               </span>
 
-              <span class="text-xs text-gray-400 whitespace-nowrap ml-2">
+              <span
+                class="text-xs text-gray-400 whitespace-nowrap ml-2 font-medium"
+              >
                 {{ timeAgo(c.lastActivity) }}
               </span>
             </div>
 
             <div class="flex justify-between items-center">
               <p
-                class="text-sm truncate w-full"
+                class="text-sm truncate w-full pr-2"
                 :class="
                   c.unreadCount > 0
                     ? 'text-gray-900 font-medium'
@@ -322,7 +346,7 @@ const lastSentMessageIndex = computed(() => {
 
               <span
                 v-if="c.unreadCount > 0"
-                class="ml-2 bg-[#F77821] text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[1.25rem] text-center"
+                class="ml-2 bg-[#F77821] text-white text-[11px] font-bold px-2 py-0.5 rounded-full min-w-[1.25rem] text-center shadow-sm shadow-orange-200"
               >
                 {{ c.unreadCount }}
               </span>
@@ -332,7 +356,7 @@ const lastSentMessageIndex = computed(() => {
                 class="ml-2 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity hidden md:block"
                 :title="t('chat.delete')"
               >
-                <TrashIcon class="w-4 h-4" />
+                <TrashIcon class="w-5 h-5" />
               </button>
             </div>
           </div>
@@ -341,7 +365,7 @@ const lastSentMessageIndex = computed(() => {
     </div>
 
     <div
-      class="flex-1 flex flex-col h-full bg-[#f8f9fa] transition-transform duration-300 absolute md:relative w-full"
+      class="flex-1 flex flex-col h-full bg-[#f8f9fa] transition-transform duration-300 absolute md:relative w-full z-10"
       :class="[
         isMobile && !selectedConversationId
           ? 'translate-x-full'
@@ -353,29 +377,29 @@ const lastSentMessageIndex = computed(() => {
         class="flex-1 flex flex-col items-center justify-center text-gray-400 p-8"
       >
         <div
-          class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4"
+          class="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm border border-gray-100"
         >
-          <PaperAirplaneIcon class="w-10 h-10 text-gray-300" />
+          <PaperAirplaneIcon class="w-10 h-10 text-gray-300 ml-1" />
         </div>
 
-        <h3 class="text-lg font-medium text-gray-600">
+        <h3 class="text-xl font-bold text-gray-600 mb-2">
           {{ t("chat.selectToStart") }}
         </h3>
 
-        <p class="text-sm mt-1">{{ t("chat.startTip") }}</p>
+        <p class="text-sm text-gray-500">{{ t("chat.startTip") }}</p>
       </div>
 
       <template v-else-if="selectedConversation">
         <div
-          class="h-16 px-4 bg-white border-b border-gray-100 flex items-center justify-between shrink-0 shadow-sm z-10"
+          class="h-20 px-6 bg-white/95 backdrop-blur-sm border-b border-gray-100 flex items-center justify-between shrink-0 shadow-sm z-20"
         >
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-4">
             <button
               v-if="isMobile"
               @click="handleBackToConversations"
               class="mr-1 p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full"
             >
-              <ArrowLeftIcon class="w-5 h-5" />
+              <ArrowLeftIcon class="w-6 h-6" />
             </button>
 
             <img
@@ -383,21 +407,17 @@ const lastSentMessageIndex = computed(() => {
                 getOtherParticipant(selectedConversation)?.avatarUrl ||
                 '/default-avatar.png'
               "
-              class="w-10 h-10 rounded-full object-cover border border-gray-100"
+              class="w-12 h-12 rounded-full object-cover border border-gray-100 shadow-sm"
             />
 
             <div class="flex flex-col">
-              <span class="font-bold text-gray-800 leading-tight">
+              <span class="text-lg font-bold text-gray-800 leading-tight">
                 {{ getOtherParticipant(selectedConversation)?.name }}
               </span>
 
               <span
-                class="text-xs"
-                :class="
-                  otherUserIsOnline
-                    ? 'text-green-600 font-medium'
-                    : 'text-gray-400'
-                "
+                class="text-xs font-medium mt-0.5"
+                :class="otherUserIsOnline ? 'text-green-600' : 'text-gray-400'"
               >
                 {{
                   otherUserIsOnline
@@ -410,18 +430,18 @@ const lastSentMessageIndex = computed(() => {
 
           <button
             @click="(e) => onDelete(e, selectedConversation!._id)"
-            class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+            class="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
           >
-            <TrashIcon class="w-5 h-5" />
+            <TrashIcon class="w-6 h-6" />
           </button>
         </div>
 
         <div
           ref="messagesContainer"
-          class="flex-1 overflow-y-auto p-4 pt-6 space-y-4 bg-repeat"
+          class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 md:space-y-6"
           style="
             background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
-            background-size: 20px 20px;
+            background-size: 24px 24px;
           "
         >
           <div
@@ -434,11 +454,11 @@ const lastSentMessageIndex = computed(() => {
             }"
           >
             <div
-              class="max-w-[75%] md:max-w-[65%] px-4 py-3 text-[15px] shadow-md relative group"
+              class="max-w-[85%] md:max-w-[70%] px-5 py-3 text-[15px] md:text-base shadow-sm relative group"
               :class="[
                 msg.senderId === auth.user?._id
-                  ? 'bg-[#F77821] text-white rounded-2xl rounded-tr-sm'
-                  : 'bg-white text-gray-800 border border-gray-100 rounded-2xl rounded-tl-sm',
+                  ? 'bg-[#F77821] text-white rounded-2xl rounded-tr-none shadow-orange-100'
+                  : 'bg-white text-gray-800 border border-gray-100 rounded-2xl rounded-tl-none shadow-gray-100',
               ]"
             >
               <div class="break-words leading-relaxed whitespace-pre-wrap">
@@ -446,7 +466,7 @@ const lastSentMessageIndex = computed(() => {
               </div>
 
               <div
-                class="flex items-center justify-end gap-1 mt-1 text-[10px] opacity-80"
+                class="flex items-center justify-end gap-1 mt-1.5 text-[11px] opacity-80 select-none"
                 :class="
                   msg.senderId === auth.user?._id
                     ? 'text-white/90'
@@ -456,25 +476,26 @@ const lastSentMessageIndex = computed(() => {
                 <span>{{ formatTime(msg.createdAt) }}</span>
               </div>
             </div>
+
             <div
               v-if="index === lastReadMessageIndex"
-              class="flex flex-row justify-center items-center gap-1 text-[10px] text-gray-500 font-medium mt-1 pr-1"
+              class="flex flex-row justify-center items-center gap-1 text-[11px] text-gray-400 font-medium mt-1 pr-1"
             >
               {{ t("chat.mess.read") }}
-              <CheckCircleIcon class="h-3 w-3" />
+              <CheckCircleIcon class="h-3.5 w-3.5 text-green-500" />
             </div>
             <div
               v-else-if="index === lastSentMessageIndex"
-              class="text-[10px] text-gray-400 mt-1 pr-1"
+              class="text-[11px] text-gray-400 mt-1 pr-1"
             >
               {{ t("chat.mess.sent") }}
             </div>
           </div>
         </div>
 
-        <div class="p-4 bg-white border-t border-gray-100 shrink-0">
+        <div class="p-4 md:p-5 bg-white border-t border-gray-100 shrink-0 z-20">
           <div
-            class="flex items-end gap-2 bg-gray-50 border border-gray-200 rounded-2xl p-2 focus-within:ring-2 focus-within:ring-[#F77821]/20 focus-within:border-[#F77821] transition-all"
+            class="flex items-end gap-3 bg-gray-50 border border-gray-200 rounded-3xl p-3 focus-within:ring-2 focus-within:ring-[#F77821]/20 focus-within:border-[#F77821] transition-all shadow-sm"
           >
             <textarea
               ref="textareaRef"
@@ -482,22 +503,22 @@ const lastSentMessageIndex = computed(() => {
               @keydown.enter.prevent="sendMessage"
               @input="autoResize"
               :placeholder="t('chat.writeMessage')"
-              class="flex-1 bg-transparent border-none focus:ring-0 resize-none max-h-32 min-h-[24px] py-2 px-2 text-gray-700 placeholder-gray-400"
+              class="flex-1 bg-transparent border-none focus:ring-0 resize-none max-h-32 min-h-[24px] py-1 px-2 text-gray-700 placeholder-gray-400 text-base"
               rows="1"
             ></textarea>
 
             <button
               @click="sendMessage"
               :disabled="!newMessage.trim()"
-              class="p-2 rounded-xl transition-all duration-200 flex items-center justify-center shrink-0 mb-0.5"
+              class="p-2.5 rounded-xl transition-all duration-200 flex items-center justify-center shrink-0"
               :class="
                 newMessage.trim()
-                  ? 'bg-[#F77821] text-white hover:bg-[#e06915] shadow-md hover:shadow-lg'
+                  ? 'bg-[#F77821] text-white hover:bg-[#EA580C] shadow-md hover:shadow-lg hover:shadow-orange-200 transform hover:-translate-y-0.5'
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed'
               "
             >
               <PaperAirplaneIcon
-                class="w-5 h-5 -rotate-45 translate-x-px -translate-y-px"
+                class="w-5 h-5 -rotate-45 translate-x-0.5 -translate-y-0.5"
               />
             </button>
           </div>
@@ -519,16 +540,30 @@ const lastSentMessageIndex = computed(() => {
 
 <style scoped>
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(156, 163, 175, 0.3);
+  background-color: #e5e7eb;
   border-radius: 20px;
 }
 .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-  background-color: rgba(156, 163, 175, 0.5);
+  background-color: #d1d5db;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
 }
 </style>

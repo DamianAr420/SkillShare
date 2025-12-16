@@ -19,6 +19,7 @@ export const useChatStore = defineStore("chat", () => {
   const conversations = ref<Conversation[]>([]);
   const loading = ref(false);
   const activeConversationId = ref<string | null>(null);
+  const previousActiveConversationId = ref<string | null>(null);
 
   const socket = ref<Socket | null>(null);
   let initialized = false;
@@ -144,7 +145,15 @@ export const useChatStore = defineStore("chat", () => {
   };
 
   const setActiveConversation = (conversationId: string | null) => {
+    previousActiveConversationId.value = activeConversationId.value;
     activeConversationId.value = conversationId;
+
+    if (
+      previousActiveConversationId.value &&
+      previousActiveConversationId.value !== conversationId
+    ) {
+      socket.value?.emit("leaveRoom", previousActiveConversationId.value);
+    }
 
     if (conversationId && auth.user?._id) {
       const conv = conversations.value.find((c) => c._id === conversationId);

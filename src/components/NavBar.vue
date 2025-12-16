@@ -48,125 +48,168 @@ function logout() {
 <template>
   <LoginDialog v-if="showLogin" @close="closeLogin" />
 
-  <header
-    class="w-full h-[12vh] flex justify-between items-center px-6 py-4 shadow-md relative"
+  <div
+    class="fixed top-0 left-0 w-full flex justify-center z-50 pointer-events-none"
   >
-    <button @click="$router.push({ name: 'Home' })">
-      <img
-        class="max-h-14 md:max-h-24 object-contain"
-        :src="SkillShareLogo"
-        alt="Logo"
-      />
-    </button>
-
-    <nav class="hidden md:flex gap-2 text-2xl font-bold">
-      <button
-        @click="$router.push({ name: 'Home' })"
-        class="border border-transparent rounded px-4 py-2 hover:text-[#F77821] hover:border-[#F77821] transition-colors duration-150 ease-in cursor-pointer"
-      >
-        {{ t("NavBar.buttons.home") }}
-      </button>
-      <button
-        @click="$router.push({ name: 'Categories' })"
-        class="border border-transparent rounded px-4 py-2 hover:text-[#F77821] hover:border-[#F77821] transition-colors duration-150 ease-in cursor-pointer"
-      >
-        {{ t("NavBar.buttons.categories") }}
-      </button>
-    </nav>
-
-    <div class="flex flex-row gap-2 ml-2">
-      <button
-        v-if="!isLoggedIn"
-        @click="openLogin()"
-        class="hidden md:block bg-[#F77821] text-white text-2xl px-5 py-2 rounded hover:bg-[#EA580C] transition-all duration-150 ease-in-out cursor-pointer"
-      >
-        {{ t("NavBar.buttons.logIn") }}
-      </button>
-
-      <button
-        v-else
-        @click="goToProfile()"
-        class="hidden md:block bg-[#F77821] text-white text-2xl px-5 py-2 rounded hover:bg-[#EA580C] transition-all duration-150 ease-in-out cursor-pointer"
-      >
-        {{ username }}
-      </button>
-
-      <button
-        v-if="isLoggedIn"
-        @click="logout()"
-        class="hidden md:flex items-center gap-2 bg-red-500 text-white px-5 py-2 rounded-md hover:bg-red-600 transition-all duration-150 ease-in-out cursor-pointer"
-      >
-        <LogoutIcon class="w-5 h-5" />
-      </button>
-    </div>
-
-    <button
-      @click="toggleMobileMenu"
-      class="md:hidden text-3xl cursor-pointer z-50"
+    <header
+      class="pointer-events-auto w-full max-w-7xl h-20 md:h-28 flex justify-between items-center px-6 md:px-12 bg-[#F9FAFB]/95 backdrop-blur-md border-b md:border-x border-gray-200/50 md:rounded-b-3xl shadow-sm transition-all duration-300"
     >
-      ☰
-    </button>
-  </header>
+      <div class="flex items-center">
+        <button
+          @click="$router.push({ name: 'Home' })"
+          class="group flex items-center gap-2 focus:outline-none"
+        >
+          <img
+            class="h-12 md:h-16 w-auto object-contain transition-transform duration-300 group-hover:scale-105 cursor-pointer"
+            :src="SkillShareLogo"
+            alt="Logo"
+          />
+        </button>
+      </div>
+
+      <nav
+        class="hidden md:flex items-center gap-10 text-lg font-bold text-gray-700"
+      >
+        <button
+          @click="$router.push({ name: 'Home' })"
+          class="relative py-2 hover:text-[#F77821] transition-colors duration-200 group cursor-pointer"
+        >
+          {{ t("NavBar.buttons.home") }}
+          <span
+            class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#F77821] transition-all duration-300 group-hover:w-full"
+          ></span>
+        </button>
+
+        <button
+          @click="$router.push({ name: 'Categories' })"
+          class="relative py-2 hover:text-[#F77821] transition-colors duration-200 group cursor-pointer"
+        >
+          {{ t("NavBar.buttons.categories") }}
+          <span
+            class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#F77821] transition-all duration-300 group-hover:w-full"
+          ></span>
+        </button>
+      </nav>
+
+      <div class="hidden md:flex items-center gap-6">
+        <div
+          v-if="isLoggedIn"
+          class="flex items-center gap-3 pr-6 border-r border-gray-300"
+        >
+          <span class="text-base text-gray-500"
+            >{{ t("NavBar.welcome") }},</span
+          >
+          <button
+            @click="goToProfile()"
+            class="text-lg font-bold text-gray-900 hover:text-[#F77821] transition-colors cursor-pointer"
+          >
+            {{ username }}
+          </button>
+        </div>
+
+        <button
+          v-if="!isLoggedIn"
+          @click="openLogin()"
+          class="bg-[#F77821] text-white text-lg font-bold px-8 py-3.5 rounded-full hover:bg-[#EA580C] hover:shadow-lg hover:shadow-orange-200 transition-all duration-300 active:scale-95 cursor-pointer"
+        >
+          {{ t("NavBar.buttons.logIn") }}
+        </button>
+
+        <button
+          v-if="isLoggedIn"
+          @click="logout()"
+          class="p-3 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all duration-200 cursor-pointer"
+          :title="t('NavBar.buttons.logout')"
+        >
+          <LogoutIcon class="w-7 h-7" />
+        </button>
+      </div>
+
+      <button
+        @click="toggleMobileMenu"
+        class="md:hidden w-12 h-12 flex flex-col justify-center items-center gap-2 focus:outline-none"
+      >
+        <span
+          class="w-8 h-0.5 bg-gray-700 transition-all duration-300"
+          :class="{ 'rotate-45 translate-y-2.5': mobileMenuOpen }"
+        ></span>
+        <span
+          class="w-8 h-0.5 bg-gray-700 transition-all duration-300"
+          :class="{ 'opacity-0': mobileMenuOpen }"
+        ></span>
+        <span
+          class="w-8 h-0.5 bg-gray-700 transition-all duration-300"
+          :class="{ '-rotate-45 -translate-y-2.5': mobileMenuOpen }"
+        ></span>
+      </button>
+    </header>
+  </div>
 
   <transition
-    enter-active-class="transition-all duration-300 ease-out"
-    leave-active-class="transition-all duration-200 ease-in"
+    enter-active-class="transition duration-300 ease-out"
     enter-from-class="opacity-0 -translate-y-10"
     enter-to-class="opacity-100 translate-y-0"
+    leave-active-class="transition duration-200 ease-in"
     leave-from-class="opacity-100 translate-y-0"
     leave-to-class="opacity-0 -translate-y-10"
   >
     <div
       v-if="mobileMenuOpen"
-      class="md:hidden bg-[#F9FAFB] shadow-md w-full absolute top-[12vh] left-0 flex flex-col items-center gap-4 py-4 z-40"
+      class="md:hidden fixed top-20 left-1/2 -translate-x-1/2 w-full max-w-7xl bg-[#F9FAFB] shadow-2xl z-40 px-8 py-10 flex flex-col gap-8 rounded-b-3xl border-t border-gray-100"
     >
-      <button
-        @click="
-          $router.push({ name: 'Home' });
-          toggleMobileMenu();
-        "
-        class="text-xl font-bold hover:text-[#F77821] transition-colors duration-150"
-      >
-        {{ t("NavBar.buttons.home") }}
-      </button>
-
-      <button
-        @click="
-          $router.push({ name: 'Categories' });
-          toggleMobileMenu();
-        "
-        class="text-xl font-bold hover:text-[#F77821] transition-colors duration-150"
-      >
-        {{ t("NavBar.buttons.categories") }}
-      </button>
-
-      <button
-        v-if="!isLoggedIn"
-        @click="openLogin()"
-        class="bg-[#F77821] text-white text-xl px-4 py-2 rounded hover:bg-[#EA580C] transition-all duration-150 ease-in-out"
-      >
-        {{ t("NavBar.buttons.logIn") }}
-      </button>
-
-      <button
-        v-else
-        @click="goToProfile()"
-        class="bg-[#F77821] text-white text-xl px-4 py-2 rounded hover:bg-[#EA580C] transition-all duration-150 ease-in-out"
-      >
-        {{ username }}
-      </button>
-
-      <button
-        v-if="isLoggedIn"
-        @click="
-          logout();
-          toggleMobileMenu();
-        "
-        class="flex items-center gap-2 bg-red-500 text-white text-xl px-4 py-2 rounded hover:bg-red-600 transition-all duration-150 ease-in-out w-1/2 justify-center"
-      >
-        <LogoutIcon class="w-5 h-5" />
-        {{ t("NavBar.buttons.logout") }}
-      </button>
+      <div class="flex flex-col gap-6">
+        <button
+          @click="
+            router.push({ name: 'Home' });
+            toggleMobileMenu();
+          "
+          class="text-left text-xl font-bold text-gray-800 py-2"
+        >
+          {{ t("NavBar.buttons.home") }}
+        </button>
+        <button
+          @click="
+            router.push({ name: 'Categories' });
+            toggleMobileMenu();
+          "
+          class="text-left text-xl font-bold text-gray-800 py-2"
+        >
+          {{ t("NavBar.buttons.categories") }}
+        </button>
+      </div>
+      <div class="h-px bg-gray-200 w-full"></div>
+      <div class="flex flex-col gap-6">
+        <button
+          v-if="!isLoggedIn"
+          @click="openLogin()"
+          class="w-full bg-[#F77821] text-white text-xl py-4 rounded-2xl font-bold shadow-md"
+        >
+          {{ t("NavBar.buttons.logIn") }}
+        </button>
+        <template v-else>
+          <button
+            @click="goToProfile()"
+            class="w-full bg-gray-100 text-gray-900 text-lg py-4 rounded-2xl font-bold flex justify-between items-center px-6"
+          >
+            {{ username }}
+            <span
+              class="text-sm text-[#F77821] uppercase tracking-wider font-bold"
+              >Mój Profil</span
+            >
+          </button>
+          <button
+            @click="
+              logout();
+              toggleMobileMenu();
+            "
+            class="flex items-center justify-center gap-3 text-red-600 text-lg font-bold py-3"
+          >
+            <LogoutIcon class="w-6 h-6" /> {{ t("NavBar.buttons.logout") }}
+          </button>
+        </template>
+      </div>
     </div>
   </transition>
+
+  <div class="h-20 md:h-28"></div>
 </template>

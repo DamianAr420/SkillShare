@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { computed } from "vue";
 import { useRoute } from "vue-router";
 import NavBar from "@/components/NavBar.vue";
 import FooterComp from "@/components/Footer.vue";
@@ -7,19 +8,27 @@ import { useAuthStore } from "@/stores/authStore";
 
 const route = useRoute();
 const auth = useAuthStore();
+
+const isChatRoute = computed(() => route.path.startsWith("/chat"));
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-[#F9FAFB]">
-    <div class="max-w-7xl w-full flex mx-auto"><NavBar /></div>
-    <main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <div class="min-h-screen flex flex-col bg-[#F9FAFB] overflow-x-hidden">
+    <div class="w-full max-w-7xl z-40">
+      <NavBar />
+    </div>
+
+    <main
+      class="flex-1 w-full max-w-7xl mx-auto"
+      :class="[
+        isChatRoute ? 'p-0 md:px-6 md:py-6' : 'px-4 sm:px-6 lg:px-8 py-6',
+      ]"
+    >
       <router-view />
     </main>
 
-    <FooterComp v-if="!route.path.startsWith('/chat')" />
+    <FooterComp v-if="!isChatRoute" />
 
-    <ChatBubble
-      v-if="!route.path.startsWith('/chat') && auth.isAuthenticated"
-    />
+    <ChatBubble v-if="!isChatRoute && auth.isAuthenticated" />
   </div>
 </template>

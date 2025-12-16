@@ -21,7 +21,8 @@
       "logIn": "Zaloguj się",
       "logout": "Wyloguj"
     },
-    "logout": "Pomyślnie wylogowano!"
+    "logout": "Pomyślnie wylogowano!",
+    "welcome": "Witaj"
   },
 
   "categories": {
@@ -235,6 +236,7 @@
     "mess": {
       "read": "Wyświetlono",
       "sent": "Wysłano"
-    }
+    },
+    "startTip": "Wybierz czat z lewej strony aby wysłać wiadomość. Jeśli nie masz żadnego czatu możesz go utworzyć poprzez wciśnięcie przycisku na dole ogłoszenia."
   }
 }
