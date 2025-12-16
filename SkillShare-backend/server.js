@@ -14,6 +14,7 @@ dotenv.config();
 const app = express();
 const allowedOrigins = [
   "https://damianar420.github.io",
+  "http://localhost:5173",
   "http://localhost:5173/SkillShare",
 ];
 app.use(
