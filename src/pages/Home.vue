@@ -117,7 +117,6 @@ const normalizedAnnouncements = computed(() =>
 
 <template>
   <div class="px-4 sm:px-6 lg:px-8 pb-12">
-    <!-- ================= HEADER ================= -->
     <div class="text-center sm:text-left mb-10">
       <h1
         class="text-2xl sm:text-4xl font-extrabold bg-gradient-to-r from-[#F77821] to-[#ff9d4c] bg-clip-text text-transparent py-2"
@@ -139,9 +138,7 @@ const normalizedAnnouncements = computed(() =>
       </span>
     </div>
 
-    <!-- ================= MOBILE VIEW ================= -->
     <div v-if="isMobile" class="flex flex-col gap-6">
-      <!-- ===== MOBILE CATEGORIES (SCROLLABLE) ===== -->
       <div>
         <h2 class="text-xl font-bold mb-3">
           {{ t("Home.categories.title") }}
@@ -154,7 +151,6 @@ const normalizedAnnouncements = computed(() =>
             class="flex flex-row items-center gap-3 bg-white p-3 rounded-xl shadow active:scale-95 transition-all hover:-translate-y-1"
             @click="goToCategory(category.name)"
           >
-            <!-- Ikona -->
             <div
               class="bg-[#F77821] rounded-full flex items-center justify-center h-12 w-12"
             >
@@ -164,7 +160,6 @@ const normalizedAnnouncements = computed(() =>
               />
             </div>
 
-            <!-- Nazwa kategorii -->
             <span class="text-sm font-medium">
               {{ t("categories." + category.name) }}
             </span>
@@ -172,7 +167,6 @@ const normalizedAnnouncements = computed(() =>
         </div>
       </div>
 
-      <!-- ===== MOBILE ANNOUNCEMENTS ===== -->
       <div class="flex flex-col gap-4">
         <div
           v-for="a in normalizedAnnouncements"
@@ -180,7 +174,6 @@ const normalizedAnnouncements = computed(() =>
           class="bg-white rounded-xl shadow-[0px_0px_8px_1px_rgba(0,0,0,0.25)] p-3 active:scale-[0.98] transition cursor-pointer"
           @click="$router.push(`/announcement/${a._id}`)"
         >
-          <!-- IMAGE -->
           <div class="relative">
             <img
               :src="
@@ -191,7 +184,6 @@ const normalizedAnnouncements = computed(() =>
               class="h-48 w-full object-cover rounded-lg"
             />
 
-            <!-- WATCH ICON FLOATING -->
             <button
               v-if="!isOwner(a.userId)"
               @click.stop="toggleWatch(a)"
@@ -202,12 +194,10 @@ const normalizedAnnouncements = computed(() =>
             </button>
           </div>
 
-          <!-- TITLE -->
           <h3 class="text-lg font-bold mt-3 mb-1">
             {{ a.title }}
           </h3>
 
-          <!-- CATEGORY + TYPE + LOCATION -->
           <div class="flex flex-wrap items-center gap-2 mb-2">
             <span
               class="px-2 py-1 rounded-full text-[11px] font-semibold border"
@@ -255,12 +245,10 @@ const normalizedAnnouncements = computed(() =>
             </span>
           </div>
 
-          <!-- DESCRIPTION -->
           <p class="text-gray-700 text-sm mb-3 line-clamp-3">
             {{ a.desc }}
           </p>
 
-          <!-- PRICE -->
           <div class="flex justify-between items-center">
             <span
               v-if="a.price !== null"
@@ -273,7 +261,6 @@ const normalizedAnnouncements = computed(() =>
       </div>
     </div>
 
-    <!-- ================= DESKTOP VIEW ================= -->
     <div class="hidden md:block">
       <div class="mb-10">
         <h2 class="text-3xl font-bold mb-6 text-gray-800">

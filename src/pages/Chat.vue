@@ -30,8 +30,6 @@ const textareaRef = ref<HTMLTextAreaElement | null>(null);
 const confirmDeleteVisible = ref(false);
 let conversationToDelete = ref<string | null>(null);
 
-// Usunięto nieużywany showMobileChat (teraz logika jest bezpośrednio w template)
-
 const selectedConversationId = computed({
   get: () => chatStore.activeConversationId,
   set: (id) => chatStore.setActiveConversation(id),
@@ -40,14 +38,12 @@ const selectedConversationId = computed({
 const conversationList = computed(() =>
   chatStore.conversations.map((c) => ({
     ...c,
-    // lastMessage jest teraz w typie Conversation, więc TS nie będzie krzyczał
     lastMessage:
       c.lastMessage ||
       (c.messages.length > 0 ? c.messages[c.messages.length - 1] : null),
   }))
 );
 
-// Formatowanie godziny wiadomości (np. 14:30)
 const formatTime = (dateString: string) => {
   if (!dateString) return "";
   const date = new Date(dateString);
@@ -91,8 +87,6 @@ const otherUserIsOnline = computed(() => {
   return otherUser.value.isOnline || diff < 60;
 });
 
-// --- Actions ---
-
 const handleBackToConversations = () => {
   selectedConversationId.value = null;
   router.replace({ name: "chat" });
@@ -132,8 +126,6 @@ const confirmDelete = async () => {
   confirmDeleteVisible.value = false;
   conversationToDelete.value = null;
 };
-
-// --- Watchers & Lifecycle ---
 
 watch(
   () => selectedConversation.value?.messages.length,

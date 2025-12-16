@@ -313,16 +313,13 @@ router.post("/:id/view", async (req, res) => {
 
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
-    // Znajdź ostatnie wejście IP na to ogłoszenie
     const log = await ViewLog.findOne({ listingId, ip });
 
     if (!log || log.lastView < oneHourAgo) {
-      // zwiększ licznik
       await Announcement.findByIdAndUpdate(listingId, {
         $inc: { views: 1 },
       });
 
-      // zapisz/aktualizuj log
       await ViewLog.findOneAndUpdate(
         { listingId, ip },
         { lastView: new Date() },

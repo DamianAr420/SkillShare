@@ -2,8 +2,8 @@ import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
 import User from "./models/User.js";
 import Conversation from "./models/Conversation.js";
-import { createClient } from "redis"; // Import klienta Redis
-import { createAdapter } from "@socket.io/redis-adapter"; // Import Adaptera
+import { createClient } from "redis";
+import { createAdapter } from "@socket.io/redis-adapter";
 
 let io;
 
@@ -12,13 +12,12 @@ export const initSocket = (server) => {
     cors: {
       origin: [
         "https://damianar420.github.io",
-        "http://localhost:5173", // <-- DODAJ TĘ LINIĘ
+        "http://localhost:5173/SkillShare",
       ],
       credentials: true,
     },
   });
 
-  // --- KONFIGURACJA REDIS ADAPTERA ---
   const redisUrl = process.env.REDIS_URL;
 
   if (redisUrl) {
@@ -27,7 +26,6 @@ export const initSocket = (server) => {
     const pubClient = createClient({ url: redisUrl });
     const subClient = pubClient.duplicate();
 
-    // Obsługa błędów Redis (ważne, jeśli Redis padnie)
     pubClient.on("error", (err) =>
       console.error("Redis Pub Client Error:", err)
     );
@@ -35,10 +33,8 @@ export const initSocket = (server) => {
       console.error("Redis Sub Client Error:", err)
     );
 
-    // Połącz klientów Redis
     Promise.all([pubClient.connect(), subClient.connect()])
       .then(() => {
-        // Ustaw Adapter
         io.adapter(createAdapter(pubClient, subClient));
         console.log(
           "Socket.IO successfully configured with Redis Adapter (Multi-Instance support enabled)."
@@ -46,14 +42,12 @@ export const initSocket = (server) => {
       })
       .catch((err) => {
         console.error("Failed to connect Redis clients (FATAL):", err);
-        // Serwer uruchomi się w trybie single-instance, ale będzie logował błąd.
       });
   } else {
     console.warn(
       "REDIS_URL not found. Running Socket.IO in single-instance mode (Likely to fail on Render scaling)."
     );
   }
-  // -----------------------------------
 
   io.use((socket, next) => {
     const token = socket.handshake.auth?.token;
@@ -71,7 +65,6 @@ export const initSocket = (server) => {
   io.on("connection", async (socket) => {
     const userId = socket.userId;
 
-    // ... reszta logiki on connection jest bez zmian ...
     await User.findByIdAndUpdate(userId, {
       isOnline: true,
       lastSeen: new Date(),
@@ -88,7 +81,6 @@ export const initSocket = (server) => {
     });
 
     socket.on("markRead", async ({ conversationId }) => {
-      // ... (logika markRead jest OK)
       const conv = await Conversation.findById(conversationId);
       if (!conv) return;
 
@@ -103,7 +95,6 @@ export const initSocket = (server) => {
 
       if (updated) {
         await conv.save();
-        // Ta wiadomość również zostanie rozesłana przez Redis
         io.to(conversationId).emit("messagesRead", {
           conversationId,
           userId,

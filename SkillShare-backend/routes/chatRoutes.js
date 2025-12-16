@@ -5,7 +5,6 @@ import { io } from "../socket.js";
 
 const router = express.Router();
 
-// Pobierz wszystkie konwersacje użytkownika
 router.get("/conversations", authMiddleware, async (req, res) => {
   const userId = req.user.userId;
 
@@ -42,7 +41,6 @@ router.get("/conversations/:id", authMiddleware, async (req, res) => {
   res.json({ ...conv.toObject(), unreadCount });
 });
 
-// Pobierz wiadomości z konwersacji
 router.get("/conversations/:id/messages", authMiddleware, async (req, res) => {
   const { id } = req.params;
   const conversation = await Conversation.findById(id);
@@ -51,7 +49,6 @@ router.get("/conversations/:id/messages", authMiddleware, async (req, res) => {
   res.json(conversation.messages);
 });
 
-// Utwórz nową konwersację
 router.post("/conversations", authMiddleware, async (req, res) => {
   const { participantId } = req.body;
   const userId = req.user.userId;
@@ -70,7 +67,6 @@ router.post("/conversations", authMiddleware, async (req, res) => {
   res.json(conversation);
 });
 
-// Wyślij wiadomość
 router.post("/conversations/:id/messages", authMiddleware, async (req, res) => {
   const { id } = req.params;
   const { content } = req.body;
@@ -111,12 +107,10 @@ router.post("/conversations/:id/messages", authMiddleware, async (req, res) => {
   res.json(payload);
 });
 
-// Usuń konwersację
 router.delete("/conversations/:id", authMiddleware, async (req, res) => {
   const { id } = req.params;
   const userId = req.user.userId;
 
-  // rozmowę może usunąć tylko uczestnik
   const conversation = await Conversation.findOne({
     _id: id,
     participants: userId,

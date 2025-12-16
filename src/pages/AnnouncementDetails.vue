@@ -159,7 +159,6 @@ const goToChat = async (userId: string) => {
 
 <template>
   <div class="max-w-5xl mx-auto p-4 space-y-6">
-    <!-- Back button -->
     <button
       class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition duration-300 shadow cursor-pointer"
       @click="router.back()"
@@ -170,7 +169,6 @@ const goToChat = async (userId: string) => {
     <Loader v-if="announcementStore.loading" />
 
     <div v-else class="space-y-6">
-      <!-- Image -->
       <div
         class="w-full rounded-2xl overflow-hidden shadow-xl cursor-pointer"
         @click="openImage(ann.imageUrl || t('announcementDetails.noImage'))"
@@ -182,7 +180,6 @@ const goToChat = async (userId: string) => {
         />
       </div>
 
-      <!-- Info panel -->
       <div class="bg-white rounded-2xl shadow-xl p-6 space-y-4">
         <h1
           class="text-4xl font-extrabold text-gray-900 transition duration-300"
@@ -191,7 +188,6 @@ const goToChat = async (userId: string) => {
         </h1>
         <p class="text-gray-700 leading-relaxed">{{ ann.desc }}</p>
 
-        <!-- Watch button -->
         <div
           v-if="
             auth.isAuthenticated &&
@@ -219,7 +215,6 @@ const goToChat = async (userId: string) => {
           </button>
         </div>
 
-        <!-- Stats cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
           <div v-if="ann.type !== 'search'" class="p-4 rounded-xl shadow-inner">
             <p class="text-gray-500 uppercase tracking-wide text-sm">
@@ -254,7 +249,6 @@ const goToChat = async (userId: string) => {
         </div>
       </div>
 
-      <!-- Seller panel -->
       <div v-if="seller" class="rounded-2xl shadow-xl p-6 space-y-4">
         <h2 class="text-2xl font-semibold text-gray-800">
           {{ t("announcementDetails.sellerData") }}
@@ -298,7 +292,6 @@ const goToChat = async (userId: string) => {
         <p>{{ ann.views }}</p>
       </div>
 
-      <!-- Owner actions -->
       <div v-if="isOwner" class="flex flex-wrap gap-3 mt-4">
         <button
           class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition duration-300 cursor-pointer"
