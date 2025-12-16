@@ -76,9 +76,22 @@ export const initSocket = (server) => {
       isOnline: true,
     });
 
-    socket.on("joinRoom", (conversationId) => {
-      console.log(`[SOCKET] User ${userId} joining room: ${conversationId}`); // Możesz to usunąć po testach
-      socket.join(conversationId);
+    socket.on("joinRoom", async (conversationId) => {
+      const conv = await Conversation.findOne({
+        _id: conversationId,
+        participants: userId,
+      });
+
+      if (conv) {
+        socket.join(conversationId);
+        console.log(
+          `[SOCKET] User ${userId} successfully joined room: ${conversationId}`
+        );
+      } else {
+        console.warn(
+          `[SOCKET] Access denied: User ${userId} cannot join room ${conversationId}.`
+        );
+      }
     });
 
     socket.on("markRead", async ({ conversationId }) => {

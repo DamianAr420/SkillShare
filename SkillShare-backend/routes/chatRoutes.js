@@ -27,12 +27,14 @@ router.get("/conversations", authMiddleware, async (req, res) => {
 });
 
 router.get("/conversations/:id", authMiddleware, async (req, res) => {
-  const conv = await Conversation.findById(req.params.id).populate(
-    "participants",
-    "name avatarUrl lastSeen"
-  );
+  const userId = req.user.userId;
+  const conv = await Conversation.findOne({
+    _id: req.params.id,
+    participants: userId,
+  }).populate("participants", "name avatarUrl lastSeen");
 
-  if (!conv) return res.status(404).json({ message: "Not found" });
+  if (!conv)
+    return res.status(403).json({ message: "Access denied or not found" });
 
   const unreadCount = conv.messages.filter(
     (m) => !m.readBy.includes(req.user.userId)
@@ -72,9 +74,14 @@ router.post("/conversations/:id/messages", authMiddleware, async (req, res) => {
   const { content } = req.body;
   const userId = req.user.userId;
 
-  const conversation = await Conversation.findById(id);
+  const conversation = await Conversation.findOne({
+    _id: id,
+    participants: userId,
+  });
   if (!conversation)
-    return res.status(404).json({ message: "Conversation not found" });
+    return res
+      .status(403)
+      .json({ message: "Access denied or conversation not found" });
 
   const message = {
     senderId: userId,
@@ -102,7 +109,7 @@ router.post("/conversations/:id/messages", authMiddleware, async (req, res) => {
     payload.content
   );
 
-  io.emit("newMessage", payload);
+  io.to(id).emit("newMessage", payload);
 
   res.json(payload);
 });

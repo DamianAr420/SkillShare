@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick, onUnmounted } from "vue"; // Usunięto onUnmounted
+import { ref, computed, onMounted, watch, nextTick, onUnmounted } from "vue";
 import { useChatStore } from "@/stores/chatStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useRoute, useRouter } from "vue-router";
@@ -16,6 +16,7 @@ import {
   ArrowLeftIcon,
   CheckCircleIcon,
 } from "@heroicons/vue/24/solid";
+import { getSocket } from "@/utils/socket";
 
 const { isMobile } = useBreakpoints();
 const chatStore = useChatStore();
@@ -29,6 +30,7 @@ const messagesContainer = ref<HTMLElement | null>(null);
 const textareaRef = ref<HTMLTextAreaElement | null>(null);
 const confirmDeleteVisible = ref(false);
 let conversationToDelete = ref<string | null>(null);
+const initialLoadDone = ref(false);
 
 const selectedConversationId = computed({
   get: () => chatStore.activeConversationId,
@@ -44,27 +46,6 @@ const conversationList = computed(() =>
   }))
 );
 
-const formatTime = (dateString: string) => {
-  if (!dateString) return "";
-  const date = new Date(dateString);
-  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-};
-
-const scrollToEnd = async () => {
-  await nextTick();
-  if (messagesContainer.value) {
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-  }
-};
-
-onMounted(() => {
-  chatStore.setScrollFunction(scrollToEnd);
-});
-
-onUnmounted(() => {
-  chatStore.setScrollFunction(null);
-});
-
 const selectedConversation = computed<Conversation | null>(
   () =>
     chatStore.conversations.find(
@@ -79,12 +60,38 @@ const otherUser = computed(() =>
   getOtherParticipant(selectedConversation.value)
 );
 
+const otherParticipantId = computed(() => otherUser.value?._id);
+
 const otherUserIsOnline = computed(() => {
   if (!otherUser.value?.lastSeen) return false;
   const diff =
     (new Date().getTime() - new Date(otherUser.value.lastSeen).getTime()) /
     1000;
   return otherUser.value.isOnline || diff < 60;
+});
+
+const formatTime = (dateString: string) => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+};
+
+const scrollToEnd = async (smooth: boolean = false) => {
+  await nextTick();
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTo({
+      top: messagesContainer.value.scrollHeight,
+      behavior: smooth ? "smooth" : "instant",
+    });
+  }
+};
+
+onMounted(() => {
+  chatStore.setScrollFunction(scrollToEnd);
+});
+
+onUnmounted(() => {
+  chatStore.setScrollFunction(null);
 });
 
 const handleBackToConversations = () => {
@@ -94,10 +101,11 @@ const handleBackToConversations = () => {
 
 const sendMessage = async () => {
   if (!selectedConversationId.value || !newMessage.value.trim()) return;
-  await chatStore.sendMessage(selectedConversationId.value, newMessage.value);
+  const messageToSend = newMessage.value;
   newMessage.value = "";
   resetTextareaHeight();
-  scrollToEnd();
+  await chatStore.sendMessage(selectedConversationId.value, messageToSend);
+  scrollToEnd(true);
 };
 
 const resetTextareaHeight = () => {
@@ -122,6 +130,7 @@ const confirmDelete = async () => {
   await chatStore.deleteConversation(conversationToDelete.value);
   if (selectedConversationId.value === conversationToDelete.value) {
     selectedConversationId.value = null;
+    router.replace({ name: "chat" });
   }
   confirmDeleteVisible.value = false;
   conversationToDelete.value = null;
@@ -131,14 +140,20 @@ watch(
   () => selectedConversation.value?.messages.length,
   (newVal, oldVal) => {
     if (newVal && (!oldVal || newVal > oldVal)) {
-      scrollToEnd();
+      if (!initialLoadDone.value) {
+        scrollToEnd(false);
+      } else {
+        if (newVal > oldVal!) {
+          scrollToEnd(true);
+        }
+      }
     }
   }
 );
 
-watch(selectedConversationId, (id) => {
-  if (id) {
-    router.replace({ name: "chat", query: { id } });
+watch(selectedConversationId, (newId) => {
+  if (newId) {
+    router.replace({ name: "chat", query: { id: newId } });
     scrollToEnd();
   } else {
     router.replace({ name: "chat" });
@@ -148,7 +163,9 @@ watch(selectedConversationId, (id) => {
 onMounted(async () => {
   const convId = route.query.id as string;
 
-  chatStore.initializeSocketListeners();
+  if (!getSocket() && auth.isAuthenticated && auth.token) {
+    await chatStore.initializeChat(auth.token);
+  }
 
   if (chatStore.conversations.length === 0) {
     await chatStore.fetchConversations();
@@ -156,10 +173,65 @@ onMounted(async () => {
 
   if (convId) {
     chatStore.setActiveConversation(convId);
+
     if (!chatStore.conversations.find((c) => c._id === convId)) {
       await chatStore.fetchConversation(convId);
     }
   }
+
+  initialLoadDone.value = true;
+
+  if (selectedConversation.value) {
+    scrollToEnd(true);
+  }
+});
+
+const lastReadMessageIndex = computed(() => {
+  if (!selectedConversation.value || !auth.user || !otherParticipantId.value) {
+    return -1;
+  }
+
+  const messages = selectedConversation.value.messages;
+
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+
+    if (!msg) continue;
+
+    if (
+      msg.senderId === auth.user._id &&
+      msg.readBy.includes(otherParticipantId.value)
+    ) {
+      return i;
+    }
+  }
+  return -1;
+});
+
+const lastSentMessageIndex = computed(() => {
+  if (!selectedConversation.value || !auth.user || !otherParticipantId.value) {
+    return -1;
+  }
+
+  if (lastReadMessageIndex.value === -1) {
+    return -1;
+  }
+
+  const messages = selectedConversation.value.messages;
+
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+
+    if (!msg) continue;
+
+    if (
+      msg.senderId === auth.user._id &&
+      !msg.readBy.includes(otherParticipantId.value)
+    ) {
+      return i;
+    }
+  }
+  return -1;
 });
 </script>
 
@@ -209,6 +281,7 @@ onMounted(async () => {
               :src="getOtherParticipant(c)?.avatarUrl || '/default-avatar.png'"
               class="w-12 h-12 rounded-full object-cover border border-gray-200"
             />
+
             <span
               v-if="getOtherParticipant(c)?.isOnline"
               class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"
@@ -223,6 +296,7 @@ onMounted(async () => {
               >
                 {{ getOtherParticipant(c)?.name || t("chat.unknownUser") }}
               </span>
+
               <span class="text-xs text-gray-400 whitespace-nowrap ml-2">
                 {{ timeAgo(c.lastActivity) }}
               </span>
@@ -242,6 +316,7 @@ onMounted(async () => {
                   class="mr-1 text-gray-400"
                   >{{ t("chat.you") }}:</span
                 >
+
                 {{ c.lastMessage?.content || t("chat.startedConversation") }}
               </p>
 
@@ -282,9 +357,12 @@ onMounted(async () => {
         >
           <PaperAirplaneIcon class="w-10 h-10 text-gray-300" />
         </div>
+
         <h3 class="text-lg font-medium text-gray-600">
           {{ t("chat.selectToStart") }}
         </h3>
+
+        <p class="text-sm mt-1">{{ t("chat.startTip") }}</p>
       </div>
 
       <template v-else-if="selectedConversation">
@@ -307,10 +385,12 @@ onMounted(async () => {
               "
               class="w-10 h-10 rounded-full object-cover border border-gray-100"
             />
+
             <div class="flex flex-col">
               <span class="font-bold text-gray-800 leading-tight">
                 {{ getOtherParticipant(selectedConversation)?.name }}
               </span>
+
               <span
                 class="text-xs"
                 :class="
@@ -338,14 +418,14 @@ onMounted(async () => {
 
         <div
           ref="messagesContainer"
-          class="flex-1 overflow-y-auto p-4 space-y-4 bg-repeat"
+          class="flex-1 overflow-y-auto p-4 pt-6 space-y-4 bg-repeat"
           style="
             background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
             background-size: 20px 20px;
           "
         >
           <div
-            v-for="msg in selectedConversation.messages"
+            v-for="(msg, index) in selectedConversation.messages"
             :key="msg._id"
             class="flex flex-col"
             :class="{
@@ -354,11 +434,11 @@ onMounted(async () => {
             }"
           >
             <div
-              class="max-w-[75%] md:max-w-[65%] px-4 py-2 text-[15px] shadow-sm relative group"
+              class="max-w-[75%] md:max-w-[65%] px-4 py-3 text-[15px] shadow-md relative group"
               :class="[
                 msg.senderId === auth.user?._id
-                  ? 'bg-[#F77821] text-white rounded-2xl rounded-tr-none'
-                  : 'bg-white text-gray-800 border border-gray-100 rounded-2xl rounded-tl-none',
+                  ? 'bg-[#F77821] text-white rounded-2xl rounded-tr-sm'
+                  : 'bg-white text-gray-800 border border-gray-100 rounded-2xl rounded-tl-sm',
               ]"
             >
               <div class="break-words leading-relaxed whitespace-pre-wrap">
@@ -374,10 +454,20 @@ onMounted(async () => {
                 "
               >
                 <span>{{ formatTime(msg.createdAt) }}</span>
-                <span v-if="msg.senderId === auth.user?._id">
-                  <CheckCircleIcon class="w-3 h-3" />
-                </span>
               </div>
+            </div>
+            <div
+              v-if="index === lastReadMessageIndex"
+              class="flex flex-row justify-center items-center gap-1 text-[10px] text-gray-500 font-medium mt-1 pr-1"
+            >
+              {{ t("chat.mess.read") }}
+              <CheckCircleIcon class="h-3 w-3" />
+            </div>
+            <div
+              v-else-if="index === lastSentMessageIndex"
+              class="text-[10px] text-gray-400 mt-1 pr-1"
+            >
+              {{ t("chat.mess.sent") }}
             </div>
           </div>
         </div>

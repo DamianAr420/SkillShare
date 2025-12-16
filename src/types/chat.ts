@@ -8,6 +8,7 @@ export interface Message {
   createdAt: string;
   readBy: string[];
   conversationId: string;
+  isTemp?: boolean;
 }
 
 export interface Conversation {

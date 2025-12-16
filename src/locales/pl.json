@@ -231,6 +231,10 @@
     "deleteConversationTitle": "Usuń konwersację",
     "deleteConversationMessage": "Czy na pewno chcesz usunąć ten chat? Tej operacji nie można cofnąć.",
     "confirm": "Usuń",
-    "cancel": "Anuluj"
+    "cancel": "Anuluj",
+    "mess": {
+      "read": "Wyświetlono",
+      "sent": "Wysłano"
+    }
   }
 }

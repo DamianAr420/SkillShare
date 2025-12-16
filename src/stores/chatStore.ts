@@ -56,6 +56,33 @@ export const useChatStore = defineStore("chat", () => {
     socket.value.on("messagesRead", handleMessagesRead);
     socket.value.on("userStatus", handleUserStatus);
 
+    socket.value?.on(
+      "messageRead",
+      (data: { conversationId: string; userId: string }) => {
+        const { conversationId, userId } = data;
+        if (!auth.user) {
+          console.error(
+            "Autoryzacja użytkownika jest wymagana do przetworzenia messageRead."
+          );
+          return;
+        }
+
+        const conv = conversations.value.find((c) => c._id === conversationId);
+        if (!conv) return;
+
+        conv.messages.forEach((msg) => {
+          if (auth.user) {
+            if (
+              msg.senderId === auth.user._id &&
+              !msg.readBy.includes(userId)
+            ) {
+              msg.readBy.push(userId);
+            }
+          }
+        });
+      }
+    );
+
     socket.value.onAny((eventName, ...args) => {
       if (eventName !== "pong") {
         console.log(
@@ -79,6 +106,16 @@ export const useChatStore = defineStore("chat", () => {
   const fetchConversation = async (conversationId: string) => {
     const conv = await fetchConversationById(conversationId);
     const normalized = normalizeConversation(conv);
+
+    if (
+      auth.user &&
+      !normalized.participants.some((p) => p._id === auth.user?._id)
+    ) {
+      console.warn(
+        `Zablokowano dołączenie do konwersacji ${conversationId}. Użytkownik nie jest uczestnikiem.`
+      );
+      return;
+    }
 
     const idx = conversations.value.findIndex((c) => c._id === conversationId);
     if (idx !== -1) {
@@ -110,18 +147,42 @@ export const useChatStore = defineStore("chat", () => {
     activeConversationId.value = conversationId;
 
     if (conversationId && auth.user?._id) {
+      const conv = conversations.value.find((c) => c._id === conversationId);
+      if (!conv) {
+        console.error(
+          `Konwersacja ${conversationId} nie istnieje w lokalnej liście. Nie dołączam do pokoju.`
+        );
+        return;
+      }
+
       socket.value?.emit("joinRoom", conversationId);
       markConversationAsRead(conversationId);
     }
   };
 
   const handleIncomingMessage = async (message: Message) => {
-    console.log("ODEBRANO NOWĄ WIADOMOŚĆ:", message);
+    if (!auth.user?._id) {
+      return;
+    }
+
+    if (message.senderId === auth.user._id) {
+      return;
+    }
+
     const conversationIndex = conversations.value.findIndex(
       (c) => c._id === message.conversationId
     );
 
     let updatedConversations: Conversation[] = [...conversations.value];
+
+    if (
+      conversationIndex !== -1 &&
+      updatedConversations[conversationIndex]?.messages.some(
+        (m) => m._id === message._id
+      )
+    ) {
+      return;
+    }
 
     if (conversationIndex === -1) {
       const fetched = await fetchConversationById(message.conversationId);
@@ -133,7 +194,7 @@ export const useChatStore = defineStore("chat", () => {
       newConv.lastMessage = message;
 
       if (message.conversationId !== activeConversationId.value) {
-        newConv.unreadCount = 1; // Ustaw na 1, bo to pierwsza nieprzeczytana.
+        newConv.unreadCount = 1;
       }
 
       updatedConversations.unshift(newConv);
@@ -184,6 +245,7 @@ export const useChatStore = defineStore("chat", () => {
       createdAt,
       readBy: [senderId],
       conversationId,
+      isTemp: true,
     };
 
     addMessageLocally(tempMsg);
@@ -289,10 +351,23 @@ export const useChatStore = defineStore("chat", () => {
   };
 
   const rejoinRooms = () => {
-    if (!socket.value) return;
-    conversations.value.forEach((c) => socket.value!.emit("joinRoom", c._id));
-    if (activeConversationId.value)
-      socket.value.emit("joinRoom", activeConversationId.value);
+    if (!socket.value || !auth.user) return;
+
+    conversations.value.forEach((c) => {
+      if (c.participants.some((p) => p._id === auth.user!._id)) {
+        socket.value!.emit("joinRoom", c._id);
+      }
+    });
+
+    if (activeConversationId.value) {
+      const activeConv = conversations.value.find(
+        (c) => c._id === activeConversationId.value
+      );
+
+      if (activeConv) {
+        socket.value.emit("joinRoom", activeConversationId.value);
+      }
+    }
   };
 
   async function initializeChat(token: string) {
