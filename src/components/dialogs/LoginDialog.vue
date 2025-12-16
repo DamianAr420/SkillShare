@@ -4,12 +4,14 @@ import { useI18n } from "vue-i18n";
 import { useAuthStore } from "@/stores/authStore";
 import { checkNameAvailability } from "@/api/auth";
 import { useToast } from "@/composables/useToast";
+import { useChatStore } from "@/stores/chatStore";
 
 type ErrorField = "name" | "password" | "repeatPassword" | "general";
 
 const { t } = useI18n();
 const auth = useAuthStore();
 const { showToast } = useToast();
+const chatStore = useChatStore();
 
 const login = ref(true);
 const name = ref("");
@@ -72,6 +74,11 @@ async function handleLogin() {
   localErrors.value = {};
   try {
     await auth.login(name.value, password.value);
+
+    if (auth.token) {
+      await chatStore.initializeChat(auth.token);
+    }
+
     showToast(t("LoginDialog.success.login"), "success");
     emit("close");
   } catch {

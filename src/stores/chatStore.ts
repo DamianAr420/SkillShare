@@ -11,6 +11,7 @@ import {
 } from "@/api/chat";
 import { useAuthStore } from "@/stores/authStore";
 import type { Socket } from "socket.io-client";
+import { connectSocket } from "@/utils/socket";
 
 export const useChatStore = defineStore("chat", () => {
   const auth = useAuthStore();
@@ -131,6 +132,10 @@ export const useChatStore = defineStore("chat", () => {
       }
       newConv.lastMessage = message;
 
+      if (message.conversationId !== activeConversationId.value) {
+        newConv.unreadCount = 1; // Ustaw na 1, bo to pierwsza nieprzeczytana.
+      }
+
       updatedConversations.unshift(newConv);
     } else {
       const conv = updatedConversations[conversationIndex];
@@ -149,14 +154,14 @@ export const useChatStore = defineStore("chat", () => {
       updatedConv.lastMessage = message;
       updatedConv.lastActivity = new Date().toISOString();
 
+      updatedConversations.splice(conversationIndex, 1);
+
       if (message.conversationId !== activeConversationId.value) {
         updatedConv.unreadCount++;
       } else {
         markConversationAsRead(message.conversationId);
         scrollFunction.value?.();
       }
-
-      updatedConversations.splice(conversationIndex, 1);
 
       updatedConversations.unshift(updatedConv);
     }
@@ -290,6 +295,26 @@ export const useChatStore = defineStore("chat", () => {
       socket.value.emit("joinRoom", activeConversationId.value);
   };
 
+  async function initializeChat(token: string) {
+    const socket = connectSocket(token);
+    setSocket(socket);
+
+    initializeSocketListeners();
+
+    await fetchConversations();
+
+    rejoinRooms();
+
+    socket.on("connect", () => {
+      console.log("Socket reconnected, rejoining rooms...");
+      rejoinRooms();
+    });
+
+    if (activeConversationId.value) {
+      setActiveConversation(activeConversationId.value);
+    }
+  }
+
   return {
     conversations,
     loading,
@@ -304,5 +329,6 @@ export const useChatStore = defineStore("chat", () => {
     startConversation,
     setScrollFunction,
     rejoinRooms,
+    initializeChat,
   };
 });
