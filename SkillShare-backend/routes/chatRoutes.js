@@ -111,6 +111,17 @@ router.post("/conversations/:id/messages", authMiddleware, async (req, res) => {
 
   io.to(id).emit("newMessage", payload);
 
+  const recipientIds = conversation.participants.filter(
+    (participantId) => participantId.toString() !== userId.toString()
+  );
+
+  recipientIds.forEach((recipientId) => {
+    console.log(
+      `[REST] Also sending 'newMessage' to private user channel: ${recipientId}`
+    );
+    io.to(recipientId.toString()).emit("newMessage", payload);
+  });
+
   res.json(payload);
 });
 

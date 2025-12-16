@@ -66,6 +66,11 @@ export const initSocket = (server) => {
   io.on("connection", async (socket) => {
     const userId = socket.userId;
 
+    socket.join(userId);
+    console.log(
+      `[SOCKET] User ${userId} connected and joined private room ${userId}`
+    );
+
     await User.findByIdAndUpdate(userId, {
       isOnline: true,
       lastSeen: new Date(),

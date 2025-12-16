@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import type { Conversation, Message } from "@/types/chat";
 import {
   fetchConversationsApi,
@@ -15,7 +15,6 @@ import { connectSocket } from "@/utils/socket";
 
 export const useChatStore = defineStore("chat", () => {
   const auth = useAuthStore();
-
   const conversations = ref<Conversation[]>([]);
   const loading = ref(false);
   const activeConversationId = ref<string | null>(null);
@@ -83,15 +82,6 @@ export const useChatStore = defineStore("chat", () => {
         });
       }
     );
-
-    socket.value.onAny((eventName, ...args) => {
-      if (eventName !== "pong") {
-        console.log(
-          `[SOCKET ANY - DZIWNY EVENT] Otrzymano event: ${eventName}`,
-          args
-        );
-      }
-    });
   };
 
   const fetchConversations = async () => {
@@ -224,10 +214,11 @@ export const useChatStore = defineStore("chat", () => {
       updatedConv.lastMessage = message;
       updatedConv.lastActivity = new Date().toISOString();
 
-      updatedConversations.splice(conversationIndex, 1);
-
       if (message.conversationId !== activeConversationId.value) {
-        updatedConv.unreadCount++;
+        updatedConv = {
+          ...updatedConv,
+          unreadCount: updatedConv.unreadCount + 1,
+        };
       } else {
         markConversationAsRead(message.conversationId);
         scrollFunction.value?.();
@@ -399,6 +390,13 @@ export const useChatStore = defineStore("chat", () => {
     }
   }
 
+  const totalUnreadCount = computed(() => {
+    return conversations.value.reduce(
+      (total, conv) => total + conv.unreadCount,
+      0
+    );
+  });
+
   return {
     conversations,
     loading,
@@ -414,5 +412,6 @@ export const useChatStore = defineStore("chat", () => {
     setScrollFunction,
     rejoinRooms,
     initializeChat,
+    totalUnreadCount,
   };
 });

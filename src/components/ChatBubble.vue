@@ -3,7 +3,6 @@ import { ref, onMounted, computed, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/authStore";
 import { useChatStore } from "@/stores/chatStore";
-import type { Conversation } from "@/types/chat";
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -23,12 +22,7 @@ const transitionEnabled = ref(true);
 const shadowActive = ref(false);
 const snappedSide = ref<"left" | "right">("right");
 
-const unreadTotal = computed(() =>
-  (chatStore.conversations || []).reduce(
-    (sum: number, conv: Conversation) => sum + (conv.unreadCount || 0),
-    0
-  )
-);
+const unreadTotal = computed(() => chatStore.totalUnreadCount);
 
 const goToChat = () => {
   if (!dragMoved) router.push("/chat");
