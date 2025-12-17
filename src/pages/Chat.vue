@@ -495,7 +495,7 @@ const resetChatSelection = () => {
 
         <div class="p-4 md:p-5 bg-white border-t border-gray-100 shrink-0 z-20">
           <div
-            class="flex items-end gap-3 bg-gray-50 border border-gray-200 rounded-3xl p-3 focus-within:ring-2 focus-within:ring-[#F77821]/20 focus-within:border-[#F77821] transition-all shadow-sm"
+            class="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-3xl p-3 focus-within:ring-2 focus-within:ring-[#F77821]/20 focus-within:border-[#F77821] transition-all shadow-sm"
           >
             <textarea
               ref="textareaRef"
@@ -503,7 +503,7 @@ const resetChatSelection = () => {
               @keydown.enter.prevent="sendMessage"
               @input="autoResize"
               :placeholder="t('chat.writeMessage')"
-              class="flex-1 bg-transparent border-none focus:ring-0 resize-none max-h-32 min-h-[24px] py-1 px-2 text-gray-700 placeholder-gray-400 text-base"
+              class="flex-1 outline-none bg-transparent border-none focus:ring-0 resize-none max-h-32 min-h-[24px] py-1 px-2 text-gray-700 placeholder-gray-400 text-base"
               rows="1"
             ></textarea>
 

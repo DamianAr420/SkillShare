@@ -160,43 +160,39 @@ export const useChatStore = defineStore("chat", () => {
   };
 
   const handleIncomingMessage = async (message: Message) => {
-    if (!auth.user?._id) {
-      return;
-    }
-
-    if (message.senderId === auth.user._id) {
+    if (!auth.user?._id || message.senderId === auth.user._id) {
       return;
     }
 
     const conversationIndex = conversations.value.findIndex(
-      (c) => c._id === message.conversationId
+      (c) => c._id.toString() === message.conversationId.toString()
     );
 
-    let updatedConversations: Conversation[] = [...conversations.value];
+    let updatedConversations = [...conversations.value];
 
-    if (
-      conversationIndex !== -1 &&
-      updatedConversations[conversationIndex]?.messages.some(
-        (m) => m._id === message._id
-      )
-    ) {
-      return;
+    if (conversationIndex !== -1) {
+      const existing = updatedConversations[conversationIndex];
+      if (existing && existing.messages.some((m) => m._id === message._id)) {
+        return;
+      }
     }
 
     if (conversationIndex === -1) {
-      const fetched = await fetchConversationById(message.conversationId);
-      const newConv = normalizeConversation(fetched);
+      try {
+        const fetched = await fetchConversationById(message.conversationId);
+        const newConv = normalizeConversation(fetched);
 
-      if (!newConv.messages.some((m) => m._id === message._id)) {
-        newConv.messages.push(message);
+        newConv.messages = [message];
+        newConv.lastMessage = message;
+
+        if (message.conversationId !== activeConversationId.value) {
+          newConv.unreadCount = 1;
+        }
+
+        updatedConversations.unshift(newConv);
+      } catch (error) {
+        console.error("Failed to fetch new conversation", error);
       }
-      newConv.lastMessage = message;
-
-      if (message.conversationId !== activeConversationId.value) {
-        newConv.unreadCount = 1;
-      }
-
-      updatedConversations.unshift(newConv);
     } else {
       const conv = updatedConversations[conversationIndex];
 
@@ -204,15 +200,13 @@ export const useChatStore = defineStore("chat", () => {
 
       let updatedConv: Conversation = {
         ...conv,
-        messages: [...conv.messages],
+        _id: conv._id,
+        participants: conv.participants,
+        messages: [...conv.messages, message],
+        lastMessage: message,
+        lastActivity: new Date().toISOString(),
+        unreadCount: conv.unreadCount ?? 0,
       };
-
-      if (!updatedConv.messages.some((m) => m._id === message._id)) {
-        updatedConv.messages.push(message);
-      }
-
-      updatedConv.lastMessage = message;
-      updatedConv.lastActivity = new Date().toISOString();
 
       if (message.conversationId !== activeConversationId.value) {
         updatedConv = {
@@ -224,6 +218,7 @@ export const useChatStore = defineStore("chat", () => {
         scrollFunction.value?.();
       }
 
+      updatedConversations.splice(conversationIndex, 1);
       updatedConversations.unshift(updatedConv);
     }
 
