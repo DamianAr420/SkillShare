@@ -256,7 +256,13 @@
       "read": "Read",
       "sent": "Sent"
     },
-    "startTip": "Select a chat from the left to start messaging."
+    "startTip": "Select a chat from the left to start messaging.",
+    "chatError": "Failed to send message. Please try again.",
+    "chatErrorInit": "Unable to load chat! Please try again.",
+    "chatDel": {
+      "success": "Conversation has been deleted.",
+      "error": "An error occurred while deleting the conversation."
+    }
   },
 
   "time": {

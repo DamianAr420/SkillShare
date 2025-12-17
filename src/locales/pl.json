@@ -256,7 +256,13 @@
       "read": "Przeczytano",
       "sent": "Wysłano"
     },
-    "startTip": "Wybierz czat z lewej strony, aby rozpocząć rozmowę."
+    "startTip": "Wybierz czat z lewej strony, aby rozpocząć rozmowę.",
+    "chatError": "Nie udało się wysłać wiadomości. Spróbuj ponownie.",
+    "chatErrorInit": "Nie udało się wczytać czatu! Spróbuj ponownie.",
+    "chatDel": {
+      "success": "Konwersacja została usunięta.",
+      "error": "Wystąpił błąd podczas usuwania konwersacji."
+    }
   },
 
   "time": {

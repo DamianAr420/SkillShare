@@ -17,6 +17,7 @@ import {
   CheckCircleIcon,
 } from "@heroicons/vue/24/solid";
 import { getSocket } from "@/utils/socket";
+import { useToast } from "@/composables/useToast";
 
 const { isMobile } = useBreakpoints();
 const chatStore = useChatStore();
@@ -24,6 +25,7 @@ const auth = useAuthStore();
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
+const { showToast } = useToast();
 
 const newMessage = ref("");
 const messagesContainer = ref<HTMLElement | null>(null);
@@ -105,10 +107,18 @@ const handleBackToConversations = () => {
 const sendMessage = async () => {
   if (!selectedConversationId.value || !newMessage.value.trim()) return;
   const messageToSend = newMessage.value;
+  const currentConvId = selectedConversationId.value;
+
   newMessage.value = "";
   resetTextareaHeight();
-  await chatStore.sendMessage(selectedConversationId.value, messageToSend);
-  scrollToEnd(true);
+
+  try {
+    await chatStore.sendMessage(currentConvId, messageToSend);
+    scrollToEnd(true);
+  } catch (error) {
+    newMessage.value = messageToSend;
+    showToast(t("chat.chatError"), "error");
+  }
 };
 
 const resetTextareaHeight = () => {
@@ -130,13 +140,22 @@ const onDelete = (e: Event, _id: string) => {
 
 const confirmDelete = async () => {
   if (!conversationToDelete.value) return;
-  await chatStore.deleteConversation(conversationToDelete.value);
-  if (selectedConversationId.value === conversationToDelete.value) {
-    selectedConversationId.value = null;
-    router.replace({ name: "chat" });
+
+  try {
+    await chatStore.deleteConversation(conversationToDelete.value);
+
+    if (selectedConversationId.value === conversationToDelete.value) {
+      selectedConversationId.value = null;
+      router.replace({ name: "chat" });
+    }
+
+    showToast(t("chat.chatDel.success"), "success");
+  } catch (error) {
+    showToast(t("chat.chatDel.error"), "error");
+  } finally {
+    confirmDeleteVisible.value = false;
+    conversationToDelete.value = null;
   }
-  confirmDeleteVisible.value = false;
-  conversationToDelete.value = null;
 };
 
 watch(
@@ -166,29 +185,30 @@ watch(selectedConversationId, (newId) => {
 onMounted(async () => {
   const convId = route.query.id as string;
 
-  if (!getSocket() && auth.isAuthenticated && auth.token) {
-    await chatStore.initializeChat(auth.token);
-  }
-
-  if (chatStore.conversations.length === 0) {
-    await chatStore.fetchConversations();
-  }
-
-  if (convId) {
-    chatStore.setActiveConversation(convId);
-
-    if (!chatStore.conversations.find((c) => c._id === convId)) {
-      await chatStore.fetchConversation(convId);
+  try {
+    if (!getSocket() && auth.isAuthenticated && auth.token) {
+      await chatStore.initializeChat(auth.token);
     }
+
+    if (chatStore.conversations.length === 0) {
+      await chatStore.fetchConversations();
+    }
+
+    if (convId) {
+      chatStore.setActiveConversation(convId);
+      if (!chatStore.conversations.find((c) => c._id === convId)) {
+        await chatStore.fetchConversation(convId);
+      }
+    }
+  } catch (error) {
+    showToast(t("chat.chatErrorInit"), "error");
   }
 
   initialLoadDone.value = true;
-
   if (selectedConversation.value) {
     scrollToEnd(true);
   }
 });
-
 const lastReadMessageIndex = computed(() => {
   if (!selectedConversation.value || !auth.user || !otherParticipantId.value) {
     return -1;
