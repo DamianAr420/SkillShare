@@ -10,7 +10,8 @@
     },
     "announcements": {
       "title": "Najnowsze ogłoszenia",
-      "showAll": "Zobacz wszystkie ogłoszenia →"
+      "showAll": "Zobacz wszystkie ogłoszenia →",
+      "noLocalization": "Brak Lokalizacji"
     }
   },
 
@@ -22,7 +23,8 @@
       "logout": "Wyloguj"
     },
     "logout": "Pomyślnie wylogowano!",
-    "welcome": "Witaj"
+    "welcome": "Witaj",
+    "selectLanguage": "Wybierz język"
   },
 
   "categories": {
@@ -93,7 +95,8 @@
 
   "announcements": {
     "title": "Ogłoszenia",
-    "addButton": "➕ Dodaj ogłoszenie",
+    "subtitle": "Przeglądaj najnowsze oferty z Twojej okolicy",
+    "addButton": "Dodaj ogłoszenie",
     "searchPlaceholder": "Szukaj ogłoszeń...",
     "locationPlaceholder": "Lokalizacja",
     "all": "Wszystkie",
@@ -117,22 +120,31 @@
 
   "addAnnouncement": {
     "title": "Dodaj nowe ogłoszenie",
-    "titlePlaceholder": "Tytuł",
-    "descriptionPlaceholder": "Opis ogłoszenia",
-    "pricePlaceholder": "Cena (zł)",
-    "locationPlaceholder": "Lokalizacja",
-    "selectCategory": "Wybierz kategorię",
-    "imagePlaceholder": "URL obrazka (opcjonalnie)",
-    "addButton": "Dodaj ogłoszenie",
-    "adding": "Dodawanie...",
-    "success": "✅ Ogłoszenie zostało dodane!",
-    "error": "❌ Wystąpił błąd przy dodawaniu ogłoszenia.",
+    "subtitle": "Wypełnij poniższe dane, aby wystawić swoją ofertę lub zapytanie",
+    "offer": "Oferuję",
+    "search": "Szukam",
+    "titleLabel": "Tytuł ogłoszenia",
+    "titlePlaceholder": "Wpisz krótki i chwytliwy tytuł",
+    "descLabel": "Opis ogłoszenia",
+    "descriptionPlaceholder": "Opisz dokładnie co oferujesz lub czego potrzebujesz...",
+    "priceLabel": "Cena",
+    "pricePlaceholder": "Kwota",
+    "locationLabel": "Lokalizacja",
+    "locationPlaceholder": "Np. Warszawa, Mazowieckie",
+    "categoryLabel": "Kategoria",
+    "selectCategory": "Wybierz odpowiednią kategorię",
     "imageLabel": "Zdjęcie ogłoszenia",
-    "imageHint": "Kliknij, aby dodać zdjęcie",
-    "showPhone": "Czy chcesz, aby Twój numer telefonu był widoczny w ogłoszeniu?",
-    "showEmail": "Czy chcesz, aby Twój e-mail był widoczny w ogłoszeniu?",
+    "imageHint": "Dodaj zdjęcie, aby przyciągnąć uwagę",
+    "imageChange": "Zmień zdjęcie",
+    "showPhone": "Pokaż numer telefonu",
+    "showEmail": "Pokaż adres e-mail",
     "yes": "Tak",
-    "no": "Nie"
+    "no": "Nie",
+    "addButton": "Opublikuj ogłoszenie",
+    "adding": "Publikowanie...",
+    "success": "✅ Ogłoszenie zostało dodane pomyślnie!",
+    "error": "❌ Wystąpił błąd. Spróbuj ponownie później.",
+    "helpNote": "Upewnij się, że dane kontaktowe są poprawne przed publikacją."
   },
 
   "announcementDetails": {
@@ -178,7 +190,9 @@
     },
     "goToProfile": "Przejdź do profilu ogłoszeniodawcy",
     "views": "Wyświetlenia:",
-    "chatError": "Nie udało się połączyć z czatem!"
+    "chatError": "Nie udało się połączyć z czatem!",
+    "clickToCopy": "Kliknij aby skopiować",
+    "viewProfile": "Zobacz Profil"
   },
 
   "Profile": {
@@ -188,7 +202,11 @@
     "noAnnouncements": "Brak ogłoszeń.",
     "loadingProfile": "Ładowanie profilu...",
     "loadingAnnouncements": "Ładuję Twoje ogłoszenia...",
+    "loading": "Ładowanie ogłoszeń...",
     "noFollowed": "Brak zaobserwowanych ogłoszeń",
+    "settings": "Ustawienia",
+    "noDescription": "Brak opisu",
+    "startChat": "Napisz wiadomość",
     "edit": {
       "title": "Ustawienia profilu",
       "avatar": "Avatar",
@@ -208,35 +226,45 @@
 
   "editAnnouncement": {
     "title": "Edytuj ogłoszenie",
+    "subtitle": "Wprowadź zmiany w poniższych polach, aby zaktualizować swoją ofertę",
     "updateButton": "Zapisz zmiany",
-    "success": "Ogłoszenie zostało zaktualizowane!",
-    "error": "Wystąpił błąd podczas aktualizacji ogłoszenia.",
+    "success": "✅ Ogłoszenie zostało zaktualizowane!",
+    "error": "❌ Wystąpił błąd podczas aktualizacji ogłoszenia.",
     "image": "Zdjęcie ogłoszenia",
-    "imageHint": "Kliknij lub dotknij, aby dodać zdjęcie"
+    "imageHint": "Kliknij, aby zmienić zdjęcie",
+    "loading": "Pobieranie danych ogłoszenia..."
   },
 
   "chat": {
     "conversations": "Konwersacje",
     "noConversations": "Brak konwersacji",
-    "selectToStart": "Wybierz czat aby wysłać wiadomość",
+    "selectToStart": "Wybierz czat, aby wysłać wiadomość",
     "loadingConversations": "Ładowanie konwersacji...",
-    "unknownUser": "Nieznany",
+    "unknownUser": "Nieznany użytkownik",
     "noMessages": "Brak wiadomości",
     "you": "Ty",
-    "archive": "Archiwizuj",
-    "markAsRead": "Oznacz jako przeczytane",
-    "delete": "Usuń chat",
-    "online": "online",
+    "online": "Aktywny",
+    "startedConversation": "Rozpoczęto konwersację",
     "writeMessage": "Napisz wiadomość...",
     "send": "Wyślij",
+    "delete": "Usuń czat",
     "deleteConversationTitle": "Usuń konwersację",
-    "deleteConversationMessage": "Czy na pewno chcesz usunąć ten chat? Tej operacji nie można cofnąć.",
+    "deleteConversationMessage": "Czy na pewno chcesz usunąć ten czat? Tej operacji nie można cofnąć.",
     "confirm": "Usuń",
     "cancel": "Anuluj",
     "mess": {
-      "read": "Wyświetlono",
+      "read": "Przeczytano",
       "sent": "Wysłano"
     },
-    "startTip": "Wybierz czat z lewej strony aby wysłać wiadomość. Jeśli nie masz żadnego czatu możesz go utworzyć poprzez wciśnięcie przycisku na dole ogłoszenia."
+    "startTip": "Wybierz czat z lewej strony, aby rozpocząć rozmowę."
+  },
+
+  "time": {
+    "unknown": "nieznany czas",
+    "now": "teraz",
+    "minutes": "{n} min temu",
+    "hours": "{n} godz. temu",
+    "yesterday": "wczoraj",
+    "days": "{n} dni temu"
   }
 }

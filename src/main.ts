@@ -5,6 +5,7 @@ import router from "./router";
 import i18n from "./i18n";
 import { MotionPlugin } from "@vueuse/motion";
 import { createPinia } from "pinia";
+import "/node_modules/flag-icons/css/flag-icons.min.css";
 
 import { useAuthStore } from "@/stores/authStore";
 import { useChatStore } from "@/stores/chatStore";
@@ -12,7 +13,12 @@ import { useChatStore } from "@/stores/chatStore";
 const app = createApp(App);
 const pinia = createPinia();
 
-app.use(router).use(i18n).use(MotionPlugin).use(pinia).mount("#app");
+app.use(pinia);
+app.use(router);
+app.use(i18n);
+app.use(MotionPlugin);
+
+app.mount("#app");
 
 (async () => {
   const authStore = useAuthStore();
@@ -25,6 +31,6 @@ app.use(router).use(i18n).use(MotionPlugin).use(pinia).mount("#app");
       await chatStore.initializeChat(authStore.token);
     }
   } catch (err) {
-    console.error("Auth fetch failed:", err);
+    console.error("Inicjalizacja aplikacji nie powiodła się:", err);
   }
 })();

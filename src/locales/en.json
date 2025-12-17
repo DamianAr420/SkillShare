@@ -1,24 +1,39 @@
 {
-  "home": {
+  "Home": {
     "header": {
-      "title": "Find or offer your skills in your area",
-      "desc": "From tutoring to graphic design, SkillShare connects people who want to exchange services."
+      "title": "Find or offer your skills in your neighborhood",
+      "desc": "From tutoring to graphic design, SkillShare connects people who want to exchange services.",
+      "welcome": "Hi, "
     },
     "categories": {
       "title": "Categories"
     },
     "announcements": {
-      "title": "Newest announcements",
-      "showAll": "See all announcements →"
+      "title": "Latest Announcements",
+      "showAll": "See all announcements →",
+      "noLocalization": "No Location"
     }
   },
 
   "NavBar": {
     "buttons": {
       "home": "Home",
-      "categories": "Categories",
-      "logIn": "Log in"
-    }
+      "categories": "Search",
+      "logIn": "Log In",
+      "logout": "Log Out"
+    },
+    "logout": "Successfully logged out!",
+    "welcome": "Welcome",
+    "selectLanguage": "Select Language"
+  },
+
+  "categories": {
+    "IT": "IT & Software",
+    "Education": "Education",
+    "Home": "Home Services",
+    "Technical": "Technical",
+    "Graphics": "Graphics & Design",
+    "Other": "Other"
   },
 
   "Footer": {
@@ -26,95 +41,230 @@
     "navigation": {
       "title": "Navigation",
       "home": "Home",
-      "categories": "Categories"
+      "categories": "Search"
     },
     "contact": {
       "title": "Contact",
-      "email": "Email: support@skillshare.com",
-      "phone": "Tel: +48 123 456 789"
+      "copyEmail": "Email copied to clipboard!",
+      "phone": "Phone: +48 519 674 593"
     },
     "social": {
       "title": "Social Media"
     },
-    "copyright": "© {year} SkillShare. All rights reserved."
+    "copyright": "© {year} SkillShare. All rights reserved.",
+    "about": {
+      "title": "About Us",
+      "description": "SkillShare is a platform built for people who want to exchange skills, services, and passions. Our goal is to connect people and facilitate collaboration within local communities."
+    }
   },
 
   "LoginDialog": {
     "login": {
-      "title": "Log in",
+      "title": "Log In",
       "iName": "Username",
       "iPassword": "Password",
-      "button": "Log in",
+      "button": "Log In",
       "signIn": {
         "text": "Don't have an account yet? ",
-        "signIn": "Sign up!"
+        "signIn": "Sign Up!"
       }
     },
     "signIn": {
-      "title": "Sign up",
+      "title": "Sign Up",
       "iName": "Username",
       "iPassword": "Password",
-      "iRepeatPassword": "Repeat password",
-      "button": "Create account",
+      "iRepeatPassword": "Repeat Password",
+      "button": "Create Account",
       "logIn": {
         "text": "Already have an account?",
-        "logIn": "Log in!"
+        "logIn": "Log In!"
       }
     },
     "errors": {
       "nameTaken": "This username is already taken",
-      "nameCheckFailed": "Could not verify username availability",
+      "nameCheckFailed": "Failed to check username availability",
       "passwordsMismatch": "Passwords do not match",
-      "loginFailed": "Login failed. Please check your credentials.",
+      "loginFailed": "Login failed. Check your credentials and try again.",
       "registerFailed": "Registration failed. Please try again later."
     },
     "success": {
       "login": "Logged in successfully!",
-      "register": "Registration successful!"
+      "register": "Registration completed successfully!"
     }
   },
 
   "announcements": {
     "title": "Announcements",
-    "addButton": "➕ Add Announcement",
+    "subtitle": "Browse the latest offers in your area",
+    "addButton": "Post an Ad",
     "searchPlaceholder": "Search announcements...",
     "locationPlaceholder": "Location",
     "all": "All",
-    "minPrice": "Min price",
-    "maxPrice": "Max price",
+    "minPrice": "Min Price",
+    "maxPrice": "Max Price",
     "sort": {
       "newest": "Newest",
       "oldest": "Oldest",
-      "priceAsc": "Price ascending",
-      "priceDesc": "Price descending"
+      "priceAsc": "Price: Low to High",
+      "priceDesc": "Price: High to Low"
     },
     "loading": "Loading announcements...",
     "noAnnouncements": "No announcements to display.",
-    "noImage": "No+image"
+    "noImage": "No image",
+    "type": {
+      "all": "All",
+      "offer": "Offering",
+      "search": "Looking for"
+    }
   },
 
   "addAnnouncement": {
     "title": "Add New Announcement",
-    "titlePlaceholder": "Title",
-    "descriptionPlaceholder": "Announcement description",
-    "pricePlaceholder": "Price (PLN)",
-    "locationPlaceholder": "Location",
-    "selectCategory": "Select category",
-    "imagePlaceholder": "Image URL (optional)",
-    "addButton": "Add Announcement",
-    "adding": "Adding...",
+    "subtitle": "Fill in the details below to post your offer or request",
+    "offer": "Offering",
+    "search": "Looking for",
+    "titleLabel": "Announcement Title",
+    "titlePlaceholder": "Enter a short and catchy title",
+    "descLabel": "Description",
+    "descriptionPlaceholder": "Describe exactly what you offer or what you need...",
+    "priceLabel": "Price",
+    "pricePlaceholder": "Amount",
+    "locationLabel": "Location",
+    "locationPlaceholder": "e.g. New York, NY",
+    "categoryLabel": "Category",
+    "selectCategory": "Select the appropriate category",
+    "imageLabel": "Announcement Photo",
+    "imageHint": "Add a photo to attract more attention",
+    "imageChange": "Change photo",
+    "showPhone": "Show phone number",
+    "showEmail": "Show email address",
+    "yes": "Yes",
+    "no": "No",
+    "addButton": "Publish Announcement",
+    "adding": "Publishing...",
     "success": "✅ Announcement added successfully!",
-    "error": "❌ Error adding announcement.",
-    "offer": "Oferuję",
-    "search": "Szukam"
+    "error": "❌ An error occurred. Please try again later.",
+    "helpNote": "Make sure your contact details are correct before publishing."
+  },
+
+  "announcementDetails": {
+    "loading": "Loading announcement...",
+    "notFound": "Announcement not found 😢",
+    "noImage": "No image",
+    "sellerData": "Contact Information",
+    "seller": {
+      "name": "Name:",
+      "phone": "Phone:",
+      "email": "Email:",
+      "no": "None"
+    },
+    "back": "Go Back",
+    "unknownCategory": "Unknown Category",
+    "edit": "Edit",
+    "delete": "Delete",
+    "price": "Price",
+    "location": "Location",
+    "category": "Category",
+    "type": "Type",
+    "confirmDelete": {
+      "title": "Confirm Deletion",
+      "message": "Are you sure you want to delete this announcement? This action cannot be undone.",
+      "yes": "Delete",
+      "no": "Cancel"
+    },
+    "annDelete": {
+      "success": "Announcement successfully deleted!",
+      "error": "An error occurred while deleting the announcement."
+    },
+    "watch": "Watch",
+    "watching": "Watching",
+    "watchError": "Could not add to watched list!",
+    "watchSuccess": "Announcement added to watched list!",
+    "unwatchSuccess": "Announcement removed from watched list!",
+    "loginToWatch": "Log in to watch this announcement!",
+    "loginToChat": "Log in to send a message!",
+    "copied": "Email: {email} copied to clipboard!",
+    "copyError": "Copy failed",
+    "chat": {
+      "startChat": "Message the advertiser"
+    },
+    "goToProfile": "View advertiser's profile",
+    "views": "Views:",
+    "chatError": "Could not connect to chat!",
+    "clickToCopy": "Click to copy",
+    "viewProfile": "View Profile"
   },
 
   "Profile": {
     "active": "Active",
     "announcements": "My Announcements",
-    "following": "Following",
+    "following": "Watched",
     "noAnnouncements": "No announcements.",
     "loadingProfile": "Loading profile...",
-    "loadingAnnouncements": "Loading your announcements..."
+    "loadingAnnouncements": "Loading your announcements...",
+    "loading": "Loading...",
+    "noFollowed": "No watched announcements",
+    "settings": "Settings",
+    "noDescription": "No description provided",
+    "startChat": "Send Message",
+    "edit": {
+      "title": "Profile Settings",
+      "avatar": "Avatar",
+      "avatarHint": "Click avatar to choose a picture",
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "description": "Description",
+      "password": "New Password",
+      "passwordPlaceholder": "Leave blank to keep current",
+      "saveButton": "Save Changes",
+      "saving": "Saving...",
+      "success": "✅ Settings saved successfully!",
+      "error": "❌ An error occurred while saving settings!"
+    }
+  },
+
+  "editAnnouncement": {
+    "title": "Edit Announcement",
+    "subtitle": "Update the fields below to modify your announcement",
+    "updateButton": "Save Changes",
+    "success": "✅ Announcement updated successfully!",
+    "error": "❌ An error occurred while updating the announcement.",
+    "image": "Announcement Photo",
+    "imageHint": "Click to change photo",
+    "loading": "Fetching announcement data..."
+  },
+
+  "chat": {
+    "conversations": "Conversations",
+    "noConversations": "No conversations",
+    "selectToStart": "Select a chat to start messaging",
+    "loadingConversations": "Loading conversations...",
+    "unknownUser": "Unknown User",
+    "noMessages": "No messages",
+    "you": "You",
+    "online": "online",
+    "startedConversation": "Started a conversation",
+    "writeMessage": "Type a message...",
+    "send": "Send",
+    "delete": "Delete chat",
+    "deleteConversationTitle": "Delete Conversation",
+    "deleteConversationMessage": "Are you sure you want to delete this chat? This action cannot be undone.",
+    "confirm": "Delete",
+    "cancel": "Cancel",
+    "mess": {
+      "read": "Read",
+      "sent": "Sent"
+    },
+    "startTip": "Select a chat from the left to start messaging."
+  },
+
+  "time": {
+    "unknown": "unknown time",
+    "now": "just now",
+    "minutes": "{n} min ago",
+    "hours": "{n}h ago",
+    "yesterday": "yesterday",
+    "days": "{n} days ago"
   }
 }

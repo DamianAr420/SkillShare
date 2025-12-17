@@ -5,6 +5,7 @@ import { useCategoryStore } from "@/stores/categoryStore";
 import { useAnnouncementStore } from "@/stores/announcementStore";
 import { useToast } from "@/composables/useToast";
 import { useI18n } from "vue-i18n";
+import Loader from "@/components/ui/Loader.vue";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -23,6 +24,7 @@ const imageFile = ref<File | null>(null);
 const previewUrl = ref<string>("");
 const showPhone = ref(true);
 const showEmail = ref(true);
+const loading = ref(true);
 
 const onFileChange = (e: Event) => {
   const file = (e.target as HTMLInputElement).files?.[0];
@@ -34,236 +36,243 @@ const onFileChange = (e: Event) => {
 
 onMounted(async () => {
   const id = route.params.id as string;
+  loading.value = true;
 
-  await categoryStore.fetchCategories();
-  await announcementStore.fetchAnnouncementById(id);
+  try {
+    await categoryStore.fetchCategories();
+    await announcementStore.fetchAnnouncementById(id);
+    const ann = announcementStore.selectedAnnouncement;
 
-  const ann = announcementStore.selectedAnnouncement;
+    if (!ann) {
+      showToast(t("announcementDetails.notFound"), "error");
+      router.push("/categories");
+      return;
+    }
 
-  if (!ann) {
-    showToast(t("announcementDetails.notFound"), "error");
-    return;
+    title.value = ann.title;
+    description.value = ann.desc;
+    price.value = ann.price ?? null;
+    location.value = ann.location ?? "";
+    showEmail.value = ann.showEmail;
+    showPhone.value = ann.showPhone;
+
+    const catName =
+      typeof ann.category === "string" ? ann.category : ann.category.name;
+    const found = categoryStore.categories.find((c) => c.name === catName);
+    category.value = found?._id ?? "";
+  } finally {
+    loading.value = false;
   }
-
-  title.value = ann.title;
-  description.value = ann.desc;
-  price.value = ann.price ?? null;
-  location.value = ann.location ?? "";
-  showEmail.value = ann.showEmail;
-  showPhone.value = ann.showPhone;
-
-  // 🔥 Category może być stringiem lub { name }
-  let catName = "";
-  if (typeof ann.category === "string") {
-    catName = ann.category;
-  } else {
-    catName = ann.category.name;
-  }
-
-  // 🔥 Znajdujemy kategorię w bazie po nazwie i ustawiamy ID
-  const found = categoryStore.categories.find((c) => c.name === catName);
-  category.value = found?._id ?? "";
 });
 
 const handleUpdate = async () => {
   try {
     const id = route.params.id as string;
-
     const formData = new FormData();
     formData.append("title", title.value);
     formData.append("desc", description.value);
     formData.append("price", price.value?.toString() || "");
     formData.append("location", location.value);
     formData.append("category", category.value);
-    formData.append("showPhone", showPhone.value ? "true" : "false");
-    formData.append("showEmail", showEmail.value ? "true" : "false");
+    formData.append("showPhone", String(showPhone.value));
+    formData.append("showEmail", String(showEmail.value));
 
     if (imageFile.value) {
       formData.append("image", imageFile.value);
     }
 
     await announcementStore.updateAnnouncement(id, formData);
-
     showToast(t("editAnnouncement.success"), "success");
     router.push(`/announcement/${id}`);
   } catch (err) {
-    console.error(err);
     showToast(t("editAnnouncement.error"), "error");
   }
 };
 </script>
 
 <template>
-  <div class="max-w-3xl mx-auto px-4 py-10">
-    <h1 class="text-4xl font-extrabold mb-10 text-center text-gray-800">
-      {{ t("editAnnouncement.title") }}
-    </h1>
-
-    <form
-      @submit.prevent="handleUpdate"
-      class="flex flex-col gap-6 bg-white shadow-lg rounded-3xl p-8"
-    >
-      <input
-        v-model="title"
-        type="text"
-        required
-        :placeholder="t('addAnnouncement.titlePlaceholder')"
-        class="border border-gray-300 p-4 rounded-xl"
-      />
-
-      <textarea
-        v-model="description"
-        rows="5"
-        required
-        :placeholder="t('addAnnouncement.descriptionPlaceholder')"
-        class="border border-gray-300 p-4 rounded-xl"
-      ></textarea>
-
-      <div class="flex flex-col sm:flex-row gap-4">
-        <input
-          v-if="announcementStore.selectedAnnouncement?.type !== 'search'"
-          v-model.number="price"
-          type="number"
-          :placeholder="t('addAnnouncement.pricePlaceholder')"
-          class="border border-gray-300 p-4 rounded-xl flex-1"
-        />
-
-        <input
-          v-model="location"
-          type="text"
-          :placeholder="t('addAnnouncement.locationPlaceholder')"
-          class="border border-gray-300 p-4 rounded-xl flex-1"
-        />
-      </div>
-
-      <select
-        v-model="category"
-        required
-        class="border border-gray-300 p-4 rounded-xl"
-      >
-        <option value="">{{ t("addAnnouncement.selectCategory") }}</option>
-
-        <option
-          v-for="cat in categoryStore.categories"
-          :key="cat._id"
-          :value="cat._id"
-        >
-          {{ cat.name }}
-        </option>
-      </select>
-
-      <div class="flex flex-col items-center">
-        <label class="text-xl text-gray-500 mb-2 font-medium">
-          {{ t("editAnnouncement.image") }}
-        </label>
-
-        <div class="relative w-full h-full mb-3">
-          <img
-            v-if="previewUrl"
-            :src="previewUrl"
-            class="w-32 h-32 object-cover rounded-2xl border-2 border-gray-200 shadow-sm"
-          />
-
-          <img
-            v-else-if="announcementStore.selectedAnnouncement?.imageUrl"
-            :src="announcementStore.selectedAnnouncement.imageUrl"
-            class="w-full h-full object-cover rounded-2xl border-2 border-gray-200 shadow-sm"
-          />
-
-          <div
-            v-else
-            class="w-32 h-32 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-400 text-3xl border-2 border-gray-200"
-          >
-            +
-          </div>
-
-          <input
-            type="file"
-            accept="image/*"
-            @change="onFileChange"
-            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer rounded-2xl"
-          />
-        </div>
-
-        <p class="text-lg text-gray-400">
-          {{ t("editAnnouncement.imageHint") }}
+  <div class="min-h-screen bg-[#fafafa] py-12 px-4 sm:px-6">
+    <div class="max-w-3xl mx-auto">
+      <div class="text-center mb-10 space-y-2">
+        <h1 class="text-4xl font-black text-gray-900 tracking-tight">
+          {{ t("editAnnouncement.title") }}
+        </h1>
+        <p class="text-gray-500 font-medium">
+          {{
+            t("editAnnouncement.subtitle") ||
+            "Zaktualizuj szczegóły swojego ogłoszenia"
+          }}
         </p>
       </div>
 
-      <div class="flex flex-col sm:flex-row gap-6">
-        <!-- Telefon -->
-        <div
-          class="flex flex-col flex-1 justify-center items-center text-center"
-        >
-          <label class="font-medium text-gray-700 mb-2">
-            {{ t("addAnnouncement.showPhone") }}
-          </label>
-          <button
-            type="button"
-            @click="showPhone = !showPhone"
-            :class="showPhone ? 'bg-[#F77821]' : 'bg-gray-300'"
-            class="relative w-20 h-10 rounded-full cursor-pointer flex items-center px-1 justify-between transition-colors duration-200"
-          >
-            <span
-              class="font-medium ml-1"
-              :class="showPhone ? 'text-white' : 'text-gray-400'"
-            >
-              {{ t("addAnnouncement.yes") }}
-            </span>
-            <span
-              class="font-medium mr-1"
-              :class="!showPhone ? 'text-white' : 'text-gray-400'"
-            >
-              {{ t("addAnnouncement.no") }}
-            </span>
-
-            <div
-              class="absolute w-10 h-8 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out"
-              :class="showPhone ? 'translate-x-8' : 'translate-x-0'"
-            ></div>
-          </button>
-        </div>
-
-        <!-- Email -->
-        <div
-          class="flex flex-col flex-1 justify-center items-center text-center"
-        >
-          <label class="font-medium text-gray-700 mb-2">
-            {{ t("addAnnouncement.showEmail") }}
-          </label>
-          <button
-            type="button"
-            @click="showEmail = !showEmail"
-            :class="showEmail ? 'bg-[#F77821]' : 'bg-gray-300'"
-            class="relative w-20 h-10 rounded-full cursor-pointer flex items-center px-1 justify-between transition-colors duration-200"
-          >
-            <span
-              class="font-medium ml-1"
-              :class="showEmail ? 'text-white' : 'text-gray-400'"
-            >
-              {{ t("addAnnouncement.yes") }}
-            </span>
-            <span
-              class="font-medium mr-1"
-              :class="!showEmail ? 'text-white' : 'text-gray-400'"
-            >
-              {{ t("addAnnouncement.no") }}
-            </span>
-
-            <div
-              class="absolute w-10 h-8 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out"
-              :class="showEmail ? 'translate-x-8' : 'translate-x-0'"
-            ></div>
-          </button>
-        </div>
+      <div v-if="loading" class="flex justify-center py-20">
+        <Loader />
       </div>
 
-      <button
-        type="submit"
-        class="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 rounded-2xl shadow-lg cursor-pointer"
+      <form
+        v-else
+        @submit.prevent="handleUpdate"
+        class="bg-white shadow-xl shadow-gray-200/50 rounded-[2.5rem] border border-gray-100 p-6 sm:p-10 flex flex-col gap-6"
       >
-        {{ t("editAnnouncement.updateButton") }}
-      </button>
-    </form>
+        <div class="space-y-2">
+          <label class="text-sm font-bold text-gray-700 ml-1">{{
+            t("addAnnouncement.titleLabel")
+          }}</label>
+          <input
+            v-model="title"
+            type="text"
+            required
+            class="w-full bg-gray-50 border border-gray-200 p-4 rounded-2xl focus:bg-white focus:ring-4 focus:ring-orange-100 focus:border-[#F77821] transition-all outline-none text-gray-700 font-medium"
+          />
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-sm font-bold text-gray-700 ml-1">{{
+            t("addAnnouncement.descLabel")
+          }}</label>
+          <textarea
+            v-model="description"
+            rows="5"
+            required
+            class="w-full bg-gray-50 border border-gray-200 p-4 rounded-2xl focus:bg-white focus:ring-4 focus:ring-orange-100 focus:border-[#F77821] transition-all outline-none text-gray-700 font-medium resize-none"
+          ></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div
+            v-if="announcementStore.selectedAnnouncement?.type !== 'search'"
+            class="space-y-2"
+          >
+            <label class="text-sm font-bold text-gray-700 ml-1">{{
+              t("addAnnouncement.priceLabel")
+            }}</label>
+            <div class="relative">
+              <input
+                v-model.number="price"
+                type="number"
+                class="w-full bg-gray-50 border border-gray-200 p-4 rounded-2xl focus:bg-white focus:ring-4 focus:ring-orange-100 focus:border-[#F77821] transition-all outline-none text-gray-700 font-bold"
+              />
+              <span
+                class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold"
+                >PLN</span
+              >
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-sm font-bold text-gray-700 ml-1">{{
+              t("addAnnouncement.locationLabel")
+            }}</label>
+            <input
+              v-model="location"
+              type="text"
+              class="w-full bg-gray-50 border border-gray-200 p-4 rounded-2xl focus:bg-white focus:ring-4 focus:ring-orange-100 focus:border-[#F77821] transition-all outline-none text-gray-700 font-medium"
+            />
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-sm font-bold text-gray-700 ml-1">{{
+            t("addAnnouncement.categoryLabel")
+          }}</label>
+          <select
+            v-model="category"
+            required
+            class="w-full bg-gray-50 border border-gray-200 p-4 rounded-2xl focus:bg-white focus:ring-4 focus:ring-orange-100 focus:border-[#F77821] transition-all outline-none text-gray-700 font-medium appearance-none cursor-pointer"
+          >
+            <option value="" disabled>
+              {{ t("addAnnouncement.selectCategory") }}
+            </option>
+            <option
+              v-for="cat in categoryStore.categories"
+              :key="cat._id"
+              :value="cat._id"
+            >
+              {{ t("categories." + cat.name) }}
+            </option>
+          </select>
+        </div>
+
+        <div class="space-y-4 py-4">
+          <label
+            class="block text-center text-sm font-bold text-gray-700 uppercase tracking-widest"
+          >
+            {{ t("addAnnouncement.imageLabel") }}
+          </label>
+          <div
+            class="relative group mx-auto w-full max-w-sm aspect-video bg-gray-50 rounded-[2rem] border-2 border-dashed border-gray-200 flex flex-col items-center justify-center overflow-hidden hover:border-orange-400 hover:bg-orange-50/30 transition-all cursor-pointer"
+          >
+            <img
+              v-if="previewUrl"
+              :src="previewUrl"
+              class="w-full h-full object-cover"
+            />
+            <img
+              v-else-if="announcementStore.selectedAnnouncement?.imageUrl"
+              :src="announcementStore.selectedAnnouncement.imageUrl"
+              class="w-full h-full object-cover"
+            />
+            <div v-else class="text-gray-400 font-bold">+</div>
+
+            <div
+              class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-bold text-sm"
+            >
+              {{ t("addAnnouncement.imageHint") }}
+            </div>
+            <input
+              type="file"
+              accept="image/*"
+              @change="onFileChange"
+              class="absolute inset-0 opacity-0 cursor-pointer"
+            />
+          </div>
+        </div>
+
+        <div
+          class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-3xl border border-gray-100"
+        >
+          <div class="flex items-center justify-between px-4 py-2">
+            <span class="text-sm font-bold text-gray-600">{{
+              t("addAnnouncement.showPhone")
+            }}</span>
+            <button
+              type="button"
+              @click="showPhone = !showPhone"
+              class="relative w-14 h-8 rounded-full transition-colors duration-300"
+              :class="showPhone ? 'bg-[#F77821]' : 'bg-gray-300'"
+            >
+              <div
+                class="absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-sm transition-transform duration-300"
+                :class="showPhone ? 'translate-x-6' : 'translate-x-0'"
+              ></div>
+            </button>
+          </div>
+
+          <div class="flex items-center justify-between px-4 py-2">
+            <span class="text-sm font-bold text-gray-600">{{
+              t("addAnnouncement.showEmail")
+            }}</span>
+            <button
+              type="button"
+              @click="showEmail = !showEmail"
+              class="relative w-14 h-8 rounded-full transition-colors duration-300"
+              :class="showEmail ? 'bg-[#F77821]' : 'bg-gray-300'"
+            >
+              <div
+                class="absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-sm transition-transform duration-300"
+                :class="showEmail ? 'translate-x-6' : 'translate-x-0'"
+              ></div>
+            </button>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          class="mt-4 w-full bg-[#F77821] text-white font-black py-5 rounded-[2rem] shadow-xl shadow-orange-100 hover:bg-[#ff8a3d] hover:-translate-y-1 active:scale-95 transition-all cursor-pointer text-lg"
+        >
+          {{ t("editAnnouncement.updateButton") || "Zapisz zmiany" }}
+        </button>
+      </form>
+    </div>
   </div>
 </template>

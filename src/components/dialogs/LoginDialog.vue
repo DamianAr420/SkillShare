@@ -42,7 +42,6 @@ function toggleForm() {
   nameAvailable.value = null;
 }
 
-// 🕓 debounce dla sprawdzania dostępności nazwy
 let debounceTimer: number | undefined;
 watch(name, (val) => {
   if (!val || login.value) return;
@@ -60,7 +59,6 @@ watch(name, (val) => {
   }, 500);
 });
 
-// 🔍 sprawdzanie zgodności haseł w czasie rzeczywistym
 watch([password, repeatPassword], ([pass, repeat]) => {
   if (!login.value) {
     localErrors.value.repeatPassword =
@@ -130,27 +128,27 @@ async function handleRegister() {
 <template>
   <div
     @click="onBackdropClick"
-    class="backdrop fixed inset-0 z-50 bg-black/30 flex justify-center items-center"
+    class="backdrop fixed inset-0 z-[100] flex justify-center items-center p-4 bg-black/60 backdrop-blur-sm"
   >
-    <Transition mode="out-in">
-      <!-- LOGIN -->
+    <Transition name="form-switch" mode="out-in">
       <div
         v-if="login"
         key="login"
-        v-motion
-        :initial="{ opacity: 0, x: -50, scale: 0.95 }"
-        :enter="{ opacity: 1, x: 0, scale: 1 }"
-        :leave="{ opacity: 0, x: 50, scale: 0.95 }"
-        :transition="{ duration: 0.4, ease: 'easeInOut' }"
-        class="w-[380px] p-8 border border-[#F77821] rounded-2xl backdrop-blur-[9px] shadow-[0_8px_32px_rgba(0,0,0,0.25)] flex flex-col justify-center items-center gap-6 text-white bg-black/40"
+        class="relative w-full max-w-[400px] bg-[#0f0f0f]/70 backdrop-blur-xl border border-[#f77821]/30 rounded-[24px] p-10 shadow-2xl flex flex-col items-center gap-8 text-white overflow-hidden"
       >
-        <h1 class="text-3xl font-semibold tracking-wide">
-          {{ t("LoginDialog.login.title") }}
-        </h1>
+        <div
+          class="absolute -top-12 -left-12 w-36 h-36 bg-[#f77821]/10 blur-[50px] rounded-full pointer-events-none"
+        ></div>
+
+        <div class="text-center z-10">
+          <h1 class="text-3xl font-bold tracking-tight mb-1">
+            {{ t("LoginDialog.login.title") }}
+          </h1>
+        </div>
 
         <form
           @submit.prevent="handleLogin"
-          class="flex flex-col justify-center items-center gap-5 w-full"
+          class="w-full flex flex-col gap-6 z-10"
         >
           <div class="relative w-full">
             <input
@@ -158,14 +156,18 @@ async function handleRegister() {
               id="login-name"
               type="text"
               placeholder=" "
-              class="peer w-full bg-transparent border border-white rounded-lg px-3 pt-4 pb-2 text-white placeholder-transparent focus:outline-none focus:border-[#F77821] transition-all duration-300"
+              required
+              class="auth-input w-full bg-transparent border-b border-white/20 py-2 pt-6 outline-none focus:border-[#f77821] transition-colors"
             />
             <label
               for="login-name"
-              class="absolute left-3 top-1 text-[#F77821] text-sm transition-all duration-300 peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-placeholder-shown:text-white peer-focus:top-1 peer-focus:text-xs peer-focus:text-[#F77821]"
+              class="auth-label absolute left-0 top-6 text-gray-400 pointer-events-none transition-all duration-300"
             >
               {{ t("LoginDialog.login.iName") }}
             </label>
+            <div
+              class="auth-bar absolute bottom-0 left-0 h-[2px] w-0 bg-[#f77821] transition-all duration-300"
+            ></div>
           </div>
 
           <div class="relative w-full">
@@ -174,58 +176,74 @@ async function handleRegister() {
               id="login-password"
               type="password"
               placeholder=" "
-              class="peer w-full bg-transparent border border-white rounded-lg px-3 pt-4 pb-2 text-white placeholder-transparent focus:outline-none focus:border-[#F77821] transition-all duration-300"
+              required
+              class="auth-input w-full bg-transparent border-b border-white/20 py-2 pt-6 outline-none focus:border-[#f77821] transition-colors"
             />
             <label
               for="login-password"
-              class="absolute left-3 top-1 text-[#F77821] text-sm transition-all duration-300 peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-placeholder-shown:text-white peer-focus:top-1 peer-focus:text-xs peer-focus:text-[#F77821]"
+              class="auth-label absolute left-0 top-6 text-gray-400 pointer-events-none transition-all duration-300"
             >
               {{ t("LoginDialog.login.iPassword") }}
             </label>
+            <div
+              class="auth-bar absolute bottom-0 left-0 h-[2px] w-0 bg-[#f77821] transition-all duration-300"
+            ></div>
           </div>
 
-          <p v-if="localErrors.general" class="text-red-400 text-sm mt-[-4px]">
+          <p
+            v-if="localErrors.general"
+            class="text-red-400 text-xs animate-pulse text-center"
+          >
             {{ localErrors.general }}
           </p>
 
           <button
             type="submit"
             :disabled="auth.loading"
-            class="bg-[#F77821] text-white font-medium rounded-full py-2 px-6 mt-2 hover:bg-[#ff8b3c] active:scale-95 transition-transform duration-150 disabled:bg-gray-500 disabled:cursor-not-allowed"
+            class="w-full bg-gradient-to-r from-[#f77821] to-[#ff9d5c] text-white font-semibold py-3.5 rounded-xl mt-2 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
           >
-            {{ t("LoginDialog.login.button") }}
+            <span v-if="!auth.loading">{{
+              t("LoginDialog.login.button")
+            }}</span>
+            <div
+              v-else
+              class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"
+            ></div>
           </button>
         </form>
 
-        <span class="text-center">
-          {{ t("LoginDialog.login.signIn.text") }}
+        <div class="flex flex-col justify-center items-center gap-1">
+          <p class="text-gray-400 text-sm">
+            {{ t("LoginDialog.login.signIn.text") }}
+          </p>
+
           <button
             @click="toggleForm"
-            class="ml-1 text-[#F77821] hover:text-[#a84300] cursor-pointer font-medium transition-colors duration-200"
+            class="text-[#f77821] font-semibold underline underline-offset-4 hover:text-white transition-colors z-10"
           >
             {{ t("LoginDialog.login.signIn.signIn") }}
           </button>
-        </span>
+        </div>
       </div>
 
-      <!-- SIGNUP -->
       <div
         v-else
         key="signup"
-        v-motion
-        :initial="{ opacity: 0, x: 50, scale: 0.95 }"
-        :enter="{ opacity: 1, x: 0, scale: 1 }"
-        :leave="{ opacity: 0, x: -50, scale: 0.95 }"
-        :transition="{ duration: 0.4, ease: 'easeInOut' }"
-        class="w-[380px] p-8 border border-[#F77821] rounded-2xl backdrop-blur-[9px] shadow-[0_8px_32px_rgba(0,0,0,0.25)] flex flex-col justify-center items-center gap-6 text-white bg-black/40"
+        class="relative w-full max-w-[400px] bg-[#0f0f0f]/70 backdrop-blur-xl border border-[#f77821]/30 rounded-[24px] p-10 shadow-2xl flex flex-col items-center gap-8 text-white overflow-hidden"
       >
-        <h1 class="text-3xl font-semibold tracking-wide">
-          {{ t("LoginDialog.signIn.title") }}
-        </h1>
+        <div
+          class="absolute -top-12 -right-12 w-36 h-36 bg-[#f77821]/10 blur-[50px] rounded-full pointer-events-none"
+        ></div>
+
+        <div class="text-center z-10">
+          <h1 class="text-3xl font-bold tracking-tight mb-1">
+            {{ t("LoginDialog.signIn.title") }}
+          </h1>
+        </div>
 
         <form
           @submit.prevent="handleRegister"
-          class="flex flex-col justify-center items-center gap-5 w-full"
+          class="w-full flex flex-col gap-6 z-10"
         >
           <div class="relative w-full">
             <input
@@ -233,58 +251,88 @@ async function handleRegister() {
               id="signup-name"
               type="text"
               placeholder=" "
-              class="peer w-full bg-transparent border border-white rounded-lg px-3 pt-4 pb-2 text-white placeholder-transparent focus:outline-none focus:border-[#F77821] transition-all duration-300"
+              required
+              class="auth-input w-full bg-transparent border-b border-white/20 py-2 pt-6 outline-none focus:border-[#f77821] transition-colors"
             />
             <label
               for="signup-name"
-              class="absolute left-3 top-1 text-[#F77821] text-sm transition-all duration-300 peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-placeholder-shown:text-white peer-focus:top-1 peer-focus:text-xs peer-focus:text-[#F77821]"
+              class="auth-label absolute left-0 top-6 text-gray-400 pointer-events-none transition-all duration-300"
             >
               {{ t("LoginDialog.signIn.iName") }}
             </label>
-            <p v-if="localErrors.name" class="text-red-400 text-sm mt-1">
+            <div
+              class="auth-bar absolute bottom-0 left-0 h-[2px] transition-all duration-300"
+              :class="[
+                localErrors.name
+                  ? 'w-full bg-red-500'
+                  : nameAvailable
+                  ? 'w-full bg-green-500'
+                  : 'w-0 bg-[#f77821]',
+              ]"
+            ></div>
+            <p
+              v-if="localErrors.name"
+              class="text-red-400 text-[10px] mt-1 absolute"
+            >
               {{ localErrors.name }}
             </p>
           </div>
 
-          <div class="relative w-full">
+          <div class="relative w-full mt-2">
             <input
               v-model="password"
               id="signup-password"
               type="password"
               placeholder=" "
-              class="peer w-full bg-transparent border border-white rounded-lg px-3 pt-4 pb-2 text-white placeholder-transparent focus:outline-none focus:border-[#F77821] transition-all duration-300"
+              required
+              class="auth-input w-full bg-transparent border-b border-white/20 py-2 pt-6 outline-none focus:border-[#f77821] transition-colors"
             />
             <label
               for="signup-password"
-              class="absolute left-3 top-1 text-[#F77821] text-sm transition-all duration-300 peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-placeholder-shown:text-white peer-focus:top-1 peer-focus:text-xs peer-focus:text-[#F77821]"
+              class="auth-label absolute left-0 top-6 text-gray-400 pointer-events-none transition-all duration-300"
             >
               {{ t("LoginDialog.signIn.iPassword") }}
             </label>
+            <div
+              class="auth-bar absolute bottom-0 left-0 h-[2px] w-0 bg-[#f77821] transition-all duration-300"
+            ></div>
           </div>
 
-          <div class="relative w-full">
+          <div class="relative w-full mt-2">
             <input
               v-model="repeatPassword"
               id="signup-repeatPassword"
               type="password"
               placeholder=" "
-              class="peer w-full bg-transparent border border-white rounded-lg px-3 pt-4 pb-2 text-white placeholder-transparent focus:outline-none focus:border-[#F77821] transition-all duration-300"
+              required
+              class="auth-input w-full bg-transparent border-b border-white/20 py-2 pt-6 outline-none focus:border-[#f77821] transition-colors"
             />
             <label
               for="signup-repeatPassword"
-              class="absolute left-3 top-1 text-[#F77821] text-sm transition-all duration-300 peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-placeholder-shown:text-white peer-focus:top-1 peer-focus:text-xs peer-focus:text-[#F77821]"
+              class="auth-label absolute left-0 top-6 text-gray-400 pointer-events-none transition-all duration-300"
             >
               {{ t("LoginDialog.signIn.iRepeatPassword") }}
             </label>
+            <div
+              class="auth-bar absolute bottom-0 left-0 h-[2px] transition-all duration-300"
+              :class="
+                localErrors.repeatPassword
+                  ? 'w-full bg-red-500'
+                  : 'w-0 bg-[#f77821]'
+              "
+            ></div>
             <p
               v-if="localErrors.repeatPassword"
-              class="text-red-400 text-sm mt-1"
+              class="text-red-400 text-[10px] mt-1 absolute"
             >
               {{ localErrors.repeatPassword }}
             </p>
           </div>
 
-          <p v-if="localErrors.general" class="text-red-400 text-sm">
+          <p
+            v-if="localErrors.general"
+            class="text-red-400 text-xs animate-pulse text-center"
+          >
             {{ localErrors.general }}
           </p>
 
@@ -295,22 +343,69 @@ async function handleRegister() {
               nameAvailable === false ||
               !!localErrors.repeatPassword
             "
-            class="bg-[#F77821] text-white font-medium rounded-full py-2 px-6 mt-2 hover:bg-[#ff8b3c] active:scale-95 transition-transform duration-150 disabled:bg-gray-500 disabled:cursor-not-allowed"
+            class="w-full bg-gradient-to-r from-[#f77821] to-[#ff9d5c] text-white font-semibold py-3.5 rounded-xl mt-4 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
           >
-            {{ t("LoginDialog.signIn.button") }}
+            <span v-if="!auth.loading">{{
+              t("LoginDialog.signIn.button")
+            }}</span>
+            <div
+              v-else
+              class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"
+            ></div>
           </button>
         </form>
 
-        <span class="text-center">
-          {{ t("LoginDialog.signIn.logIn.text") }}
+        <div class="flex flex-col justify-center items-center gap-1">
+          <p class="text-gray-400 text-sm">
+            {{ t("LoginDialog.signIn.logIn.text") }}
+          </p>
+
           <button
             @click="toggleForm"
-            class="ml-1 text-[#F77821] hover:text-[#a84300] cursor-pointer font-medium transition-colors duration-200"
+            class="text-[#f77821] font-semibold underline underline-offset-4 hover:text-white transition-colors z-10"
           >
             {{ t("LoginDialog.signIn.logIn.logIn") }}
           </button>
-        </span>
+        </div>
       </div>
     </Transition>
   </div>
 </template>
+
+<style scoped>
+.auth-input:focus ~ .auth-label,
+.auth-input:not(:placeholder-shown) ~ .auth-label {
+  top: 0;
+  font-size: 0.75rem;
+  color: #f77821;
+  font-weight: 600;
+}
+
+.auth-input:focus ~ .auth-bar:not(.bg-red-500):not(.bg-green-500) {
+  width: 100%;
+}
+
+.form-switch-enter-active,
+.form-switch-leave-active {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.form-switch-enter-from {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.form-switch-leave-to {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px transparent inset !important;
+  -webkit-text-fill-color: white !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+</style>

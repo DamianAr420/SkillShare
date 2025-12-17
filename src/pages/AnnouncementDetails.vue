@@ -158,153 +158,264 @@ const goToChat = async (userId: string) => {
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto p-4 space-y-6">
+  <div class="max-w-6xl mx-auto min-h-screen bg-[#fafafa]">
     <button
-      class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition duration-300 shadow cursor-pointer"
-      @click="router.back()"
+      class="group mb-8 flex items-center gap-2 text-gray-500 font-semibold hover:text-[#F77821] transition-colors cursor-pointer"
+      @click="router.push({ name: 'Search' })"
     >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-5 w-5 transform group-hover:-translate-x-1 transition-transform"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M15 19l-7-7 7-7"
+        />
+      </svg>
       {{ t("announcementDetails.back") }}
     </button>
 
     <Loader v-if="announcementStore.loading" />
 
-    <div v-else class="space-y-6">
-      <div
-        class="w-full rounded-2xl overflow-hidden shadow-xl cursor-pointer"
-        @click="openImage(ann.imageUrl || t('announcementDetails.noImage'))"
-      >
-        <img
-          :src="ann.imageUrl || ''"
-          :alt="ann.title"
-          class="w-full h-80 md:h-96 object-cover transition duration-500"
-        />
-      </div>
-
-      <div class="bg-white rounded-2xl shadow-xl p-6 space-y-4">
-        <h1
-          class="text-4xl font-extrabold text-gray-900 transition duration-300"
+    <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div class="lg:col-span-2 space-y-6">
+        <div
+          class="relative bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-gray-100 group cursor-zoom-in"
+          @click="openImage(ann.imageUrl || '')"
         >
-          {{ ann.title }}
-        </h1>
-        <p class="text-gray-700 leading-relaxed">{{ ann.desc }}</p>
+          <img
+            v-if="ann.imageUrl"
+            :src="ann.imageUrl"
+            :alt="ann.title"
+            class="w-full h-[300px] md:h-[500px] object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+          <div
+            v-else
+            class="w-full h-80 bg-gray-100 flex items-center justify-center text-gray-400"
+          >
+            {{ t("announcementDetails.noImage") }}
+          </div>
+
+          <div class="absolute top-6 left-6">
+            <span
+              class="px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest shadow-lg backdrop-blur-md"
+              :class="
+                ann.type === 'offer'
+                  ? 'bg-green-500/90 text-white'
+                  : 'bg-blue-500/90 text-white'
+              "
+            >
+              {{ t(`announcements.type.${ann.type}`) }}
+            </span>
+          </div>
+        </div>
 
         <div
-          v-if="
-            auth.isAuthenticated &&
-            !announcementStore.isOwner(announcementStore.selectedAnnouncement)
-          "
-          class="flex justify-end mt-4"
+          class="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-sm border border-gray-100"
+        >
+          <div
+            class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8"
+          >
+            <h1
+              class="text-3xl md:text-4xl font-black text-gray-900 leading-tight"
+            >
+              {{ ann.title }}
+            </h1>
+            <div
+              v-if="ann.price !== null"
+              class="text-3xl font-black text-[#F77821] whitespace-nowrap"
+            >
+              {{ ann.price }}
+              <span class="text-lg font-normal text-gray-400">zł</span>
+            </div>
+          </div>
+
+          <div
+            class="prose prose-orange max-w-none text-gray-600 leading-relaxed text-lg italic mb-10"
+          >
+            {{ ann.desc }}
+          </div>
+
+          <div
+            class="grid grid-cols-2 md:grid-cols-3 gap-6 pt-8 border-t border-gray-50"
+          >
+            <div>
+              <p
+                class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1"
+              >
+                {{ t("announcementDetails.location") }}
+              </p>
+              <p class="font-bold text-gray-800">
+                {{ ann.location || "Polska" }}
+              </p>
+            </div>
+            <div>
+              <p
+                class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1"
+              >
+                {{ t("announcementDetails.category") }}
+              </p>
+              <p class="font-bold text-gray-800">
+                {{
+                  typeof ann.category === "string"
+                    ? ann.category
+                    : ann.category.name
+                }}
+              </p>
+            </div>
+            <div>
+              <p
+                class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1"
+              >
+                {{ t("announcementDetails.views") }}
+              </p>
+              <p class="font-bold text-gray-800">{{ ann.views }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-6">
+        <div
+          class="bg-white rounded-[2.5rem] p-8 shadow-xl shadow-orange-100/50 border border-orange-50 space-y-4 lg:sticky lg:top-8"
         >
           <button
-            class="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-2xl cursor-pointer"
+            v-if="auth.isAuthenticated && !isOwner"
             @click="toggleWatch"
+            class="w-full flex items-center justify-center gap-3 py-4 px-6 rounded-2xl font-bold transition-all duration-300 border-2 cursor-pointer"
+            :class="
+              isWatched
+                ? 'border-orange-500 text-orange-500 bg-orange-50'
+                : 'border-gray-100 text-gray-700 hover:border-orange-200'
+            "
           >
             <component
               :is="isWatched ? StarSolid : StarOutline"
-              class="w-6 h-6 text-yellow-300 transition-colors duration-300 hover:text-yellow-100"
+              class="w-6 h-6"
             />
-            <span
-              class="select-none transition-colors duration-300 hover:text-white"
+            {{
+              isWatched
+                ? t("announcementDetails.watching")
+                : t("announcementDetails.watch")
+            }}
+          </button>
+
+          <div v-if="seller" class="pt-4 space-y-6">
+            <div
+              @click="goToProfile(seller._id)"
+              class="flex items-center gap-4 pb-6 border-b border-gray-50 cursor-pointer group/seller"
             >
-              {{
-                isWatched
-                  ? t("announcementDetails.watching")
-                  : t("announcementDetails.watch")
-              }}
-            </span>
-          </button>
-        </div>
+              <div class="relative">
+                <div
+                  class="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center text-[#F77821] text-2xl font-black group-hover/seller:bg-[#F77821] group-hover/seller:text-white transition-all duration-300"
+                >
+                  {{ seller.name.charAt(0).toUpperCase() }}
+                </div>
+                <div
+                  class="absolute -bottom-1 -right-1 bg-white p-1 rounded-lg shadow-sm opacity-0 group-hover/seller:opacity-100 transition-opacity"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                    />
+                  </svg>
+                </div>
+              </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-          <div v-if="ann.type !== 'search'" class="p-4 rounded-xl shadow-inner">
-            <p class="text-gray-500 uppercase tracking-wide text-sm">
-              {{ t("announcementDetails.price") }}
-            </p>
-            <p class="text-2xl font-bold">{{ ann.price }} zł</p>
-          </div>
-          <div class="p-4 rounded-xl shadow-inner">
-            <p class="text-gray-500 uppercase tracking-wide text-sm">
-              {{ t("announcementDetails.location") }}
-            </p>
-            <p class="text-xl font-semibold">{{ ann.location }}</p>
-          </div>
-          <div class="p-4 rounded-xl shadow-inner">
-            <p class="text-gray-500 uppercase tracking-wide text-sm">
-              {{ t("announcementDetails.category") }}
-            </p>
-            <p class="text-xl font-semibold">
-              {{
-                typeof ann.category === "string"
-                  ? ann.category
-                  : ann.category.name
-              }}
-            </p>
-          </div>
-          <div class="p-4 rounded-xl shadow-inner">
-            <p class="text-gray-500 uppercase tracking-wide text-sm">
-              {{ t("announcementDetails.type") }}
-            </p>
-            <p class="text-xl font-semibold">{{ ann.type }}</p>
-          </div>
-        </div>
-      </div>
+              <div>
+                <p
+                  class="text-xs font-bold text-gray-400 uppercase tracking-widest"
+                >
+                  {{ t("announcementDetails.sellerData") }}
+                </p>
+                <h3
+                  class="text-xl font-bold text-gray-900 group-hover/seller:text-[#F77821] transition-colors"
+                >
+                  {{ seller.name }}
+                </h3>
+                <p
+                  class="text-[10px] text-orange-400 font-bold opacity-0 group-hover/seller:opacity-100 transition-opacity uppercase"
+                >
+                  {{ t("announcementDetails.viewProfile") }}
+                </p>
+              </div>
+            </div>
 
-      <div v-if="seller" class="rounded-2xl shadow-xl p-6 space-y-4">
-        <h2 class="text-2xl font-semibold text-gray-800">
-          {{ t("announcementDetails.sellerData") }}
-        </h2>
-        <p>
-          <strong>{{ t("announcementDetails.seller.name") }}</strong>
-          {{ seller.name }}
-        </p>
-        <p v-if="ann.showEmail && seller.email">
-          <strong>{{ t("announcementDetails.seller.email") }}</strong>
-          <span
-            class="cursor-pointer text-blue-600 hover:underline transition duration-300"
-            @click="copyToClipboard(seller.email)"
+            <div class="space-y-4">
+              <button
+                v-if="!isOwner"
+                @click="goToChat(seller._id)"
+                class="w-full py-4 bg-[#F77821] text-white rounded-2xl font-bold shadow-lg shadow-orange-200 hover:bg-[#ff8a3d] hover:-translate-y-1 transition-all cursor-pointer"
+              >
+                {{ t("announcementDetails.chat.startChat") }}
+              </button>
+
+              <div
+                v-if="ann.showPhone && seller.phone"
+                class="p-4 bg-gray-50 rounded-2xl border border-gray-100 text-center"
+              >
+                <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">
+                  {{ t("announcementDetails.seller.phone") }}
+                </p>
+                <p class="text-xl font-bold text-gray-800">
+                  {{ seller.phone }}
+                </p>
+              </div>
+
+              <div
+                v-if="ann.showEmail && seller.email"
+                @click="copyToClipboard(seller.email)"
+                class="p-4 bg-gray-50 rounded-2xl border border-gray-100 text-center cursor-pointer hover:border-orange-200 hover:bg-orange-50 transition-all group/email"
+              >
+                <p
+                  class="text-[10px] text-gray-400 font-bold uppercase mb-1 group-hover/email:text-orange-500"
+                >
+                  {{ t("announcementDetails.seller.email") }}
+                </p>
+                <p class="text-sm font-bold text-gray-800 break-all">
+                  {{ seller.email }}
+                </p>
+                <p
+                  class="text-[9px] text-orange-400 opacity-0 group-hover/email:opacity-100 transition-opacity mt-1 uppercase font-bold"
+                >
+                  {{ t("announcementDetails.clickToCopy") }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            v-if="isOwner"
+            class="pt-6 grid grid-cols-2 gap-3 border-t border-gray-100"
           >
-            {{ seller.email }}
-          </span>
-        </p>
-        <p v-if="ann.showPhone && seller.phone">
-          <strong>{{ t("announcementDetails.seller.phone") }}</strong>
-          {{ seller.phone }}
-        </p>
-        <div class="flex flex-wrap gap-3 mt-2">
-          <button
-            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-300 cursor-pointer"
-            @click="goToProfile(seller._id)"
-          >
-            {{ t("announcementDetails.goToProfile") }}
-          </button>
-          <button
-            v-if="!isOwner"
-            class="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition duration-300 cursor-pointer"
-            @click="goToChat(seller._id)"
-          >
-            {{ t("announcementDetails.chat.startChat") }}
-          </button>
+            <button
+              @click="handleEdit"
+              class="py-3 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-gray-800 transition-colors cursor-pointer"
+            >
+              {{ t("announcementDetails.edit") }}
+            </button>
+            <button
+              @click="handleDelete"
+              class="py-3 bg-red-50 text-red-600 rounded-xl font-bold text-sm hover:bg-red-100 transition-colors cursor-pointer"
+            >
+              {{ t("announcementDetails.delete") }}
+            </button>
+          </div>
         </div>
-      </div>
-
-      <div class="w-fit flex flex-row gap-2 mx-auto items-center">
-        <p>{{ t("announcementDetails.views") }}</p>
-        <p>{{ ann.views }}</p>
-      </div>
-
-      <div v-if="isOwner" class="flex flex-wrap gap-3 mt-4">
-        <button
-          class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition duration-300 cursor-pointer"
-          @click="handleEdit"
-        >
-          {{ t("announcementDetails.edit") }}
-        </button>
-        <button
-          class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition duration-300 cursor-pointer"
-          @click="handleDelete"
-        >
-          {{ t("announcementDetails.delete") }}
-        </button>
       </div>
     </div>
 
@@ -315,7 +426,6 @@ const goToChat = async (userId: string) => {
       @confirm="confirmDelete"
       @close="showConfirm = false"
     />
-
     <ImageDialog
       :visible="showImageModal"
       :src="modalImageSrc"
@@ -323,3 +433,9 @@ const goToChat = async (userId: string) => {
     />
   </div>
 </template>
+
+<style scoped>
+.prose {
+  white-space: pre-line;
+}
+</style>

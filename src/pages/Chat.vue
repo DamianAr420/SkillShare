@@ -322,7 +322,12 @@ const resetChatSelection = () => {
               <span
                 class="text-xs text-gray-400 whitespace-nowrap ml-2 font-medium"
               >
-                {{ timeAgo(c.lastActivity) }}
+                {{
+                  t(timeAgo(c.lastMessage?.createdAt || c.lastActivity).key, {
+                    n: timeAgo(c.lastMessage?.createdAt || c.lastActivity)
+                      .value,
+                  })
+                }}
               </span>
             </div>
 
@@ -422,7 +427,9 @@ const resetChatSelection = () => {
                 {{
                   otherUserIsOnline
                     ? t("chat.online")
-                    : timeAgo(otherUser?.lastSeen)
+                    : t(timeAgo(otherUser?.lastSeen).key, {
+                        n: timeAgo(otherUser?.lastSeen).value,
+                      })
                 }}
               </span>
             </div>

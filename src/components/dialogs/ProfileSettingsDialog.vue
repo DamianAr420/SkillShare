@@ -68,12 +68,18 @@ const saveSettings = async () => {
     loading.value = false;
   }
 };
+
+function onBackdropClick(e: MouseEvent) {
+  const target = e.target as HTMLElement;
+  if (target.classList.contains("backdrop")) emit("close");
+}
 </script>
 
 <template>
   <div
     v-if="show"
-    class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+    @click="onBackdropClick"
+    class="backdrop fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
   >
     <div
       class="bg-white rounded-3xl shadow-2xl w-full max-w-md sm:max-w-lg p-5 sm:p-6 relative animate-fadeIn overflow-y-auto max-h-[90vh]"

@@ -19,7 +19,7 @@ const routes: Array<RouteRecordRaw> = [
     component: MainLayout,
     children: [
       { path: "/", name: "Home", component: Home },
-      { path: "/Categories", name: "Categories", component: Categories },
+      { path: "/Search", name: "Search", component: Categories },
       {
         path: "/add-announcement",
         name: "AddAnnouncement",
