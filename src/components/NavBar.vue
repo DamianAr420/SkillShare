@@ -257,7 +257,7 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
         </button>
         <button
           @click="
-            router.push({ name: 'Categories' });
+            router.push({ name: 'Search' });
             toggleMobileMenu();
           "
           class="text-left text-xl font-bold text-gray-800 py-2"
