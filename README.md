@@ -1,7 +1,7 @@
 # 🚀 SkillShare
 
 <p align="center">
-  <img src="https://damianar420.github.io/SkillShare/assets/logo-b9e3f3a1.png" alt="SkillShare Logo" width="200"/>
+  <img src="src/assets/SkillShareLogo.png" alt="SkillShare Logo" width="200"/>
 </p>
 
 ## 🌐 Live Demo
