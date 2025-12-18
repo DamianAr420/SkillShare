@@ -291,7 +291,7 @@ const lastSentMessageIndex = computed(() => {
             />
             <div
               v-else
-              class="w-12 h-12 md:w-14 md:h-14 rounded-full bg-[#F77821] flex items-center justify-center text-white text-xl font-bold"
+              class="w-12 h-12 md:w-14 md:h-14 bg-orange-100 text-[#F77821] text-2xl rounded-full flex items-center justify-center font-bold object-cover border border-gray-200"
             >
               {{ c.otherParticipant?.name?.[0]?.toUpperCase() || "?" }}
             </div>
@@ -405,7 +405,7 @@ const lastSentMessageIndex = computed(() => {
             />
             <div
               v-else
-              class="w-12 h-12 rounded-full bg-[#F77821] flex items-center justify-center text-white text-xl font-bold"
+              class="w-12 h-12 bg-orange-100 text-[#F77821] rounded-full flex items-center justify-center font-bold object-cover border border-gray-200"
             >
               {{ otherUser?.name?.[0]?.toUpperCase() }}
             </div>

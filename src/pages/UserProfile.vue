@@ -45,11 +45,15 @@ const goToChat = async (userId: string) => {
 
   try {
     await chatStore.startConversation(userId);
+
+    await chatStore.fetchConversations();
+
     router.push({
       name: "chat",
       query: { id: chatStore.activeConversationId },
     });
-  } catch {
+  } catch (error) {
+    console.error("Błąd podczas przechodzenia do czatu:", error);
     showToast(t("announcementDetails.chatError"), "error");
   }
 };
