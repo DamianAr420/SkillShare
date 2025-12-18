@@ -8,8 +8,6 @@ import { useBreakpoints } from "@/composables/useBreakpoints";
 import { timeAgo } from "@/utils/time";
 import ConfirmDialog from "@/components/dialogs/ConfirmDialog.vue";
 import { useI18n } from "vue-i18n";
-import type { Conversation } from "@/types/chat";
-import type { User } from "@/types/user";
 import {
   PaperAirplaneIcon,
   TrashIcon,
@@ -39,43 +37,53 @@ const selectedConversationId = computed({
   set: (id) => chatStore.setActiveConversation(id),
 });
 
-const conversationList = computed(() =>
-  chatStore.conversations.map((c) => ({
+const conversationList = computed(() => {
+  const mapped = chatStore.conversations.map((c) => ({
     ...c,
+    otherParticipant: c.participants.find((p) => p._id !== auth.user?._id),
     lastMessage:
       c.lastMessage ||
       (c.messages.length > 0 ? c.messages[c.messages.length - 1] : null),
-  }))
-);
+  }));
 
-const selectedConversation = computed<Conversation | null>(
+  return mapped.sort((a, b) => {
+    const timeA = new Date(
+      a.lastMessage?.createdAt || a.lastActivity || 0
+    ).getTime();
+    const timeB = new Date(
+      b.lastMessage?.createdAt || b.lastActivity || 0
+    ).getTime();
+
+    return timeB - timeA;
+  });
+});
+
+const selectedConversation = computed(
   () =>
-    chatStore.conversations.find(
+    conversationList.value.find(
       (c) => c._id === selectedConversationId.value
     ) || null
 );
 
-const getOtherParticipant = (conv: Conversation | null): User | undefined =>
-  conv?.participants.find((p) => p._id !== auth.user?._id);
-
-const otherUser = computed(() =>
-  getOtherParticipant(selectedConversation.value)
-);
-
-const otherParticipantId = computed(() => otherUser.value?._id);
+const otherUser = computed(() => selectedConversation.value?.otherParticipant);
 
 const otherUserIsOnline = computed(() => {
-  if (!otherUser.value?.lastSeen) return false;
+  if (!otherUser.value) return false;
+  if (otherUser.value.isOnline) return true;
+  if (!otherUser.value.lastSeen) return false;
+
   const diff =
     (new Date().getTime() - new Date(otherUser.value.lastSeen).getTime()) /
     1000;
-  return otherUser.value.isOnline || diff < 60;
+  return diff < 60;
 });
 
 const formatTime = (dateString: string) => {
   if (!dateString) return "";
-  const date = new Date(dateString);
-  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return new Date(dateString).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };
 
 const scrollToEnd = async (smooth: boolean = false) => {
@@ -88,42 +96,91 @@ const scrollToEnd = async (smooth: boolean = false) => {
   }
 };
 
-onMounted(() => {
-  chatStore.setScrollFunction(scrollToEnd);
-});
-
-onUnmounted(() => {
-  chatStore.setScrollFunction(null);
-  if (selectedConversationId.value) {
-    chatStore.setActiveConversation(null);
-  }
-});
-
-const handleBackToConversations = () => {
-  selectedConversationId.value = null;
-  router.replace({ name: "chat" });
-};
-
 const sendMessage = async () => {
   if (!selectedConversationId.value || !newMessage.value.trim()) return;
-  const messageToSend = newMessage.value;
-  const currentConvId = selectedConversationId.value;
+
+  const content = newMessage.value;
+  const convId = selectedConversationId.value;
 
   newMessage.value = "";
   resetTextareaHeight();
 
   try {
-    await chatStore.sendMessage(currentConvId, messageToSend);
+    await chatStore.sendMessage(convId, content);
     scrollToEnd(true);
   } catch (error) {
-    newMessage.value = messageToSend;
+    newMessage.value = content;
     showToast(t("chat.chatError"), "error");
   }
 };
 
+const confirmDelete = async () => {
+  if (!conversationToDelete.value) return;
+  try {
+    await chatStore.deleteConversation(conversationToDelete.value);
+    if (selectedConversationId.value === conversationToDelete.value) {
+      selectedConversationId.value = null;
+      router.replace({ name: "chat" });
+    }
+    showToast(t("chat.chatDel.success"), "success");
+  } catch (error) {
+    showToast(t("chat.chatDel.error"), "error");
+  } finally {
+    confirmDeleteVisible.value = false;
+    conversationToDelete.value = null;
+  }
+};
+
+onMounted(async () => {
+  chatStore.setScrollFunction(scrollToEnd);
+  const convId = route.query.id as string;
+
+  try {
+    if (!getSocket() && auth.isAuthenticated && auth.token) {
+      await chatStore.initializeChat(auth.token);
+    }
+    if (chatStore.conversations.length === 0) {
+      await chatStore.fetchConversations();
+    }
+    if (convId) {
+      chatStore.setActiveConversation(convId);
+      if (!chatStore.conversations.find((c) => c._id === convId)) {
+        await chatStore.fetchConversations();
+      }
+    }
+  } catch (error) {
+    showToast(t("chat.chatErrorInit"), "error");
+  }
+
+  initialLoadDone.value = true;
+  if (selectedConversation.value) scrollToEnd(true);
+});
+
+onUnmounted(() => {
+  chatStore.setScrollFunction(null);
+  if (selectedConversationId.value) chatStore.setActiveConversation(null);
+});
+
+watch(
+  () => selectedConversation.value?.messages.length,
+  (newVal, oldVal) => {
+    if (newVal && (!oldVal || newVal > oldVal)) {
+      scrollToEnd(initialLoadDone.value && oldVal !== undefined);
+    }
+  }
+);
+
+watch(selectedConversationId, (newId) => {
+  router.replace({ name: "chat", query: newId ? { id: newId } : {} });
+  if (newId) scrollToEnd();
+});
+
+const handleBackToConversations = () => {
+  selectedConversationId.value = null;
+};
+
 const resetTextareaHeight = () => {
-  if (!textareaRef.value) return;
-  textareaRef.value.style.height = "auto";
+  if (textareaRef.value) textareaRef.value.style.height = "auto";
 };
 
 const autoResize = (event: Event) => {
@@ -138,93 +195,15 @@ const onDelete = (e: Event, _id: string) => {
   confirmDeleteVisible.value = true;
 };
 
-const confirmDelete = async () => {
-  if (!conversationToDelete.value) return;
-
-  try {
-    await chatStore.deleteConversation(conversationToDelete.value);
-
-    if (selectedConversationId.value === conversationToDelete.value) {
-      selectedConversationId.value = null;
-      router.replace({ name: "chat" });
-    }
-
-    showToast(t("chat.chatDel.success"), "success");
-  } catch (error) {
-    showToast(t("chat.chatDel.error"), "error");
-  } finally {
-    confirmDeleteVisible.value = false;
-    conversationToDelete.value = null;
-  }
-};
-
-watch(
-  () => selectedConversation.value?.messages.length,
-  (newVal, oldVal) => {
-    if (newVal && (!oldVal || newVal > oldVal)) {
-      if (!initialLoadDone.value) {
-        scrollToEnd(false);
-      } else {
-        if (newVal > oldVal!) {
-          scrollToEnd(true);
-        }
-      }
-    }
-  }
-);
-
-watch(selectedConversationId, (newId) => {
-  if (newId) {
-    router.replace({ name: "chat", query: { id: newId } });
-    scrollToEnd();
-  } else {
-    router.replace({ name: "chat" });
-  }
-});
-
-onMounted(async () => {
-  const convId = route.query.id as string;
-
-  try {
-    if (!getSocket() && auth.isAuthenticated && auth.token) {
-      await chatStore.initializeChat(auth.token);
-    }
-
-    if (chatStore.conversations.length === 0) {
-      await chatStore.fetchConversations();
-    }
-
-    if (convId) {
-      chatStore.setActiveConversation(convId);
-      if (!chatStore.conversations.find((c) => c._id === convId)) {
-        await chatStore.fetchConversation(convId);
-      }
-    }
-  } catch (error) {
-    showToast(t("chat.chatErrorInit"), "error");
-  }
-
-  initialLoadDone.value = true;
-  if (selectedConversation.value) {
-    scrollToEnd(true);
-  }
-});
 const lastReadMessageIndex = computed(() => {
-  if (!selectedConversation.value || !auth.user || !otherParticipantId.value) {
-    return -1;
-  }
+  const messages = selectedConversation.value?.messages || [];
+  const otherId = otherUser.value?._id;
 
-  const messages = selectedConversation.value.messages;
+  if (!auth.user || !otherId) return -1;
 
   for (let i = messages.length - 1; i >= 0; i--) {
     const msg = messages[i];
-
-    if (!msg) continue;
-
-    if (
-      msg.senderId === auth.user._id &&
-      msg.readBy.includes(otherParticipantId.value)
-    ) {
+    if (msg && msg.senderId === auth.user._id && msg.readBy.includes(otherId)) {
       return i;
     }
   }
@@ -232,37 +211,26 @@ const lastReadMessageIndex = computed(() => {
 });
 
 const lastSentMessageIndex = computed(() => {
-  if (!selectedConversation.value || !auth.user || !otherParticipantId.value) {
-    return -1;
-  }
+  const messages = selectedConversation.value?.messages || [];
+  const otherId = otherUser.value?._id;
 
-  if (lastReadMessageIndex.value === -1) {
-    return -1;
-  }
+  if (!auth.user || !otherId) return -1;
 
-  const messages = selectedConversation.value.messages;
+  const lastRead = lastReadMessageIndex.value;
 
   for (let i = messages.length - 1; i >= 0; i--) {
     const msg = messages[i];
-
-    if (!msg) continue;
-
     if (
+      msg &&
       msg.senderId === auth.user._id &&
-      !msg.readBy.includes(otherParticipantId.value)
+      !msg.readBy.includes(otherId) &&
+      i > lastRead
     ) {
       return i;
     }
   }
   return -1;
 });
-
-const resetChatSelection = () => {
-  if (isMobile.value) return;
-
-  selectedConversationId.value = null;
-  router.replace({ name: "chat", query: {} });
-};
 </script>
 
 <template>
@@ -283,7 +251,7 @@ const resetChatSelection = () => {
       ]"
     >
       <div
-        @click="!isMobile && resetChatSelection()"
+        @click="!isMobile && handleBackToConversations()"
         class="h-20 px-6 border-b border-gray-100 flex justify-between items-center bg-white"
       >
         <h2
@@ -317,12 +285,18 @@ const resetChatSelection = () => {
         >
           <div class="relative shrink-0">
             <img
-              :src="getOtherParticipant(c)?.avatarUrl || '/default-avatar.png'"
-              class="w-12 h-12 md:w-14 md:h-14 rounded-full object-cover border border-gray-200 shadow-sm"
+              v-if="c.otherParticipant?.avatarUrl"
+              :src="c.otherParticipant.avatarUrl"
+              class="w-12 h-12 md:w-14 md:h-14 rounded-full object-cover border border-gray-200"
             />
-
+            <div
+              v-else
+              class="w-12 h-12 md:w-14 md:h-14 rounded-full bg-[#F77821] flex items-center justify-center text-white text-xl font-bold"
+            >
+              {{ c.otherParticipant?.name?.[0]?.toUpperCase() || "?" }}
+            </div>
             <span
-              v-if="getOtherParticipant(c)?.isOnline"
+              v-if="c.otherParticipant?.isOnline"
               class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"
             ></span>
           </div>
@@ -331,12 +305,9 @@ const resetChatSelection = () => {
             <div class="flex justify-between items-baseline mb-1">
               <span
                 class="text-[15px] text-gray-900 truncate"
-                :class="{
-                  'font-bold': c.unreadCount > 0,
-                  'font-semibold': c.unreadCount === 0,
-                }"
+                :class="c.unreadCount > 0 ? 'font-bold' : 'font-semibold'"
               >
-                {{ getOtherParticipant(c)?.name || t("chat.unknownUser") }}
+                {{ c.otherParticipant?.name || t("chat.unknownUser") }}
               </span>
 
               <span
@@ -428,20 +399,23 @@ const resetChatSelection = () => {
             </button>
 
             <img
-              :src="
-                getOtherParticipant(selectedConversation)?.avatarUrl ||
-                '/default-avatar.png'
-              "
-              class="w-12 h-12 rounded-full object-cover border border-gray-100 shadow-sm"
+              v-if="otherUser?.avatarUrl"
+              :src="otherUser.avatarUrl"
+              class="w-12 h-12 rounded-full object-cover border border-gray-100"
             />
+            <div
+              v-else
+              class="w-12 h-12 rounded-full bg-[#F77821] flex items-center justify-center text-white text-xl font-bold"
+            >
+              {{ otherUser?.name?.[0]?.toUpperCase() }}
+            </div>
 
             <div class="flex flex-col">
-              <span class="text-lg font-bold text-gray-800 leading-tight">
-                {{ getOtherParticipant(selectedConversation)?.name }}
-              </span>
-
+              <span class="text-lg font-bold text-gray-800 leading-tight">{{
+                otherUser?.name
+              }}</span>
               <span
-                class="text-xs font-medium mt-0.5"
+                class="text-xs font-medium"
                 :class="otherUserIsOnline ? 'text-green-600' : 'text-gray-400'"
               >
                 {{
@@ -537,16 +511,14 @@ const resetChatSelection = () => {
             <button
               @click="sendMessage"
               :disabled="!newMessage.trim()"
-              class="p-2.5 rounded-xl transition-all duration-200 flex items-center justify-center shrink-0"
+              class="p-2.5 rounded-xl transition-all"
               :class="
                 newMessage.trim()
-                  ? 'bg-[#F77821] text-white hover:bg-[#EA580C] shadow-md hover:shadow-lg hover:shadow-orange-200 transform hover:-translate-y-0.5'
+                  ? 'bg-[#F77821] text-white shadow-md'
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed'
               "
             >
-              <PaperAirplaneIcon
-                class="w-5 h-5 -rotate-45 translate-x-0.5 -translate-y-0.5"
-              />
+              <PaperAirplaneIcon class="w-5 h-5 -rotate-45" />
             </button>
           </div>
         </div>
